@@ -35,55 +35,70 @@ sports:
         eventgroups:
 
             # First event group would be 
-            IDL_Preseason:
+            IDL:
                 # With 'long' name
                 name:
-                    en: International Demo Legue - Preseasons
-                    de: Internationale Demo Liga - Vorliga
+                    en: International Demo Legue
+                    de: Internationale Demo Liga
+
                 # .. and blockchain id
                 id:
 
-                # Let's list the betting market groups (see folder bmgs/)
-                bettingmarketgroups:
-                    name: IDL_PreSeas_Markets_01
-                    groups:
-                        # First Group
-                        - name: FTB_MO_1
-                          menu: 1
-                        # Second group
-                        - name: FTB_OU_05_01
-                          menu: 3
-                        - name: FTB_OU_15_01
-                          menu: 4
-                        - name: FTB_OU_25_01
-                          menu: 5
-                        - name: FTB_OU_35_01
-                          menu: 6
-                        - name: FTB_OU_45_01
-                          menu: 7
-                        - name: FTB_OU_55_01
-                          menu: 8
-                        - name: FTB_OU_65_01
-                          menu: 9
-                        - name: FTB_CS_03
-                          menu: 2
+                # An event group bundles multiple events
+                events:
 
-                # and the participents (see folder participants/)
-                participants: IDL_Teams_2017-18
+                    # each event carries it's own identifier
+                    PreSeas:
 
-                # How are individual Events named (naming scheme)
-                eventscheme:
-                    parameters:
-                        - AwayTeam
-                        - HomeTeam
-                    name: [AwayTeam] @ [HomeTeam]
+                        # And has an internationlized name
+                        name:
+                            en: Pre-Season
+                            de: Vorseason
 
-                # How long before the event do we create these group? (in days)
-                leadtime_Max: 6
+                        # .. and blockchain id
+                        id:
 
-                # When does the event group/league actually begin and end?
-                start_date: 2017/08/10
-                finish_date: 2017/08/31
+                        # Let's list the betting market groups (see folder bmgs/)
+                        bettingmarketgroups:
+                            name: IDL_PreSeas_Markets_01
+                            groups:
+                                # First Group
+                                - name: FTB_MO_1
+                                  menu: 1
+                                # Second group
+                                - name: FTB_OU_05_01
+                                  menu: 3
+                                - name: FTB_OU_15_01
+                                  menu: 4
+                                - name: FTB_OU_25_01
+                                  menu: 5
+                                - name: FTB_OU_35_01
+                                  menu: 6
+                                - name: FTB_OU_45_01
+                                  menu: 7
+                                - name: FTB_OU_55_01
+                                  menu: 8
+                                - name: FTB_OU_65_01
+                                  menu: 9
+                                - name: FTB_CS_03
+                                  menu: 2
+
+                        # and the participents (see folder participants/)
+                        participants: IDL_Teams_2017-18
+
+                        # How are individual Events named (naming scheme)
+                        eventscheme:
+                            parameters:
+                                - AwayTeam
+                                - HomeTeam
+                            name: [AwayTeam] @ [HomeTeam]
+
+                        # How long before the event do we create these group? (in days)
+                        leadtime_Max: 6
+
+                        # When does the event group/league actually begin and end?
+                        start_date: 2017/08/10
+                        finish_date: 2017/08/31
 
     #
     # American Football
@@ -103,113 +118,130 @@ sports:
         eventgroups:
 
             # First event group would be 
-            NFL_PreSeas:
+            NFL:
                 # With 'long' name
                 name:
-                    en: NFL - Preseasons
-                    de: NFL - Vorliga
+                    en: NFL
+                    de: NFL
+
                 # .. and blockchain id
                 id:
 
-                # Let's list the betting market groups
-                bettingmarketgroups:
-                    name: NDL_PreSeas_Markets_01
-                    groups:
-                        # First Group
-                        - name: FTB_MO_1
-                          menu: 1
-                        # Second group
-                        - name: FTB_OU_05_01
-                          menu: 3
-                        - name: FTB_OU_15_01
-                          menu: 4
-                        - name: FTB_OU_25_01
-                          menu: 5
-                        - name: FTB_OU_35_01
-                          menu: 6
-                        - name: FTB_OU_45_01
-                          menu: 7
-                        - name: FTB_OU_55_01
-                          menu: 8
-                        - name: FTB_OU_65_01
-                          menu: 9
-                        - name: FTB_CS_03
-                          menu: 2
+                # An event group bundles multiple events
+                events:
 
-                # and the participents
-                participants: NFL_Teams_2017-18
+                    # each event carries it's own identifier
+                    PreSeas:
 
-                # How are individual Events named (naming scheme)
-                eventscheme:
-                    parameters:
-                        - AwayTeam
-                        - HomeTeam
-                    name: [AwayTeam] @ [HomeTeam]
+                        # And has an internationlized name
+                        name:
+                            en: Pre-Season
+                            de: Vorseason
 
-                # How long before the event do we create these group? (in days)
-                leadtime_Max: 6
+                        # .. and blockchain id
+                        id:
 
-                # When does the event group/league actually begin and end?
-                start_date: 2017-08-10
-                finish_date: 2017-08-31
+                        # Let's list the betting market groups
+                        bettingmarketgroups:
+                            name: NDL_PreSeas_Markets_01
+                            groups:
+                                # First Group
+                                - name: FTB_MO_1
+                                  menu: 1
+                                # Second group
+                                - name: FTB_OU_05_01
+                                  menu: 3
+                                - name: FTB_OU_15_01
+                                  menu: 4
+                                - name: FTB_OU_25_01
+                                  menu: 5
+                                - name: FTB_OU_35_01
+                                  menu: 6
+                                - name: FTB_OU_45_01
+                                  menu: 7
+                                - name: FTB_OU_55_01
+                                  menu: 8
+                                - name: FTB_OU_65_01
+                                  menu: 9
+                                - name: FTB_CS_03
+                                  menu: 2
 
-            # First event group would be 
-            NFL_RegSeas:
-                # With 'long' name
-                name:
-                    en: NFL - Regular Season 
-                    de: NFL - Hauptseason
-                # .. and blockchain id
-                id:
+                        # and the participents
+                        participants: NFL_Teams_2017-18
 
-                # Let's list the betting market groups
-                bettingmarketgroups:
-                    name: NFL_Reg_Markets_01
-                    groups:
-                        # First Group
-                        - name: FTB_MO_1
-                          menu: 1
-                        # Second group
-                        - name: FTB_OU_05_01
-                          menu: 3
-                        - name: FTB_OU_15_01
-                          menu: 4
-                        - name: FTB_OU_25_01
-                          menu: 5
-                        - name: FTB_OU_35_01
-                          menu: 6
-                        - name: FTB_OU_45_01
-                          menu: 7
-                        - name: FTB_OU_55_01
-                          menu: 8
-                        - name: FTB_OU_65_01
-                          menu: 9
-                        - name: FTB_CS_03
-                          menu: 2
+                        # How are individual Events named (naming scheme)
+                        eventscheme:
+                            parameters:
+                                - AwayTeam
+                                - HomeTeam
+                            name: [AwayTeam] @ [HomeTeam]
 
-                # and the participents
-                participants: NFL_Teams_2017-18
+                        # How long before the event do we create these group? (in days)
+                        leadtime_Max: 6
 
-                # How are individual Events named (naming scheme)
-                eventscheme:
-                    parameters:
-                        - AwayTeam
-                        - HomeTeam
-                    name: [AwayTeam] @ [HomeTeam]
+                        # When does the event group/league actually begin and end?
+                        start_date: 2017-08-10
+                        finish_date: 2017-08-31
 
-                # How long before the event do we create these group? (in days)
-                leadtime_Max: 15
+                    # Regular Season is another event
+                    RegSeas:
 
-                # When does the event group/league actually begin and end?
-                start_date: 2017/09/07
-                finish_date: 2017/12/31
+                        # And has an internationlized name
+                        name:
+                            en: Regular Season
+                            de: Hauptseason
 
-            #
-            # Todo
-            #
-            # * Playoffs
-            # * Superbowl
-            #
+                        # .. and blockchain id
+                        id:
+
+                        # Let's list the betting market groups
+                        bettingmarketgroups:
+                            name: NFL_Reg_Markets_01
+                            groups:
+                                # First Group
+                                - name: FTB_MO_1
+                                  menu: 1
+                                # Second group
+                                - name: FTB_OU_05_01
+                                  menu: 3
+                                - name: FTB_OU_15_01
+                                  menu: 4
+                                - name: FTB_OU_25_01
+                                  menu: 5
+                                - name: FTB_OU_35_01
+                                  menu: 6
+                                - name: FTB_OU_45_01
+                                  menu: 7
+                                - name: FTB_OU_55_01
+                                  menu: 8
+                                - name: FTB_OU_65_01
+                                  menu: 9
+                                - name: FTB_CS_03
+                                  menu: 2
+
+                        # and the participents
+                        participants: NFL_Teams_2017-18
+
+                        # How are individual Events named (naming scheme)
+                        eventscheme:
+                            parameters:
+                                - AwayTeam
+                                - HomeTeam
+                            name: [AwayTeam] @ [HomeTeam]
+
+                        # How long before the event do we create these group? (in days)
+                        leadtime_Max: 15
+
+                        # When does the event group/league actually begin and end?
+                        start_date: 2017/09/07
+                        finish_date: 2017/12/31
+
+                    #
+                    # Todo
+                    #
+                    # * Playoffs
+                    # * Superbowl
+                    #
 
     #
     # Football
@@ -229,45 +261,94 @@ sports:
         eventgroups:
 
             # First event group would be 
-            FTB_EPL:
+            FTB:
                 # With 'long' name
                 name:
-                    en: Football - English Premier League
-                    de: Fußball - English Premier League
+                    en: Football
+                    de: Fußball
+
                 # .. and blockchain id
                 id:
 
-                # Let's list the betting market groups
-                bettingmarketgroups: 
-                    name: FTB_LG_Markets_01
-                    groups:
-                        # First Group
-                        - name: FTB_MO_1
-                          menu: 1
+                # An event group bundles multiple events
+                events:
 
-                # and the participents
-                participants: EPL_2017-18
+                    EPL:
 
-                # How are individual Events named (naming scheme)
-                eventscheme:
-                    parameters:
-                        - AwayTeam
-                        - HomeTeam
-                    name: [AwayTeam] @ [HomeTeam]
+                        # With 'long' name
+                        name:
+                            en: English Premier League
+                            de: English Premier League
 
-                # How long before the event do we create these group? (in days)
-                leadtime_Max: 13
+                        # .. and blockchain id
+                        id:
 
-                # When does the event group/league actually begin and end?
-                start_date: 2017/08/11
-                finish_date: 2018/06/01
+                        # Let's list the betting market groups
+                        bettingmarketgroups: 
+                            name: FTB_LG_Markets_01
+                            groups:
+                                # First Group
+                                - name: FTB_MO_1
+                                  menu: 1
 
-            #
-            # Todo
-            #
-            # * La Liga
-            # * UEFA Champions League - Group Stage
-            # * UEFA Champions League - Knockout Stage
-            # * UEFA Europe League - Group Stage
-            # * UEFA Europe League - Knockout Stage
-            #
+                        # and the participents
+                        participants: EPL_2017-18
+
+                        # How are individual Events named (naming scheme)
+                        eventscheme:
+                            parameters:
+                                - AwayTeam
+                                - HomeTeam
+                            name: [AwayTeam] @ [HomeTeam]
+
+                        # How long before the event do we create these group? (in days)
+                        leadtime_Max: 13
+
+                        # When does the event group/league actually begin and end?
+                        start_date: 2017/08/11
+                        finish_date: 2018/06/01
+
+                Laliga:
+
+                        # With 'long' name
+                        name:
+                            en: La Liga
+                            de: La Liga
+
+                        # .. and blockchain id
+                        id:
+
+                        # Let's list the betting market groups
+                        bettingmarketgroups: 
+                            name: FTB_LG_Markets_01
+                            groups:
+                                # First Group
+                                - name: FTB_MO_1
+                                  menu: 1
+
+                        # and the participents
+                        participants: LaLiga_2017-18
+
+                        # How are individual Events named (naming scheme)
+                        eventscheme:
+                            parameters:
+                                - AwayTeam
+                                - HomeTeam
+                            name: [AwayTeam] @ [HomeTeam]
+
+                        # How long before the event do we create these group? (in days)
+                        leadtime_Max: 13
+
+                        # When does the event group/league actually begin and end?
+                        start_date: 2017/08/20
+                        finish_date: 2018/06/01
+
+                    #
+                    # Todo
+                    #
+                    # * La Liga
+                    # * UEFA Champions League - Group Stage
+                    # * UEFA Champions League - Knockout Stage
+                    # * UEFA Europe League - Group Stage
+                    # * UEFA Europe League - Knockout Stage
+                    #
