@@ -1,0 +1,50 @@
+name: EPL_2017-18
+participants:
+    - name: Arsenal
+
+    - name: Bournemouth
+
+    - name: Brighton & Hove
+      abbr: Albion	Brighton
+
+    - name: Burnley
+
+    - name: Chelsea
+
+    - name: Crystal Palace	
+      abbr: C Palace
+
+    - name: Everton
+
+    - name: Huddersfield
+
+    - name: Leicester City	
+      abbr: Leicester
+
+    - name: Liverpool
+
+    - name: Manchester City	
+      abbr: Man City
+
+    - name: Manchester United	
+      abbr: Man Utd
+
+    - name: Newcastle
+
+    - name: Southampton
+
+    - name: Stoke City
+
+    - name: Swansea City	
+      abbr: Swansea
+
+    - name: Tottenham Hotspur	
+      abbr: Tottenham
+
+    - name: Watford
+
+    - name: West Bromwich Albion	
+      abbr: West Brom
+
+    - name: West Ham United	
+      abbr: West Ham

@@ -1,0 +1,12 @@
+name: R_FTB_MO_1
+human_readable_rules:
+    en: Foobar
+    de: Fuubar
+arguments:
+    # First argument
+    - name: FTB_AwayTeamFTScore
+      type: AwayTeam
+    # Second argument
+    - name: FTB_HomeTeamFTScore
+      type: HomeTeam
+results: AwayTeam > HomeTeam

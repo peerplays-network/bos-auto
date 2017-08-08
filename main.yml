@@ -1,0 +1,273 @@
+# vim: set ts=4 sts=4 sw=4 expandtab:
+
+# CONVENTIONS
+#
+# dates:      YYYY/MM/DD
+# datetimes:  YYYY/MM/DDTHH:MM:SS
+
+
+# The version of this file. Important when syntax is changed
+version: 1
+
+# Last Update time
+latest_update: 2017/08/01
+
+# This is the main sports tree
+sports:
+
+    #
+    # Syntax:
+    # Here, we setup sports and, below each sport, define the groups and
+    # events in more detail. Let's create a "demo" sport:
+    #
+    Demo:
+
+        # This sport needs to be registered on the blockchain, there it
+        # is registered with internationalized names:
+        name:
+            en: Demo Sport
+            de: Demo Sport
+
+        # After creation, of the sports object, we will end up with an id
+        id:
+
+        # Now let's get started listing event groups
+        eventgroups:
+
+            # First event group would be 
+            IDL_Preseason:
+                # With 'long' name
+                name:
+                    en: International Demo Legue - Preseasons
+                    de: Internationale Demo Liga - Vorliga
+                # .. and blockchain id
+                id:
+
+                # Let's list the betting market groups (see folder bmgs/)
+                bettingmarketgroups:
+                    name: IDL_PreSeas_Markets_01
+                    groups:
+                        # First Group
+                        - name: FTB_MO_1
+                          menu: 1
+                        # Second group
+                        - name: FTB_OU_05_01
+                          menu: 3
+                        - name: FTB_OU_15_01
+                          menu: 4
+                        - name: FTB_OU_25_01
+                          menu: 5
+                        - name: FTB_OU_35_01
+                          menu: 6
+                        - name: FTB_OU_45_01
+                          menu: 7
+                        - name: FTB_OU_55_01
+                          menu: 8
+                        - name: FTB_OU_65_01
+                          menu: 9
+                        - name: FTB_CS_03
+                          menu: 2
+
+                # and the participents (see folder participants/)
+                participants: IDL_Teams_2017-18
+
+                # How are individual Events named (naming scheme)
+                eventscheme:
+                    parameters:
+                        - AwayTeam
+                        - HomeTeam
+                    name: [AwayTeam] @ [HomeTeam]
+
+                # How long before the event do we create these group? (in days)
+                leadtime_Max: 6
+
+                # When does the event group/league actually begin and end?
+                start_date: 2017/08/10
+                finish_date: 2017/08/31
+
+    #
+    # American Football
+    #
+    AmericanFootball:
+
+        # This sport needs to be registered on the blockchain, there it
+        # is registered with internationalized names:
+        name:
+            en: American Football
+            de: Amerikanisches Football 
+
+        # After creation, of the sports object, we will end up with an id
+        id:
+
+        # Now let's get started listing event groups
+        eventgroups:
+
+            # First event group would be 
+            NFL_PreSeas:
+                # With 'long' name
+                name:
+                    en: NFL - Preseasons
+                    de: NFL - Vorliga
+                # .. and blockchain id
+                id:
+
+                # Let's list the betting market groups
+                bettingmarketgroups:
+                    name: NDL_PreSeas_Markets_01
+                    groups:
+                        # First Group
+                        - name: FTB_MO_1
+                          menu: 1
+                        # Second group
+                        - name: FTB_OU_05_01
+                          menu: 3
+                        - name: FTB_OU_15_01
+                          menu: 4
+                        - name: FTB_OU_25_01
+                          menu: 5
+                        - name: FTB_OU_35_01
+                          menu: 6
+                        - name: FTB_OU_45_01
+                          menu: 7
+                        - name: FTB_OU_55_01
+                          menu: 8
+                        - name: FTB_OU_65_01
+                          menu: 9
+                        - name: FTB_CS_03
+                          menu: 2
+
+                # and the participents
+                participants: NFL_Teams_2017-18
+
+                # How are individual Events named (naming scheme)
+                eventscheme:
+                    parameters:
+                        - AwayTeam
+                        - HomeTeam
+                    name: [AwayTeam] @ [HomeTeam]
+
+                # How long before the event do we create these group? (in days)
+                leadtime_Max: 6
+
+                # When does the event group/league actually begin and end?
+                start_date: 2017-08-10
+                finish_date: 2017-08-31
+
+            # First event group would be 
+            NFL_RegSeas:
+                # With 'long' name
+                name:
+                    en: NFL - Regular Season 
+                    de: NFL - Hauptseason
+                # .. and blockchain id
+                id:
+
+                # Let's list the betting market groups
+                bettingmarketgroups:
+                    name: NFL_Reg_Markets_01
+                    groups:
+                        # First Group
+                        - name: FTB_MO_1
+                          menu: 1
+                        # Second group
+                        - name: FTB_OU_05_01
+                          menu: 3
+                        - name: FTB_OU_15_01
+                          menu: 4
+                        - name: FTB_OU_25_01
+                          menu: 5
+                        - name: FTB_OU_35_01
+                          menu: 6
+                        - name: FTB_OU_45_01
+                          menu: 7
+                        - name: FTB_OU_55_01
+                          menu: 8
+                        - name: FTB_OU_65_01
+                          menu: 9
+                        - name: FTB_CS_03
+                          menu: 2
+
+                # and the participents
+                participants: NFL_Teams_2017-18
+
+                # How are individual Events named (naming scheme)
+                eventscheme:
+                    parameters:
+                        - AwayTeam
+                        - HomeTeam
+                    name: [AwayTeam] @ [HomeTeam]
+
+                # How long before the event do we create these group? (in days)
+                leadtime_Max: 15
+
+                # When does the event group/league actually begin and end?
+                start_date: 2017/09/07
+                finish_date: 2017/12/31
+
+            #
+            # Todo
+            #
+            # * Playoffs
+            # * Superbowl
+            #
+
+    #
+    # Football
+    #
+    Football:
+
+        # This sport needs to be registered on the blockchain, there it
+        # is registered with internationalized names:
+        name:
+            en: Football
+            de: Fußball
+
+        # After creation, of the sports object, we will end up with an id
+        id:
+
+        # Now let's get started listing event groups
+        eventgroups:
+
+            # First event group would be 
+            FTB_EPL:
+                # With 'long' name
+                name:
+                    en: Football - English Premier League
+                    de: Fußball - English Premier League
+                # .. and blockchain id
+                id:
+
+                # Let's list the betting market groups
+                bettingmarketgroups: 
+                    name: FTB_LG_Markets_01
+                    groups:
+                        # First Group
+                        - name: FTB_MO_1
+                          menu: 1
+
+                # and the participents
+                participants: EPL_2017-18
+
+                # How are individual Events named (naming scheme)
+                eventscheme:
+                    parameters:
+                        - AwayTeam
+                        - HomeTeam
+                    name: [AwayTeam] @ [HomeTeam]
+
+                # How long before the event do we create these group? (in days)
+                leadtime_Max: 13
+
+                # When does the event group/league actually begin and end?
+                start_date: 2017/08/11
+                finish_date: 2018/06/01
+
+            #
+            # Todo
+            #
+            # * La Liga
+            # * UEFA Champions League - Group Stage
+            # * UEFA Champions League - Knockout Stage
+            # * UEFA Europe League - Group Stage
+            # * UEFA Europe League - Knockout Stage
+            #
