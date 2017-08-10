@@ -48,9 +48,14 @@ class WitnessLookup(dict):
 
     def loadEventGroup(self, eventgroupDir):
         eventgroup = self.loadyaml(os.path.join(eventgroupDir, "index.yaml"))
+
+        """
+        # Events
         events = dict()
         for event in eventgroup["events"]:
             events[event] = self.loadEvent(os.path.join(eventgroupDir, event))
+        eventgroup["events"] = events
+        """
 
         # Rules
         rulesDir = os.path.join(eventgroupDir, "rules")
@@ -58,6 +63,7 @@ class WitnessLookup(dict):
         for ruleDir in glob(os.path.join(rulesDir, "*")):
             rule = os.path.basename(ruleDir).replace(".yaml", "")
             rules[rule] = self.loadyaml(ruleDir)
+        eventgroup["rules"] = rules
 
         # participants
         participantsDir = os.path.join(eventgroupDir, "participants")
@@ -65,6 +71,7 @@ class WitnessLookup(dict):
         for participantDir in glob(os.path.join(participantsDir, "*")):
             participant = os.path.basename(participantDir).replace(".yaml", "")
             participants[participant] = self.loadyaml(participantDir)
+        eventgroup["participants"] = participants
 
         # def_bmgs
         def_bmgsDir = os.path.join(eventgroupDir, "def_bmg")
@@ -72,11 +79,7 @@ class WitnessLookup(dict):
         for def_bmgDir in glob(os.path.join(def_bmgsDir, "*")):
             def_bmg = os.path.basename(def_bmgDir).replace(".yaml", "")
             def_bmgs[def_bmg] = self.loadyaml(def_bmgDir)
-
-        eventgroup["rules"] = rules
-        eventgroup["participants"] = participants
         eventgroup["def_bmgs"] = def_bmgs
-        eventgroup["events"] = events
 
         return eventgroup
 

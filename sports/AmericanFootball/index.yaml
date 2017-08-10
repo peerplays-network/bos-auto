@@ -15,4 +15,5 @@ id:
 
 # List Event Groups (each of them has a subfolder)
 eventgroups:
-  - NFL
+  - NFL#PreSeas
+  - NFL#RegSeas
