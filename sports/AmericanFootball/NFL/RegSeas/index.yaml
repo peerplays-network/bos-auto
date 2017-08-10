@@ -13,19 +13,16 @@ id:
 
 # Define the betting market groups
 bettingmarketgroups:
-    - name: NFL_ML_1
-      menu: 1
-    - name: NFL_HCP_1
-      menu: 2
-    - name: NFL_OU_1
-      menu: 3
+    - NFL_ML_2017_1
+    - NFL_HCP_2017_1
+    - NFL_OU_2017_1
 
 # How are individual Events named (naming scheme)
 eventscheme:
     parameters:
         - AwayTeam
         - HomeTeam
-    name: [AwayTeam] @ [HomeTeam]
+    name: "[AwayTeam] @ [HomeTeam]"
 
 # How long before the event do we create these group? (in days)
 leadtime_Max: 6

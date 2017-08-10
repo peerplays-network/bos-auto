@@ -60,7 +60,7 @@ grading:
     # Human readable rules that the Grading Algorithm is a machine-readable instantiation of
     rules: R_FTB_MO_1
 
- bettingmarkets:
+bettingmarkets:
      - name:
          en: HomeTeam
      - name:
