@@ -1,4 +1,7 @@
 - name: Buffalo Bills
+  aliases:
+    - BuffBill
+    - Buffy
 - name: Miami Dolphins
 - name: New England Patriots
 - name: New York Jets
