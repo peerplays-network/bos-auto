@@ -1,8 +1,5 @@
-# Id
-id:
-
 # A way of grouping BMG
-group: FTB_MO
+group: NFL_MO
 
 # Internationalized name
 name:
@@ -51,14 +48,11 @@ when_live_close: event_end
 grading:
     # Arguments for the Grading algorithm for this BMG
     arguments:
-        - FTB_AwayTeamFTScore
-        - FTB_HomeTeamFTScore
-
-    # Name of Grading Algorithm for this BMG
-    algorithm: GA_FTB_MO_1
+        - NFL_AwayTeamFTScore
+        - NFL_HomeTeamFTScore
 
     # Human readable rules that the Grading Algorithm is a machine-readable instantiation of
-    rules: R_FTB_MO_1
+    rules: R_NFL_MO_1
 
 bettingmarkets:
      - name:

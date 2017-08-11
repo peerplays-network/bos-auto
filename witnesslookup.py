@@ -20,6 +20,9 @@ class WitnessLookup(dict):
         # Load sports
         self["sports"] = self.loadSports()
 
+        # Tests
+        self.tests()
+
     def loadyaml(self, f):
         try:
             t = yaml.load(open(f))
@@ -34,6 +37,8 @@ class WitnessLookup(dict):
     def loadSports(self):
         ret = dict()
         for sportDir in glob(os.path.join(self._cwd, "sports/*")):
+            if not os.path.isdir(sportDir):
+                continue
             sport = os.path.basename(sportDir)
             ret[sport] = self.loadSport(sportDir)
         return ret
@@ -44,6 +49,37 @@ class WitnessLookup(dict):
         for eventgroup in sport["eventgroups"]:
             eventgroups[eventgroup] = self.loadEventGroup(os.path.join(sportDir, eventgroup))
         sport["eventgroups"] = eventgroups
+
+        # Rules
+        rulesDir = os.path.join(sportDir, "rules")
+        rules = dict()
+        for ruleDir in glob(os.path.join(rulesDir, "*")):
+            if not ".yaml" in ruleDir:
+                continue
+            rule = os.path.basename(ruleDir).replace(".yaml", "")
+            rules[rule] = self.loadyaml(ruleDir)
+        sport["rules"] = rules
+
+        # participants
+        participantsDir = os.path.join(sportDir, "participants")
+        participants = dict()
+        for participantDir in glob(os.path.join(participantsDir, "*")):
+            if not ".yaml" in participantDir:
+                continue
+            participant = os.path.basename(participantDir).replace(".yaml", "")
+            participants[participant] = self.loadyaml(participantDir)
+        sport["participants"] = participants
+
+        # def_bmgs
+        def_bmgsDir = os.path.join(sportDir, "bettingmarketgroups")
+        def_bmgs = dict()
+        for def_bmgDir in glob(os.path.join(def_bmgsDir, "*")):
+            if not ".yaml" in def_bmgDir:
+                continue
+            def_bmg = os.path.basename(def_bmgDir).replace(".yaml", "")
+            def_bmgs[def_bmg] = self.loadyaml(def_bmgDir)
+        sport["bettingmarketgroups"] = def_bmgs
+
         return sport
 
     def loadEventGroup(self, eventgroupDir):
@@ -56,30 +92,6 @@ class WitnessLookup(dict):
             events[event] = self.loadEvent(os.path.join(eventgroupDir, event))
         eventgroup["events"] = events
         """
-
-        # Rules
-        rulesDir = os.path.join(eventgroupDir, "rules")
-        rules = dict()
-        for ruleDir in glob(os.path.join(rulesDir, "*")):
-            rule = os.path.basename(ruleDir).replace(".yaml", "")
-            rules[rule] = self.loadyaml(ruleDir)
-        eventgroup["rules"] = rules
-
-        # participants
-        participantsDir = os.path.join(eventgroupDir, "participants")
-        participants = dict()
-        for participantDir in glob(os.path.join(participantsDir, "*")):
-            participant = os.path.basename(participantDir).replace(".yaml", "")
-            participants[participant] = self.loadyaml(participantDir)
-        eventgroup["participants"] = participants
-
-        # def_bmgs
-        def_bmgsDir = os.path.join(eventgroupDir, "def_bmg")
-        def_bmgs = dict()
-        for def_bmgDir in glob(os.path.join(def_bmgsDir, "*")):
-            def_bmg = os.path.basename(def_bmgDir).replace(".yaml", "")
-            def_bmgs[def_bmg] = self.loadyaml(def_bmgDir)
-        eventgroup["def_bmgs"] = def_bmgs
 
         return eventgroup
 
@@ -94,6 +106,41 @@ class WitnessLookup(dict):
     def loadBettingMarketGroup(self, bmgDir):
         bmg = self.loadyaml(os.path.join(bmgDir, "index.yaml"))
         return bmg
+
+    def tests(self):
+        """ Tests and requirements
+        """
+        for sportname, sport in self["sports"].items():
+            self.test_required_attributes(sport, sportname, ["name", "id"])
+
+            for evengroupname, eventgroup in sport["eventgroups"].items():
+                self.test_required_attributes(eventgroup, evengroupname, ["name", "id"])
+
+                for bmg in eventgroup["bettingmarketgroups"]:
+                    # Test that each used BMG is deinfed
+                    assert bmg in sport["bettingmarketgroups"], \
+                        "Betting market group {} is used in {}:{} but wasn't defined!".format(
+                            bmg, sportname, evengroupname
+                        )
+            for rule in sport["rules"]:
+                pass
+            for bettingmarketgroupname, bettingmarketgroup in sport["bettingmarketgroups"].items():
+                self.test_required_attributes(bettingmarketgroup, bettingmarketgroupname, ["name"])
+
+                # Test that each used rule is defined
+                assert bettingmarketgroup["grading"]["rules"] in sport["rules"], \
+                    "Rule {} is used in {}:{} but wasn't defined!".format(
+                        bettingmarketgroup["grading"]["rules"],
+                        sportname, 
+                        bettingmarketgroupname
+                    )
+
+                for bettingmarkets in bettingmarketgroup["bettingmarkets"]:
+                    self.test_required_attributes(bettingmarkets, bettingmarketgroupname, ["name"])
+
+    def test_required_attributes(self, data, name, checks):
+        for check in checks:
+            assert check in data, "{} is missing a {}".format(name, check)
 
 
 if __name__ == "__main__":

@@ -13,9 +13,9 @@ id:
 
 # Define the betting market groups (each one has a subfolder)
 bettingmarketgroups:
-    - NFL_ML_2017_1
-    - NFL_HCP_2017_1
-    - NFL_OU_2017_1
+    - NFL_HCP_2017-18_1
+    - NFL_ML_2017-18_1
+    - NFL_OU_2017-18_1
 
 # How are individual Events named (naming scheme)
 eventscheme:

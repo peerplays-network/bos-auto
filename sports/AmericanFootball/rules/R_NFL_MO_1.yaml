@@ -9,4 +9,4 @@ arguments:
     # Second argument
     - name: NFL_HomeTeamFTScore
       type: HomeTeam
-results: AwayTeam > HomeTeam
+grading: AwayTeam > HomeTeam
