@@ -6,26 +6,36 @@ from pprint import pprint
 from glob import glob
 
 
+UPDATE_PROPOSING_NEW = 1
+UPDATE_PENDING_NEW = 2
+
+
 class WitnessLookup(dict):
+
+    # Singelton to store data and prevent rereading if WitnessLookup is
+    # instantiated multiple times
+    data = dict()
 
     def __init__(self, *args, **kwargs):
         """ Let's load all the data from the folder and its subfolders
         """
         self._cwd = os.path.dirname(os.path.realpath(__file__))
 
-        # Read main index.yaml
-        data = self.loadyaml(os.path.join(self._cwd, "index.yaml"))
-        super(WitnessLookup, self).__init__(data)
+        if not self.data:
+            # Read main index.yaml
+            data = self.loadyaml(os.path.join(self._cwd, "index.yaml"))
+            super(WitnessLookup, self).__init__(data)
 
-        # Load sports
-        self["sports"] = self.loadSports()
+            # Load sports
+            self.data["sports"] = self.loadSports()
 
-        # Tests
-        self.tests()
+            # Tests
+            self.tests()
 
     def loadyaml(self, f):
         try:
             t = yaml.load(open(f))
+            pprint(t)
             return t
         except yaml.YAMLError as exc:
             print("Error in configuration file {}: {}".format(f, exc))
@@ -110,7 +120,7 @@ class WitnessLookup(dict):
     def tests(self):
         """ Tests and requirements
         """
-        for sportname, sport in self["sports"].items():
+        for sportname, sport in self.data["sports"].items():
             self.test_required_attributes(sport, sportname, ["name", "id"])
 
             for evengroupname, eventgroup in sport["eventgroups"].items():
@@ -142,7 +152,186 @@ class WitnessLookup(dict):
         for check in checks:
             assert check in data, "{} is missing a {}".format(name, check)
 
+    # List calls
+    def list_sports(self):
+        return [WitnessLookupSport(x) for x in self.data["sports"]]
+
+    # Update call
+    def update():
+        """ This call makes sure that the data in the witness lookup matches
+            the data on the blockchain for the object we are currenty looking
+            at.
+
+            It works like this:
+
+            1. Test if the witness lookup knows the "id" of the object on chain
+            1.1. If it does not, try to identify the object from the blockchain, 
+                  * if available, warn about existing id
+                  * if pending creation proposal, approve it
+                  * if none of the above, create proposal
+            1.2. Test if witness lookup and blockchain data match, if not
+                * if exists proposal for update, approve
+                * if not, create proposal to update
+        """
+        # See if witness lookup already has an id
+        if "id" not in self.data or not self.data["id"]:
+
+            # Test if an object with the characteristics (i.e. name) exist
+            id = self.find_id()
+            if id:
+                log.warn(
+                    "Object {} carries id {} on the blockchain. Please update your witness lookup".format(
+                        self.identifier, id
+                    )
+                )
+                self.data["id"] = id
+            elif self.has_pending_new():
+                self.approve_new()
+                return UPDATE_PENDING_NEW
+            else:
+                # Propose the creation of this object
+                self.propose_new()
+                return UPDATE_PROPOSING_NEW
+
+
+        if not self.is_synced():
+            if self.has_pending_update():
+                self.approve_update()
+            else:
+                self.propose_update()
+
+
+class WitnessLookupSport(WitnessLookup, dict):
+    def __init__(self, sport):
+        self.identifier = sport
+        super(WitnessLookupSport, self).__init__()
+        assert sport in self.data["sports"], "Sport {} not avaialble".format(
+            sport
+        )
+        dict.__init__(self, self.data["sports"][sport])
+
+    def find_id():
+        """ Try to find an id for the object of the witness lookup on the
+            blockchain
+        """
+        pass
+
+    def is_synced(self):
+        """ Test if data on chain matches witness lookup
+        """
+        # Compare blockchain content with witness lookup
+
+    def has_pending_new(self):
+        """ This call tests if a pending proposal would create this object
+
+            It only returns true if the exact content is proposed
+        """
+        pass
+
+    def has_pending_update(self):
+        """ Test if there is an update to properly match blockchain content
+            with witness lookup content
+        """
+        pass
+
+    def propose_new(self):
+        """ Propose operation to create this object
+        """
+        pass
+
+    def propose_update(self):
+        """ Propose to update this object to match witness lookup
+        """
+        pass
+
+    def approve_new(self):
+        """ Approve a proposal for creation
+
+            This call approves a proposal that would create a new object.
+
+            The call has to identify the correct operation of a proposal on its
+            own.
+        """
+        pass
+
+    def approve_update(self):
+        """ Approve a proposal
+
+            This call basically flags a single update operation of a proposal
+            as "approved". Only if all operations in the proposal are approved,
+            will this tool approve the whole proposal and otherwise ignore the
+            proposal.
+
+            The call has to identify the correct operation of a proposal on its
+            own.
+        """
+        pass
+
+
+
+
+class WitnessLookupEventGroup(WitnessLookup, dict):
+    def __init__(self, sport, eventgroup):
+        self.identifier = "{}/{}".format(sport, eventgroup)
+        super(WitnessLookupEventGroup, self).__init__()
+        assert sport in self.data["sports"], "Sport {} not avaialble".format(
+            sport
+        )
+        assert eventgroup in self.data["sports"][sport]["eventgroups"], "Eventgroup {} not avaialble in sport {}".format(
+            eventgroup, sport
+        )
+        dict.__init__(self, self.data["sports"][sport]["eventgroups"][eventgroup])
+
+
+class WitnessLookupBettingMarketGroup(WitnessLookup, dict):
+    def __init__(self, sport, bmg):
+        self.identifier = "{}/{}".format(sport, bmg)
+        super(WitnessLookupBettingMarketGroup, self).__init__()
+        assert sport in self.data["sports"], "Sport {} not avaialble".format(
+            sport
+        )
+        assert bmg in self.data["sports"][sport]["bettingmarketgroups"], "Bettingmarketgroup {} not avaialble in sport {}".format(
+            bmg, sport
+        )
+        dict.__init__(self, self.data["sports"][sport]["bettingmarketgroups"][bmg])
+
+
+class WitnessLookupParticipants(WitnessLookup, dict):
+    def __init__(self, sport, participants):
+        self.identifier = "{}/{}".format(sport, participants)
+        super(WitnessLookupParticipants, self).__init__()
+        assert sport in self.data["sports"], "Sport {} not avaialble".format(
+            sport
+        )
+        assert participants in self.data["sports"][sport]["participants"], "Participants {} not avaialble in sport {}".format(
+            participants, sport
+        )
+        # This is a list and not a dictionary!
+        dict.__init__(self, self.data["sports"][sport]["participants"][participants])
+
+
+class WitnessLookupRules(WitnessLookup, dict):
+    def __init__(self, sport, rules):
+        self.identifier = "{}/{}".format(sport, rules)
+        super(WitnessLookupRules, self).__init__()
+        assert sport in self.data["sports"], "Sport {} not avaialble".format(
+            sport
+        )
+        assert rules in self.data["sports"][sport]["rules"], "rules {} not avaialble in sport {}".format(
+            rules, sport
+        )
+        # This is a list and not a dictionary!
+        dict.__init__(self, self.data["sports"][sport]["rules"][rules])
+
+
 
 if __name__ == "__main__":
     w = WitnessLookup()
     print(json.dumps(w, indent=4))
+    print(json.dumps(w.data, indent=4))
+    print(w.list_sports())
+    print(WitnessLookupSport("AmericanFootball"))
+    print(WitnessLookupEventGroup("AmericanFootball", "NFL#PreSeas"))
+    print(WitnessLookupBettingMarketGroup("AmericanFootball", "NFL_HCP_2017-18_1"))
+    print(WitnessLookupParticipants("AmericanFootball", "NFL_Teams_2017-18"))
+    print(WitnessLookupRules("AmericanFootball", "R_NFL_MO_1"))
