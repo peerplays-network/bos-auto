@@ -1,7 +1,7 @@
 # This file represents an
-#        Event
+#        Event Group
 # Each sport has 
-#        betting market groups
+#        events
 # as children
 
 name:
