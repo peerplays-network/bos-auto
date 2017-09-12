@@ -5,34 +5,34 @@
 # as children
 
 name:
-    en: NFL - Pre-Season
-    de: NFL - Vorseason
+    en: Spanish La Liga
+    de: SLL
 
 aliases:
-  - National Football League - Pre-Season
-  - American Football - Pre-Season
+ - Spanish Premier League
+ - La Liga Espanyol
+ - La Liga
+ - La Liga Santander
 
 # .. and blockchain id
 id:
 
-participants: "NFL_Teams_2017-18"
+participants: "SLL_Teams_2017-18"
 
 # Define the betting market groups (each one has a subfolder)
 bettingmarketgroups:
-    - NFL_HCP_2017-18_1
-    - NFL_ML_2017-18_1
-    - NFL_OU_2017-18_1
+    - SLL_ML_2017-18_1
 
 # How are individual Events named (naming scheme)
 eventscheme:
     parameters:
-        - AwayTeam
         - HomeTeam
-    name: "[AwayTeam] @ [HomeTeam]"
+        - AwayTeam
+    name: "[HomeTeam] @ [AwayTeam]"
 
 # How long before the event do we create these group? (in days)
 leadtime_Max: 6
 
 # When does the event group/league actually begin and end?
-start_date: 2017/08/10
-finish_date: 2017/08/31
+start_date: 2017/08/11
+finish_date: 2018/05/31

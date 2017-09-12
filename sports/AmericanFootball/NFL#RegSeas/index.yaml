@@ -8,8 +8,16 @@ name:
     en: NFL - Regular Season
     de: NFL - Hauptsaison
 
+aliases:
+  - National Football League
+  - American Football
+  - National Football League - Regular Season
+  - American Football - Regular Season
+
 # .. and blockchain id
 id:
+
+participants: "NFL_Teams_2017-18"
 
 # Define the betting market groups
 bettingmarketgroups:
