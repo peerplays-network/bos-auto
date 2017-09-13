@@ -1,7 +1,6 @@
 import sys
 import os
 import yaml
-import json
 import logging
 from glob import glob
 from peerplays.instance import shared_peerplays_instance
@@ -11,10 +10,11 @@ from peerplays.proposal import Proposal, Proposals
 from peerplays.storage import configStorage as config
 log = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
-
+# logging.basicConfig(level=logging.DEBUG)
 
 UPDATE_PROPOSING_NEW = 1
 UPDATE_PENDING_NEW = 2
+
 
 class WitnessLookup(dict):
 
@@ -25,10 +25,10 @@ class WitnessLookup(dict):
 
     def __init__(
         self,
-        *args,
         peerplays_instance=None,
         proposing_account=None,
         approving_account=None,
+        *args,
         **kwargs
     ):
         """ Let's load all the data from the folder and its subfolders
@@ -49,7 +49,6 @@ class WitnessLookup(dict):
             else:
                 approving_account = approving_account
         self.approving_account = approving_account
-
 
         if not self.data:
             # Read main index.yaml
@@ -257,10 +256,10 @@ class WitnessLookup(dict):
         for proposal in pending_proposals:
             if not proposal["id"] in WitnessLookup.approval_map:
                 WitnessLookup.approval_map[proposal["id"]] = {}
-            for operation_id, operations in enumerate(proposal.proposed_operations):
-                if not operation_id in WitnessLookup.approval_map[proposal["id"]]:
-                    WitnessLookup.approval_map[proposal["id"]][operation_id] = False
-                yield operations, proposal["id"], operation_id
+            for oid, operations in enumerate(proposal.proposed_operations):
+                if oid not in WitnessLookup.approval_map[proposal["id"]]:
+                    WitnessLookup.approval_map[proposal["id"]][oid] = False
+                yield operations, proposal["id"], oid
 
     def approve(self, pid, oid):
         """ Approve a proposal
@@ -312,7 +311,7 @@ class WitnessLookup(dict):
                 if self.test_operation_equal(op[1]):
                     return pid, oid
 
-    ## Prototypes ############################################################
+    # Prototypes #############################################################
     def find_id(self):
         """ Try to find an id for the object of the witness lookup on the
             blockchain
@@ -479,9 +478,8 @@ if __name__ == "__main__":
     w.peerplays.wallet.unlock(getpass())
     w.peerplays.nobroadcast = True
     sport = WitnessLookupSport("AmericanFootball")
-    #sport = WitnessLookupSport("Soccer")
+    # sport = WitnessLookupSport("Soccer")
     sport.update()
-    sport.has_pending_new()
     """
     print(json.dumps(w, indent=4))
     print(json.dumps(w.data, indent=4))
