@@ -252,7 +252,7 @@ class WitnessLookup(dict):
                 self.propose_update()
 
     def get_pending_operations(self, account="witness-account"):
-        pending_proposals = Proposals("witness-account")
+        pending_proposals = Proposals(account)
         for proposal in pending_proposals:
             if not proposal["id"] in WitnessLookup.approval_map:
                 WitnessLookup.approval_map[proposal["id"]] = {}
