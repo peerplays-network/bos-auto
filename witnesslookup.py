@@ -4,6 +4,8 @@ import yaml
 import json
 from pprint import pprint
 from glob import glob
+import logging
+log = logging.getLogger(__name__)
 
 
 UPDATE_PROPOSING_NEW = 1
@@ -57,14 +59,16 @@ class WitnessLookup(dict):
         sport = self.loadyaml(os.path.join(sportDir, "index.yaml"))
         eventgroups = dict()
         for eventgroup in sport["eventgroups"]:
-            eventgroups[eventgroup] = self.loadEventGroup(os.path.join(sportDir, eventgroup))
+            eventgroups[eventgroup] = self.loadEventGroup(
+                os.path.join(sportDir, eventgroup)
+            )
         sport["eventgroups"] = eventgroups
 
         # Rules
         rulesDir = os.path.join(sportDir, "rules")
         rules = dict()
         for ruleDir in glob(os.path.join(rulesDir, "*")):
-            if not ".yaml" in ruleDir:
+            if ".yaml" not in ruleDir:
                 continue
             rule = os.path.basename(ruleDir).replace(".yaml", "")
             rules[rule] = self.loadyaml(ruleDir)
@@ -74,7 +78,7 @@ class WitnessLookup(dict):
         participantsDir = os.path.join(sportDir, "participants")
         participants = dict()
         for participantDir in glob(os.path.join(participantsDir, "*")):
-            if not ".yaml" in participantDir:
+            if ".yaml" not in participantDir:
                 continue
             participant = os.path.basename(participantDir).replace(".yaml", "")
             participants[participant] = self.loadyaml(participantDir)
@@ -84,7 +88,7 @@ class WitnessLookup(dict):
         def_bmgsDir = os.path.join(sportDir, "bettingmarketgroups")
         def_bmgs = dict()
         for def_bmgDir in glob(os.path.join(def_bmgsDir, "*")):
-            if not ".yaml" in def_bmgDir:
+            if ".yaml" not in def_bmgDir:
                 continue
             def_bmg = os.path.basename(def_bmgDir).replace(".yaml", "")
             def_bmgs[def_bmg] = self.loadyaml(def_bmgDir)
@@ -108,8 +112,10 @@ class WitnessLookup(dict):
     def loadEvent(self, eventDir):
         event = self.loadyaml(os.path.join(eventDir, "index.yaml"))
         bettingmarketgroups = dict()
-        for bettingmarketgroup in event["bettingmarketgroups"]:
-            bettingmarketgroups[bettingmarketgroup] = self.loadBettingMarketGroup(os.path.join(eventDir, bettingmarketgroup))
+        for bmg in event["bettingmarketgroups"]:
+            bettingmarketgroups[bmg] = self.loadBettingMarketGroup(
+                os.path.join(eventDir, bmg)
+            )
         event["bettingmarketgroups"] = bettingmarketgroups
         return event
 
@@ -124,29 +130,38 @@ class WitnessLookup(dict):
             self.test_required_attributes(sport, sportname, ["name", "id"])
 
             for evengroupname, eventgroup in sport["eventgroups"].items():
-                self.test_required_attributes(eventgroup, evengroupname, ["name", "id"])
+                self.test_required_attributes(
+                    eventgroup,
+                    evengroupname,
+                    ["name", "id"]
+                )
 
                 for bmg in eventgroup["bettingmarketgroups"]:
                     # Test that each used BMG is deinfed
-                    assert bmg in sport["bettingmarketgroups"], \
-                        "Betting market group {} is used in {}:{} but wasn't defined!".format(
-                            bmg, sportname, evengroupname
-                        )
+                    assert bmg in sport["bettingmarketgroups"], (
+                        "Betting market group {} is used"
+                        "in {}:{} but wasn't defined!"
+                    ).format(
+                        bmg, sportname, evengroupname
+                    )
             for rule in sport["rules"]:
                 pass
-            for bettingmarketgroupname, bettingmarketgroup in sport["bettingmarketgroups"].items():
-                self.test_required_attributes(bettingmarketgroup, bettingmarketgroupname, ["name"])
+            for bmgname, bmg in sport["bettingmarketgroups"].items():
+                self.test_required_attributes(bmg, bmgname, ["name"])
 
                 # Test that each used rule is defined
-                assert bettingmarketgroup["grading"]["rules"] in sport["rules"], \
+                assert bmg["grading"]["rules"] in sport["rules"], \
                     "Rule {} is used in {}:{} but wasn't defined!".format(
-                        bettingmarketgroup["grading"]["rules"],
-                        sportname, 
-                        bettingmarketgroupname
-                    )
+                        bmg["grading"]["rules"],
+                        sportname,
+                        bmgname)
 
-                for bettingmarkets in bettingmarketgroup["bettingmarkets"]:
-                    self.test_required_attributes(bettingmarkets, bettingmarketgroupname, ["name"])
+                for bettingmarkets in bmg["bettingmarkets"]:
+                    self.test_required_attributes(
+                        bettingmarkets,
+                        bmgname,
+                        ["name"]
+                    )
 
     def test_required_attributes(self, data, name, checks):
         for check in checks:
@@ -157,7 +172,7 @@ class WitnessLookup(dict):
         return [WitnessLookupSport(x) for x in self.data["sports"]]
 
     # Update call
-    def update():
+    def update(self):
         """ This call makes sure that the data in the witness lookup matches
             the data on the blockchain for the object we are currenty looking
             at.
@@ -165,7 +180,7 @@ class WitnessLookup(dict):
             It works like this:
 
             1. Test if the witness lookup knows the "id" of the object on chain
-            1.1. If it does not, try to identify the object from the blockchain, 
+            1.1. If it does not, try to identify the object from the blockchain
                   * if available, warn about existing id
                   * if pending creation proposal, approve it
                   * if none of the above, create proposal
@@ -179,11 +194,10 @@ class WitnessLookup(dict):
             # Test if an object with the characteristics (i.e. name) exist
             id = self.find_id()
             if id:
-                log.warn(
-                    "Object {} carries id {} on the blockchain. Please update your witness lookup".format(
-                        self.identifier, id
-                    )
-                )
+                log.warn((
+                    "Object {} carries id {} on the blockchain. "
+                    "Please update your witness lookup"
+                ).format(self.identifier, id))
                 self.data["id"] = id
             elif self.has_pending_new():
                 self.approve_new()
@@ -192,7 +206,6 @@ class WitnessLookup(dict):
                 # Propose the creation of this object
                 self.propose_new()
                 return UPDATE_PROPOSING_NEW
-
 
         if not self.is_synced():
             if self.has_pending_update():
@@ -268,8 +281,6 @@ class WitnessLookupSport(WitnessLookup, dict):
         pass
 
 
-
-
 class WitnessLookupEventGroup(WitnessLookup, dict):
     def __init__(self, sport, eventgroup):
         self.identifier = "{}/{}".format(sport, eventgroup)
@@ -277,10 +288,13 @@ class WitnessLookupEventGroup(WitnessLookup, dict):
         assert sport in self.data["sports"], "Sport {} not avaialble".format(
             sport
         )
-        assert eventgroup in self.data["sports"][sport]["eventgroups"], "Eventgroup {} not avaialble in sport {}".format(
-            eventgroup, sport
+        assert eventgroup in self.data["sports"][sport]["eventgroups"], \
+            "Eventgroup {} not avaialble in sport {}".format(
+                eventgroup, sport)
+        dict.__init__(
+            self,
+            self.data["sports"][sport]["eventgroups"][eventgroup]
         )
-        dict.__init__(self, self.data["sports"][sport]["eventgroups"][eventgroup])
 
 
 class WitnessLookupBettingMarketGroup(WitnessLookup, dict):
@@ -290,10 +304,13 @@ class WitnessLookupBettingMarketGroup(WitnessLookup, dict):
         assert sport in self.data["sports"], "Sport {} not avaialble".format(
             sport
         )
-        assert bmg in self.data["sports"][sport]["bettingmarketgroups"], "Bettingmarketgroup {} not avaialble in sport {}".format(
-            bmg, sport
+        assert bmg in self.data["sports"][sport]["bettingmarketgroups"], \
+            "Bettingmarketgroup {} not avaialble in sport {}".format(
+                bmg, sport)
+        dict.__init__(
+            self,
+            self.data["sports"][sport]["bettingmarketgroups"][bmg]
         )
-        dict.__init__(self, self.data["sports"][sport]["bettingmarketgroups"][bmg])
 
 
 class WitnessLookupParticipants(WitnessLookup, dict):
@@ -303,11 +320,14 @@ class WitnessLookupParticipants(WitnessLookup, dict):
         assert sport in self.data["sports"], "Sport {} not avaialble".format(
             sport
         )
-        assert participants in self.data["sports"][sport]["participants"], "Participants {} not avaialble in sport {}".format(
-            participants, sport
-        )
+        assert participants in self.data["sports"][sport]["participants"], \
+            "Participants {} not avaialble in sport {}".format(
+                participants, sport)
         # This is a list and not a dictionary!
-        dict.__init__(self, self.data["sports"][sport]["participants"][participants])
+        dict.__init__(
+            self,
+            self.data["sports"][sport]["participants"][participants]
+        )
 
 
 class WitnessLookupRules(WitnessLookup, dict):
@@ -317,12 +337,14 @@ class WitnessLookupRules(WitnessLookup, dict):
         assert sport in self.data["sports"], "Sport {} not avaialble".format(
             sport
         )
-        assert rules in self.data["sports"][sport]["rules"], "rules {} not avaialble in sport {}".format(
-            rules, sport
-        )
+        assert rules in self.data["sports"][sport]["rules"], \
+            "rules {} not avaialble in sport {}".format(
+                rules, sport)
         # This is a list and not a dictionary!
-        dict.__init__(self, self.data["sports"][sport]["rules"][rules])
-
+        dict.__init__(
+            self,
+            self.data["sports"][sport]["rules"][rules]
+        )
 
 
 if __name__ == "__main__":
@@ -332,6 +354,8 @@ if __name__ == "__main__":
     print(w.list_sports())
     print(WitnessLookupSport("AmericanFootball"))
     print(WitnessLookupEventGroup("AmericanFootball", "NFL#PreSeas"))
-    print(WitnessLookupBettingMarketGroup("AmericanFootball", "NFL_HCP_2017-18_1"))
+    print(WitnessLookupBettingMarketGroup(
+        "AmericanFootball", "NFL_HCP_2017-18_1")
+    )
     print(WitnessLookupParticipants("AmericanFootball", "NFL_Teams_2017-18"))
     print(WitnessLookupRules("AmericanFootball", "R_NFL_MO_1"))
