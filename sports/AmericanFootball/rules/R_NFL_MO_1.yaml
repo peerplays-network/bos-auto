@@ -1,5 +1,8 @@
-name: R_NFL_MO_1
-human_readable_rules:
+id:
+name:
+    en: R_NFL_MO_1
+    de: R_NFL_MO_1
+description:
     en: Foobar
     de: Fuubar
 arguments:

@@ -1,5 +1,8 @@
-name: R_SLL_MO_1
-human_readable_rules:
+id:
+name: 
+    de: R_SLL_MO_1
+    en: R_SLL_MO_1
+description:
     en: Foobar
     de: Fuubar
 arguments:

@@ -1,5 +1,8 @@
-name: R_EPL_MO_1
-human_readable_rules:
+id:
+name: 
+    en: R_EPL_MO_1
+    de: R_EPL_MO_1
+description:
     en: Foobar
     de: Fuubar
 arguments:
