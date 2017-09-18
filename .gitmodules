@@ -1,0 +1,3 @@
+[submodule "sports"]
+	path = sports
+	url = bitbucket:peerplaysblockchain/bookiesports
