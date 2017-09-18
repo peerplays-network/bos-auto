@@ -8,8 +8,23 @@ from peerplays.sport import Sports, Sport
 from peerplays.account import Account
 from peerplays.proposal import Proposal, Proposals
 from peerplays.storage import configStorage as config
+from peerplays.eventgroup import EventGroups, EventGroup
+from peerplays.bettingmarketgroup import (
+    BettingMarketGroups, BettingMarketGroup)
+from peerplays.rule import Rules, Rule
+from colorlog import ColoredFormatter
+
+LOG_LEVEL = logging.DEBUG
+LOGFORMAT = "  %(log_color)s%(levelname)-8s%(reset)s | %(log_color)s%(message)s%(reset)s"
+logging.root.setLevel(LOG_LEVEL)
+formatter = ColoredFormatter(LOGFORMAT)
+stream = logging.StreamHandler()
+stream.setLevel(LOG_LEVEL)
+stream.setFormatter(formatter)
 log = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO)
+log.setLevel(LOG_LEVEL)
+log.addHandler(stream)
+
 # logging.basicConfig(level=logging.DEBUG)
 
 UPDATE_PROPOSING_NEW = 1
@@ -22,6 +37,9 @@ class WitnessLookup(dict):
     #: instantiated multiple times
     data = dict()
     approval_map = {}
+
+    direct_buffer = None
+    proposal_buffer = None
 
     def __init__(
         self,
@@ -42,6 +60,7 @@ class WitnessLookup(dict):
             else:
                 proposing_account = proposing_account
         self.peerplays.proposer = proposing_account
+        self.proposing_account = proposing_account
 
         if not approving_account:
             if "default_account" in config:
@@ -49,6 +68,12 @@ class WitnessLookup(dict):
             else:
                 approving_account = approving_account
         self.approving_account = approving_account
+
+        # We define two transaction buffers
+        if not WitnessLookup.direct_buffer:
+            WitnessLookup.direct_buffer = self.peerplays.new_txbuffer()
+        if not WitnessLookup.proposal_buffer:
+            WitnessLookup.proposal_buffer = self.peerplays.new_txbuffer(proposer=self.proposing_account)
 
         if not self.data:
             # Read main index.yaml
@@ -60,6 +85,21 @@ class WitnessLookup(dict):
 
             # _tests
             self._tests()
+
+    def _use_direct_buffer(self):
+        self.peerplays.set_txbuffer(self.direct_buffer)
+
+    def _use_proposal_buffer(self):
+        self.peerplays.set_txbuffer(self.proposal_buffer)
+
+    def broadcast(self):
+        """ Since we are using multiple txbuffers, we need to do multiple
+            broadcasts
+        """
+        self._use_direct_buffer()
+        self.peerplays.txbuffer.broadcast()
+        self._use_proposal_buffer()
+        self.peerplays.txbuffer.broadcast()
 
     def _loadyaml(self, f):
         """ Load a YAML file
@@ -96,6 +136,7 @@ class WitnessLookup(dict):
             eventgroups[eventgroup] = self._loadEventGroup(
                 os.path.join(sportDir, eventgroup)
             )
+            eventgroups[eventgroup]["sport_id"] = sport.get("id")
         sport["eventgroups"] = eventgroups
 
         # Rules
@@ -219,21 +260,26 @@ class WitnessLookup(dict):
             id = self.find_id()
             has_pending_new = self.has_pending_new()
             if id:
-                log.warn((
+                log.error((
                     "Object {} carries id {} on the blockchain. "
                     "Please update your witness lookup"
                 ).format(self.identifier, id))
                 self["id"] = id
             elif has_pending_new:
+                log.warn((
+                    "Object {} has pending update proposal. Approving ..."
+                ).format(self.identifier))
                 self.approve(*has_pending_new)
                 return UPDATE_PENDING_NEW
             else:
-                # Propose the creation of this object
+                log.warn((
+                    "Object {} does not exist on chain. Proposing ..."
+                ).format(self.identifier))
                 self.propose_new()
                 return UPDATE_PROPOSING_NEW
 
         if not self.is_synced():
-            log.info("Object not fully synced: {}: {}".format(
+            log.warn("Object not fully synced: {}: {}".format(
                 self.__class__.__name__,
                 str(self.get("name", ""))
             ))
@@ -281,14 +327,28 @@ class WitnessLookup(dict):
             :param int oid: Operation number within the proposal
         """
         WitnessLookup.approval_map[pid][oid] = True
+        approved_read_for_delete = []
         for p in WitnessLookup.approval_map:
             if all(WitnessLookup.approval_map[p].values()):
-                self.peerplays.use_direct_buffer()
+                self._use_direct_buffer()
                 proposal = Proposal(p)
                 account = Account(self.approving_account)
                 if account["id"] not in proposal["available_active_approvals"]:
                     log.info("Approving proposal {}".format(p))
-                    self.peerplays.approveproposal(p)
+                    approved_read_for_delete.append(p)
+                    self._use_direct_buffer()
+                    self.peerplays.approveproposal(
+                        p,
+                        account=self.approving_account
+                    )
+                else:
+                    log.info(
+                        "Proposal {} has already been approved by us".format(p)
+                    )
+        # In order not to approve the same proposal again and again, we remove
+        # it from the map
+        for p in approved_read_for_delete:
+            del WitnessLookup.approval_map[p]
 
     def has_pending_new(self):
         """ This call tests if a pending proposal would create this object
@@ -301,6 +361,8 @@ class WitnessLookup(dict):
                 if self.test_operation_equal(op[1]):
                     return pid, oid
 
+        # FIXME: Test for our own proposals pending in txbuffer
+
     def has_pending_update(self):
         """ Test if there is an update to properly match blockchain content
             with witness lookup content
@@ -311,10 +373,21 @@ class WitnessLookup(dict):
                 if self.test_operation_equal(op[1]):
                     return pid, oid
 
+        # FIXME: Test for our own proposals pending in txbuffer
+
     # Prototypes #############################################################
+    def test_operation_equal(self, sport):
+        """ This method checks if an object or operation on the blockchain
+            has the same content as an object in the witness lookup
+        """
+        pass
+
     def find_id(self):
         """ Try to find an id for the object of the witness lookup on the
             blockchain
+
+            ... note:: This only checks if a sport exists with the same name in
+                       **ENGLISH**!
         """
         pass
 
@@ -333,12 +406,6 @@ class WitnessLookup(dict):
         """
         pass
 
-    def test_operation_equal(self, sport):
-        """ This method checks if an object or operation on the blockchain
-            has the same content as an object in the witness lookup
-        """
-        pass
-
 
 class WitnessLookupSport(WitnessLookup, dict):
 
@@ -353,10 +420,31 @@ class WitnessLookupSport(WitnessLookup, dict):
         )
         dict.__init__(self, self.data["sports"][sport])
 
+    @property
+    def eventgroups(self):
+        for e in self["eventgroups"]:
+            yield WitnessLookupEventGroup(
+                self.identifier, e)
+
+    @property
+    def rules(self):
+        for e in self["rules"]:
+            yield WitnessLookupRules(
+                self.identifier, e)
+
+    @property
+    def participants(self):
+        for e in self["participants"]:
+            yield WitnessLookupParticipants(
+                self.identifier, e)
+
+    @property
+    def bettingmarketgroups(self):
+        for e in self["bettingmarketgroups"]:
+            yield WitnessLookupBettingMarketGroup(
+                self.identifier, e)
+
     def test_operation_equal(self, sport):
-        """ This method checks if an object or operation on the blockchain
-            has the same content as an object in the witness lookup
-        """
         lookupnames = [[k, v] for k, v in self["name"].items()]
         chainsnames = [[]]
         if "name" in sport:
@@ -370,21 +458,14 @@ class WitnessLookupSport(WitnessLookup, dict):
             return True
 
     def find_id(self):
-        """ Try to find an id for the object of the witness lookup on the
-            blockchain
-
-            ... note:: This only checks if a sport exists with the same name in
-                       **ENGLISH**!
-        """
         sports = Sports(peerplays_instance=self.peerplays)
         for sport in sports:
-            for i in sport["name"]:
-                if i[0] == "en" and i[1] == self["name"]["en"]:
-                    return sport["id"]
+            if (
+                ["en", self["name"]["en"]] in sport["name"]
+            ):
+                return sport["id"]
 
     def is_synced(self):
-        """ Test if data on chain matches witness lookup
-        """
         if "id" in self:
             sport = Sport(self["id"])
             if self.test_operation_equal(sport):
@@ -392,21 +473,26 @@ class WitnessLookupSport(WitnessLookup, dict):
         return False
 
     def propose_new(self):
-        """ Propose operation to create this object
-        """
         names = [[k, v] for k, v in self["name"].items()]
-        self.peerplays.use_proposal_buffer()
-        self.peerplays.sport_create(names)
+        self._use_proposal_buffer()
+        self.peerplays.sport_create(
+            names,
+            account=self.proposing_account)
 
     def propose_update(self):
-        """ Propose to update this object to match witness lookup
-        """
         names = [[k, v] for k, v in self["name"].items()]
-        self.peerplays.use_proposal_buffer()
-        self.peerplays.sport_update(self["id"], names)
+        self._use_proposal_buffer()
+        self.peerplays.sport_update(
+            self["id"],
+            names=names,
+            account=self.proposing_account)
 
 
 class WitnessLookupEventGroup(WitnessLookup, dict):
+
+    operation_update = "event_group_update"
+    operation_create = "event_group_create"
+
     def __init__(self, sport, eventgroup):
         self.identifier = "{}/{}".format(sport, eventgroup)
         super(WitnessLookupEventGroup, self).__init__()
@@ -421,8 +507,79 @@ class WitnessLookupEventGroup(WitnessLookup, dict):
             self.data["sports"][sport]["eventgroups"][eventgroup]
         )
 
+    def test_operation_equal(self, eventgroup):
+        lookupnames = [[k, v] for k, v in self["name"].items()]
+        chainsnames = [[]]
+        if "name" in eventgroup:
+            chainsnames = eventgroup["name"]
+            sport_id = eventgroup["sport_id"]
+        elif "new_name" in eventgroup:
+            chainsnames = eventgroup["new_name"]
+            sport_id = eventgroup["new_sport_id"]
+        else:
+            raise ValueError
+
+        parts = sport_id.split(".")
+        assert len(parts) == 3,\
+            "{} is a strange sport object id".format(sport_id)
+        if int(parts[0]) == 0:
+            sport_id = ""
+
+        if (all([a in chainsnames for a in lookupnames]) and
+                all([b in lookupnames for b in chainsnames]) and
+                (sport_id and self["sport_id"] == sport_id)):
+            return True
+
+    def find_id(self):
+        assert "sport_id" in self, "The {} ({}) has no sport_id".format(
+            self.__class__.__name__, self["name"]["en"])
+        if self["sport_id"]:
+            egs = EventGroups(self["sport_id"], peerplays_instance=self.peerplays)
+            for eg in egs:
+                if (
+                    ["en", self["name"]["en"]] in eg["name"] and
+                    self.get("sport_id") == eg["sport_id"]
+                ):
+                    return eg["id"]
+
+    def is_synced(self):
+        if "id" in self:
+            eventgroup = EventGroup(self["id"])
+            if self.test_operation_equal(eventgroup):
+                return True
+        return False
+
+    def propose_new(self):
+        assert "sport_id" in self, "The {} ({}) has no sport_id".format(
+            self.__class__.__name__, self["name"]["en"])
+        if self["sport_id"]:
+            names = [[k, v] for k, v in self["name"].items()]
+            self._use_proposal_buffer()
+            self.peerplays.event_group_create(
+                names,
+                sport_id=self["sport_id"],
+                account=self.proposing_account
+            )
+
+    def propose_update(self):
+        assert "sport_id" in self, "The {} ({}) has no sport_id".format(
+            self.__class__.__name__, self["name"]["en"])
+        if self["sport_id"]:
+            names = [[k, v] for k, v in self["name"].items()]
+            self._use_proposal_buffer()
+            self.peerplays.event_group_update(
+                self["id"],
+                names=names,
+                sport_id=self["sport_id"],
+                account=self.proposing_account
+            )
+
 
 class WitnessLookupBettingMarketGroup(WitnessLookup, dict):
+
+    operation_update = "betting_market_group_update"
+    operation_create = "betting_market_group_create"
+
     def __init__(self, sport, bmg):
         self.identifier = "{}/{}".format(sport, bmg)
         super(WitnessLookupBettingMarketGroup, self).__init__()
@@ -437,8 +594,139 @@ class WitnessLookupBettingMarketGroup(WitnessLookup, dict):
             self.data["sports"][sport]["bettingmarketgroups"][bmg]
         )
 
+    def test_operation_equal(self, bmg):
+        lookupdescr = [[k, v] for k, v in self["name"].items()]
+        chainsdescr = [[]]
+        if "description" in bmg:
+            chainsdescr = bmg["description"]
+            rulesid = bmg["rules_id"]
+            freeze = ""
+            delay_bets = ""
+        elif "new_description" in bmg:
+            chainsdescr = bmg["new_description"]
+            rulesid = bmg["new_rules_id"]
+            freeze = bmg["freeze"]
+            delay_bets = bmg["delay_bets"]
+        else:
+            raise ValueError
+        parts = rulesid.split(".")
+        assert len(parts) == 3, \
+            "{} is a strange rule object id".format(rulesid)
+        if int(parts[0]) == 0:
+            rules = False
+        else:
+            rules = Rules(rulesid)
+        if (all([a in chainsdescr for a in lookupdescr]) and
+                all([b in lookupdescr for b in chainsdescr]) and
+                (rules and self["grading"]["rules"] in rules["name"])):
+            # FIXME: How to deal with 'freeze' and 'delay_bets'?!?
+            return True
+
+    def find_id(self):
+        return False
+
+        bmgs = BettingMarketGroups(
+            event_id="0.0.0",         # FIXME: This requires an event
+            peerplays_instance=self.peerplays)
+        for bmg in bmgs:
+            if (
+                ["en", self["name"]["en"]] in bmg["description"]
+            ):
+                return bmg["id"]
+
+    def is_synced(self):
+        if "id" in self:
+            sport = BettingMarketGroup(self["id"])
+            if self.test_operation_equal(sport):
+                return True
+        return False
+
+    def propose_new(self):
+        descriptions = [[k, v] for k, v in self["description"].items()]
+        self._use_proposal_buffer()
+        self.peerplays.betting_market_rules_create(
+            descriptions,
+            event_id=self["event_id"],
+            rules_id=0,
+            account=self.proposing_account
+        )
+        # FIXME --- get rules ID by looking through the rules associated with
+        # this sport and see if an id is provided .. if not, complain!
+
+    def propose_update(self):
+        names = [[k, v] for k, v in self["name"].items()]
+        descriptions = [[k, v] for k, v in self["description"].items()]
+        self._use_proposal_buffer()
+        # FIXME here!
+        # self.peerplays.sport_update(
+        #    self["id"],
+        #    names=names,
+        #    descriptions=descriptions,
+        #    account=self.proposing_account)
+
+
+class WitnessLookupRules(WitnessLookup, dict):
+
+    operation_update = "betting_market_rules_update"
+    operation_create = "betting_market_rules_create"
+
+    def __init__(self, sport, rules):
+        self.identifier = "{}/{}".format(sport, rules)
+        super(WitnessLookupRules, self).__init__()
+        assert sport in self.data["sports"], "Sport {} not avaialble".format(
+            sport
+        )
+        assert rules in self.data["sports"][sport]["rules"], \
+            "rules {} not avaialble in sport {}".format(
+                rules, sport)
+        # This is a list and not a dictionary!
+        dict.__init__(
+            self,
+            self.data["sports"][sport]["rules"][rules]
+        )
+
+    def find_id(self):
+        rules = Rules(peerplays_instance=self.peerplays)
+        for rule in rules:
+            if (
+                ["en", self["name"]["en"]] in rule["name"]
+            ):
+                return rule["id"]
+
+    def is_synced(self):
+        if "id" in self:
+            sport = Rule(self["id"])
+            if self.test_operation_equal(sport):
+                return True
+        return False
+
+    def propose_new(self):
+        names = [[k, v] for k, v in self["name"].items()]
+        descriptions = [[k, v] for k, v in self["description"].items()]
+        self._use_proposal_buffer()
+        self.peerplays.betting_market_rules_create(
+            names,
+            descriptions,
+            account=self.proposing_account
+        )
+
+    def propose_update(self):
+        names = [[k, v] for k, v in self["name"].items()]
+        descriptions = [[k, v] for k, v in self["description"].items()]
+        self._use_proposal_buffer()
+        self.peerplays.sport_update(
+            self["id"],
+            names=names,
+            descriptions=descriptions,
+            account=self.proposing_account
+        )
+
 
 class WitnessLookupParticipants(WitnessLookup, dict):
+
+    operation_update = ""
+    operation_create = ""
+
     def __init__(self, sport, participants):
         self.identifier = "{}/{}".format(sport, participants)
         super(WitnessLookupParticipants, self).__init__()
@@ -455,31 +743,32 @@ class WitnessLookupParticipants(WitnessLookup, dict):
         )
 
 
-class WitnessLookupRules(WitnessLookup, dict):
-    def __init__(self, sport, rules):
-        self.identifier = "{}/{}".format(sport, rules)
-        super(WitnessLookupRules, self).__init__()
-        assert sport in self.data["sports"], "Sport {} not avaialble".format(
-            sport
-        )
-        assert rules in self.data["sports"][sport]["rules"], \
-            "rules {} not avaialble in sport {}".format(
-                rules, sport)
-        # This is a list and not a dictionary!
-        dict.__init__(
-            self,
-            self.data["sports"][sport]["rules"][rules]
-        )
-
-
 if __name__ == "__main__":
     from getpass import getpass
     w = WitnessLookup()
     w.peerplays.wallet.unlock(getpass())
     w.peerplays.nobroadcast = True
-    sport = WitnessLookupSport("AmericanFootball")
-    # sport = WitnessLookupSport("Soccer")
+    w.peerplays.bundle = True
+    #for sport in w.list_sports():
+    sport = WitnessLookupSport("Soccer")
     sport.update()
+    for e in sport.eventgroups:
+        e.update()
+    for r in sport.rules:
+        r.update()
+
+    w.broadcast()
+
+    """
+    for p in sport.participants:
+        p.update()
+    for b in sport.bettingmarketgroups:
+        b.update()
+    """
+    # sport.update()
+    # eventgroup = WitnessLookupEventGroup("AmericanFootball", "NFL#PreSeas")
+    # eventgroup.update()
+
     """
     print(json.dumps(w, indent=4))
     print(json.dumps(w.data, indent=4))
