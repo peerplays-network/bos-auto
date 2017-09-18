@@ -9,7 +9,7 @@ if __name__ == "__main__":
     w.peerplays.nobroadcast = True
     w.peerplays.bundle = True
     # for sport in w.list_sports():
-    sport = WitnessLookupSport("Soccer")
+    sport = WitnessLookupSport("Football")
     sport.update()
     for e in sport.eventgroups:
         e.update()
@@ -17,12 +17,11 @@ if __name__ == "__main__":
         r.update()
 
     w.broadcast()
-
     """
-    for p in sport.participants:
-        p.update()
     for b in sport.bettingmarketgroups:
         b.update()
+    for p in sport.participants:
+        p.update()
     """
     # sport.update()
     # eventgroup = WitnessLookupEventGroup("AmericanFootball", "NFL#PreSeas")

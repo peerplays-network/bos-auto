@@ -29,13 +29,13 @@ class WitnessLookupBettingMarketGroup(WitnessLookup, dict):
         if "description" in bmg:
             chainsdescr = bmg["description"]
             rulesid = bmg["rules_id"]
-            freeze = ""
-            delay_bets = ""
+            # freeze = ""
+            # delay_bets = ""
         elif "new_description" in bmg:
             chainsdescr = bmg["new_description"]
             rulesid = bmg["new_rules_id"]
-            freeze = bmg["freeze"]
-            delay_bets = bmg["delay_bets"]
+            # freeze = bmg["freeze"]
+            # delay_bets = bmg["delay_bets"]
         else:
             raise ValueError
         parts = rulesid.split(".")
@@ -83,9 +83,10 @@ class WitnessLookupBettingMarketGroup(WitnessLookup, dict):
         # this sport and see if an id is provided .. if not, complain!
 
     def propose_update(self):
-        names = [[k, v] for k, v in self["name"].items()]
-        descriptions = [[k, v] for k, v in self["description"].items()]
-        self._use_proposal_buffer()
+        pass
+        # names = [[k, v] for k, v in self["name"].items()]
+        # descriptions = [[k, v] for k, v in self["description"].items()]
+        # self._use_proposal_buffer()
         # FIXME here!
         # self.peerplays.sport_update(
         #    self["id"],

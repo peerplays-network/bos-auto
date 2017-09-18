@@ -8,6 +8,8 @@ class WitnessLookupEventGroup(WitnessLookup, dict):
     operation_create = "event_group_create"
 
     def __init__(self, sport, eventgroup):
+        from .sport import WitnessLookupSport
+        self.sport = WitnessLookupSport(sport)
         self.identifier = "{}/{}".format(sport, eventgroup)
         super(WitnessLookupEventGroup, self).__init__()
         assert sport in self.data["sports"], "Sport {} not avaialble".format(
@@ -45,16 +47,14 @@ class WitnessLookupEventGroup(WitnessLookup, dict):
             return True
 
     def find_id(self):
-        assert "sport_id" in self, "The {} ({}) has no sport_id".format(
-            self.__class__.__name__, self["name"]["en"])
-        if self["sport_id"]:
+        if "sport_id" in self and self["sport_id"]:
             egs = EventGroups(
                 self["sport_id"],
                 peerplays_instance=self.peerplays)
             for eg in egs:
                 if (
                     ["en", self["name"]["en"]] in eg["name"] and
-                    self.get("sport_id") == eg["sport_id"]
+                    sport_id == eg["sport_id"]
                 ):
                     return eg["id"]
 
@@ -66,26 +66,22 @@ class WitnessLookupEventGroup(WitnessLookup, dict):
         return False
 
     def propose_new(self):
-        assert "sport_id" in self, "The {} ({}) has no sport_id".format(
-            self.__class__.__name__, self["name"]["en"])
-        if self["sport_id"]:
-            names = [[k, v] for k, v in self["name"].items()]
-            self._use_proposal_buffer()
-            self.peerplays.event_group_create(
-                names,
-                sport_id=self["sport_id"],
-                account=self.proposing_account
-            )
+        sport_id = self.obtain_parent_id(self.sport)
+        names = [[k, v] for k, v in self["name"].items()]
+        self._use_proposal_buffer()
+        self.peerplays.event_group_create(
+            names,
+            sport_id=sport_id,
+            account=self.proposing_account
+        )
 
     def propose_update(self):
-        assert "sport_id" in self, "The {} ({}) has no sport_id".format(
-            self.__class__.__name__, self["name"]["en"])
-        if self["sport_id"]:
-            names = [[k, v] for k, v in self["name"].items()]
-            self._use_proposal_buffer()
-            self.peerplays.event_group_update(
-                self["id"],
-                names=names,
-                sport_id=self["sport_id"],
-                account=self.proposing_account
-            )
+        sport_id = self.obtain_parent_id(self.sport)
+        names = [[k, v] for k, v in self["name"].items()]
+        self._use_proposal_buffer()
+        self.peerplays.event_group_update(
+            self["id"],
+            names=names,
+            sport_id=sport_id,
+            account=self.proposing_account
+        )

@@ -80,10 +80,11 @@ class WitnessLookup(dict):
         """ Since we are using multiple txbuffers, we need to do multiple
             broadcasts
         """
+        from pprint import pprint
         self._use_direct_buffer()
-        self.peerplays.txbuffer.broadcast()
+        pprint(self.peerplays.txbuffer.broadcast())
         self._use_proposal_buffer()
-        self.peerplays.txbuffer.broadcast()
+        pprint(self.peerplays.txbuffer.broadcast())
 
     def _loadyaml(self, f):
         """ Load a YAML file
@@ -274,9 +275,10 @@ class WitnessLookup(dict):
             ))
             has_pending_update = self.has_pending_update()
             if has_pending_update:
-                log.info("Object has pending update: {}: {}".format(
+                log.info("Object has pending update: {}: {} in {}".format(
                     self.__class__.__name__,
-                    str(self.get("name", ""))
+                    str(self.get("name", "")),
+                    str(has_pending_update)
                 ))
                 self.approve(*has_pending_update)
             else:
@@ -295,6 +297,19 @@ class WitnessLookup(dict):
                 if oid not in WitnessLookup.approval_map[proposal["id"]]:
                     WitnessLookup.approval_map[proposal["id"]][oid] = False
                 yield operations, proposal["id"], oid
+
+    def get_buffered_operations(self):
+        # Obtain the proposals that we have in our buffer
+        from peerplaysbase.operationids import getOperationNameForId
+        txbuffer = self.peerplays.get_txbuffer(WitnessLookup.proposal_buffer)
+        txbuffer.constructTx()
+        for oid, operation in enumerate(txbuffer.json()["operations"]):
+            if getOperationNameForId(operation[0]) == "proposal_create":
+                for poid, props in enumerate(operation[1].get("proposed_ops", [])):
+                    yield props["op"], "0.0.0", "0.0.%d" % poid
+            # If we refer to an object within a transaction, we can use 0.0.x
+            # with x being the index of the operation in the transaction
+            yield operation, "0.0.0", "0.0.%d" % oid
 
     def approve(self, pid, oid):
         """ Approve a proposal
@@ -350,11 +365,16 @@ class WitnessLookup(dict):
                 if self.test_operation_equal(op[1]):
                     return pid, oid
 
-        # FIXME: Test for our own proposals pending in txbuffer
+        for op, pid, oid in self.get_buffered_operations():
+            if getOperationNameForId(op[0]) == self.operation_create:
+                if self.test_operation_equal(op[1]):
+                    return pid, oid
 
     def has_pending_update(self):
         """ Test if there is an update to properly match blockchain content
             with witness lookup content
+
+            It only returns true if the exact content is proposed
         """
         from peerplaysbase.operationids import getOperationNameForId
         for op, pid, oid in self.get_pending_operations():
@@ -362,7 +382,22 @@ class WitnessLookup(dict):
                 if self.test_operation_equal(op[1]):
                     return pid, oid
 
-        # FIXME: Test for our own proposals pending in txbuffer
+        for op, pid, oid in self.get_buffered_operations():
+            if getOperationNameForId(op[0]) == self.operation_update:
+                if self.test_operation_equal(op[1]):
+                    return pid, oid
+
+    def obtain_parent_id(self, parent, key="id"):
+        """ Try to obtain the id of the parent object
+        """
+        if key in self and self[key]:
+            return self[key]
+        else:
+            _, id = parent.has_pending_new()
+            assert id, "Could not identify parent id in {}/{}".format(
+                self.__class__.__name__,
+                str(self))
+            return id
 
     # Prototypes #############################################################
     def test_operation_equal(self, sport):
