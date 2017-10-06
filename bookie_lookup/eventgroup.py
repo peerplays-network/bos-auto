@@ -1,17 +1,17 @@
-from .lookup import WitnessLookup
+from .lookup import Lookup
 from peerplays.eventgroup import EventGroups, EventGroup
 
 
-class WitnessLookupEventGroup(WitnessLookup, dict):
+class LookupEventGroup(Lookup, dict):
 
     operation_update = "event_group_update"
     operation_create = "event_group_create"
 
     def __init__(self, sport, eventgroup):
-        from .sport import WitnessLookupSport
-        self.sport = WitnessLookupSport(sport)
+        from .sport import LookupSport
+        self.sport = LookupSport(sport)
         self.identifier = "{}/{}".format(sport, eventgroup)
-        super(WitnessLookupEventGroup, self).__init__()
+        super(LookupEventGroup, self).__init__()
         assert sport in self.data["sports"], "Sport {} not avaialble".format(
             sport
         )
@@ -54,7 +54,7 @@ class WitnessLookupEventGroup(WitnessLookup, dict):
             for eg in egs:
                 if (
                     ["en", self["name"]["en"]] in eg["name"] and
-                    sport_id == eg["sport_id"]
+                    self["sport_id"] == eg["sport_id"]
                 ):
                     return eg["id"]
 

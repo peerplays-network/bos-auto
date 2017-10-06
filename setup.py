@@ -5,21 +5,27 @@ import sys
 
 __VERSION__ = '0.0.1'
 
-assert sys.version_info[0] == 3, "We requires Python > 3"
+assert sys.version_info[0] == 3, "We require Python > 3"
 
 setup(
-    name='peerplays-bookie',
+    name='bookied',
     version=__VERSION__,
-    description='A library that allows to lookup sports in bookie',
+    description=(
+        'A daemon to keep the blockchain bookie DApp in sync (i.e., an oracle'
+        ' daemon)'
+    ),
     long_description=open('README.md').read(),
-    download_url='https://github.com/pbsa/bookielookup/tarball/' + __VERSION__,
+    download_url='https://github.com/pbsa/bookied/tarball/' + __VERSION__,
     author='Fabian Schuh',
     author_email='Fabian@chainsquad.com',
     maintainer='Fabian Schuh',
     maintainer_email='Fabian@chainsquad.com',
     url='http://pbsa.info',
     keywords=['peerplays', 'bookie'],
-    packages=["bookie", "witnesslookup"],
+    packages=[
+        "bookie",
+        "bookie_lookup"
+    ],
     classifiers=[
         'License :: OSI Approved :: MIT License',
         'Operating System :: OS Independent',
@@ -29,7 +35,7 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'bookie = bookie.cli:main'
+            'bookied = bookie.cli:main'
         ],
     },
     install_requires=[
@@ -38,6 +44,7 @@ setup(
         "click",
         "pyyaml",
         "colorlog",
+        # "bookied-scrapers",
     ],
     setup_requires=['pytest-runner'],
     tests_require=['pytest'],

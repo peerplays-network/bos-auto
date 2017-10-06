@@ -1,19 +1,19 @@
 from peerplays.sport import Sports, Sport
-from .lookup import WitnessLookup
-from .eventgroup import WitnessLookupEventGroup
-from .rule import WitnessLookupRules
-from .bettingmarketgroup import WitnessLookupBettingMarketGroup
-from .participant import WitnessLookupParticipants
+from .lookup import Lookup
+from .eventgroup import LookupEventGroup
+from .rule import LookupRules
+from .bettingmarketgroup import LookupBettingMarketGroup
+from .participant import LookupParticipants
 
 
-class WitnessLookupSport(WitnessLookup, dict):
+class LookupSport(Lookup, dict):
 
     operation_update = "sport_update"
     operation_create = "sport_create"
 
     def __init__(self, sport):
         self.identifier = sport
-        super(WitnessLookupSport, self).__init__()
+        super(LookupSport, self).__init__()
         assert sport in self.data["sports"], "Sport {} not avaialble".format(
             sport
         )
@@ -22,25 +22,25 @@ class WitnessLookupSport(WitnessLookup, dict):
     @property
     def eventgroups(self):
         for e in self["eventgroups"]:
-            yield WitnessLookupEventGroup(
+            yield LookupEventGroup(
                 self.identifier, e)
 
     @property
     def rules(self):
         for e in self["rules"]:
-            yield WitnessLookupRules(
+            yield LookupRules(
                 self.identifier, e)
 
     @property
     def participants(self):
         for e in self["participants"]:
-            yield WitnessLookupParticipants(
+            yield LookupParticipants(
                 self.identifier, e)
 
     @property
     def bettingmarketgroups(self):
         for e in self["bettingmarketgroups"]:
-            yield WitnessLookupBettingMarketGroup(
+            yield LookupBettingMarketGroup(
                 self.identifier, e)
 
     def test_operation_equal(self, sport):

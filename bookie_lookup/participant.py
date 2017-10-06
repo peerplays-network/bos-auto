@@ -1,14 +1,14 @@
-from .lookup import WitnessLookup
+from .lookup import Lookup
 
 
-class WitnessLookupParticipants(WitnessLookup, dict):
+class LookupParticipants(Lookup, dict):
 
     operation_update = ""
     operation_create = ""
 
     def __init__(self, sport, participants):
         self.identifier = "{}/{}".format(sport, participants)
-        super(WitnessLookupParticipants, self).__init__()
+        super(LookupParticipants, self).__init__()
         assert sport in self.data["sports"], "Sport {} not avaialble".format(
             sport
         )

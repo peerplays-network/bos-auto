@@ -9,9 +9,9 @@ from peerplays.storage import configStorage as config
 from . import log, UPDATE_PENDING_NEW, UPDATE_PROPOSING_NEW
 
 
-class WitnessLookup(dict):
+class Lookup(dict):
 
-    #: Singelton to store data and prevent rereading if WitnessLookup is
+    #: Singelton to store data and prevent rereading if Lookup is
     #: instantiated multiple times
     data = dict()
     approval_map = {}
@@ -21,6 +21,7 @@ class WitnessLookup(dict):
 
     def __init__(
         self,
+        sports_folder="bookiesports",
         peerplays_instance=None,
         proposing_account=None,
         approving_account=None,
@@ -49,23 +50,35 @@ class WitnessLookup(dict):
         self.approving_account = approving_account
 
         # We define two transaction buffers
-        if not WitnessLookup.direct_buffer:
-            WitnessLookup.direct_buffer = self.peerplays.new_txbuffer()
-        if not WitnessLookup.proposal_buffer:
-            WitnessLookup.proposal_buffer = self.peerplays.new_txbuffer(
+        if not Lookup.direct_buffer:
+            Lookup.direct_buffer = self.peerplays.new_txbuffer()
+        if not Lookup.proposal_buffer:
+            Lookup.proposal_buffer = self.peerplays.new_txbuffer(
                 proposer=self.proposing_account)
 
         if not self.data:
-            # Read main index.yaml
+            if not os.path.isdir(
+                os.path.join(
+                    self._cwd,
+                    sports_folder)):
+                log.error(
+                    "You need to clone the bookiesports repository into your "
+                    "working directory first!"
+                )
+                sys.exit(1)
+            """
+            # Read general data
             data = self._loadyaml(
                 os.path.join(
                     self._cwd,
+                    sports_folder,
                     "index.yaml"
                 ))
-            super(WitnessLookup, self).__init__(data)
+            super(Lookup, self).__init__(data)
+            """
 
             # Load sports
-            self.data["sports"] = self._loadSports()
+            self.data["sports"] = self._loadSports(sports_folder)
 
             # _tests
             self._tests()
@@ -101,15 +114,15 @@ class WitnessLookup(dict):
             log.error("The file {} is required but doesn't exist!".format(f))
             sys.exit(1)
 
-    def _loadSports(self):
+    def _loadSports(self, sports_folder):
         """ This loads all sports recursively from the ``sports/`` folder
         """
         ret = dict()
         for sportDir in glob(
             os.path.join(
                 self._cwd,
-                "sports/*"
-        )):
+                sports_folder,
+                "*")):
             if not os.path.isdir(sportDir):
                 continue
             sport = os.path.basename(sportDir)
@@ -202,9 +215,9 @@ class WitnessLookup(dict):
                 self._test_required_attributes(bmg, bmgname, ["name"])
 
                 # Test that each used rule is defined
-                assert bmg["grading"]["rules"] in sport["rules"], \
+                assert bmg["rules"] in sport["rules"], \
                     "Rule {} is used in {}:{} but wasn't defined!".format(
-                        bmg["grading"]["rules"],
+                        bmg["rules"],
                         sportname,
                         bmgname)
 
@@ -221,29 +234,33 @@ class WitnessLookup(dict):
 
     # List calls
     def list_sports(self):
-        """ List all sports in the witness lookup
+        """ List all sports in the  lookup
         """
-        from .sport import WitnessLookupSport
-        return [WitnessLookupSport(x) for x in self.data["sports"]]
+        from .sport import LookupSport
+        return [LookupSport(x) for x in self.data["sports"]]
+
+    def get_sport(self, sportname):
+        from .sport import LookupSport
+        return LookupSport(sportname)
 
     # Update call
     def update(self):
-        """ This call makes sure that the data in the witness lookup matches
+        """ This call makes sure that the data in the  lookup matches
             the data on the blockchain for the object we are currenty looking
             at.
 
             It works like this:
 
-            1. Test if the witness lookup knows the "id" of the object on chain
+            1. Test if the  lookup knows the "id" of the object on chain
             1.1. If it does not, try to identify the object from the blockchain
                   * if available, warn about existing id
                   * if pending creation proposal, approve it
                   * if none of the above, create proposal
-            1.2. Test if witness lookup and blockchain data match, if not
+            1.2. Test if  lookup and blockchain data match, if not
                 * if exists proposal for update, approve
                 * if not, create proposal to update
         """
-        # See if witness lookup already has an id
+        # See if  lookup already has an id
         if "id" not in self or not self["id"]:
 
             # Test if an object with the characteristics (i.e. name) exist
@@ -252,7 +269,7 @@ class WitnessLookup(dict):
             if id:
                 log.error((
                     "Object {} carries id {} on the blockchain. "
-                    "Please update your witness lookup"
+                    "Please update your  lookup"
                 ).format(self.identifier, id))
                 self["id"] = id
             elif has_pending_new:
@@ -288,24 +305,26 @@ class WitnessLookup(dict):
                 ))
                 self.propose_update()
 
-    def get_pending_operations(self, account="witness-account"):
+    def get_pending_operations(self, account="-account"):
         pending_proposals = Proposals(account)
         for proposal in pending_proposals:
-            if not proposal["id"] in WitnessLookup.approval_map:
-                WitnessLookup.approval_map[proposal["id"]] = {}
+            if not proposal["id"] in Lookup.approval_map:
+                Lookup.approval_map[proposal["id"]] = {}
             for oid, operations in enumerate(proposal.proposed_operations):
-                if oid not in WitnessLookup.approval_map[proposal["id"]]:
-                    WitnessLookup.approval_map[proposal["id"]][oid] = False
+                if oid not in Lookup.approval_map[proposal["id"]]:
+                    Lookup.approval_map[proposal["id"]][oid] = False
                 yield operations, proposal["id"], oid
 
     def get_buffered_operations(self):
         # Obtain the proposals that we have in our buffer
         from peerplaysbase.operationids import getOperationNameForId
-        txbuffer = self.peerplays.get_txbuffer(WitnessLookup.proposal_buffer)
+        txbuffer = self.peerplays.get_txbuffer(Lookup.proposal_buffer)
         txbuffer.constructTx()
         for oid, operation in enumerate(txbuffer.json()["operations"]):
             if getOperationNameForId(operation[0]) == "proposal_create":
-                for poid, props in enumerate(operation[1].get("proposed_ops", [])):
+                for poid, props in enumerate(
+                    operation[1].get("proposed_ops", [])
+                ):
                     yield props["op"], "0.0.0", "0.0.%d" % poid
             # If we refer to an object within a transaction, we can use 0.0.x
             # with x being the index of the operation in the transaction
@@ -330,10 +349,10 @@ class WitnessLookup(dict):
             :param str pid: Proposal id
             :param int oid: Operation number within the proposal
         """
-        WitnessLookup.approval_map[pid][oid] = True
+        Lookup.approval_map[pid][oid] = True
         approved_read_for_delete = []
-        for p in WitnessLookup.approval_map:
-            if all(WitnessLookup.approval_map[p].values()):
+        for p in Lookup.approval_map:
+            if all(Lookup.approval_map[p].values()):
                 self._use_direct_buffer()
                 proposal = Proposal(p)
                 account = Account(self.approving_account)
@@ -352,7 +371,7 @@ class WitnessLookup(dict):
         # In order not to approve the same proposal again and again, we remove
         # it from the map
         for p in approved_read_for_delete:
-            del WitnessLookup.approval_map[p]
+            del Lookup.approval_map[p]
 
     def has_pending_new(self):
         """ This call tests if a pending proposal would create this object
@@ -372,7 +391,7 @@ class WitnessLookup(dict):
 
     def has_pending_update(self):
         """ Test if there is an update to properly match blockchain content
-            with witness lookup content
+            with  lookup content
 
             It only returns true if the exact content is proposed
         """
@@ -402,12 +421,12 @@ class WitnessLookup(dict):
     # Prototypes #############################################################
     def test_operation_equal(self, sport):
         """ This method checks if an object or operation on the blockchain
-            has the same content as an object in the witness lookup
+            has the same content as an object in the  lookup
         """
         pass
 
     def find_id(self):
-        """ Try to find an id for the object of the witness lookup on the
+        """ Try to find an id for the object of the  lookup on the
             blockchain
 
             ... note:: This only checks if a sport exists with the same name in
@@ -416,9 +435,9 @@ class WitnessLookup(dict):
         pass
 
     def is_synced(self):
-        """ Test if data on chain matches witness lookup
+        """ Test if data on chain matches  lookup
         """
-        # Compare blockchain content with witness lookup
+        # Compare blockchain content with  lookup
 
     def propose_new(self):
         """ Propose operation to create this object
@@ -426,6 +445,6 @@ class WitnessLookup(dict):
         pass
 
     def propose_update(self):
-        """ Propose to update this object to match witness lookup
+        """ Propose to update this object to match  lookup
         """
         pass

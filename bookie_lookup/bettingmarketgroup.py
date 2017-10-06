@@ -1,17 +1,17 @@
-from .lookup import WitnessLookup
-from peerplays.rule import Rules, Rule
+from .lookup import Lookup
+from peerplays.rule import Rules
 from peerplays.bettingmarketgroup import (
     BettingMarketGroups, BettingMarketGroup)
 
 
-class WitnessLookupBettingMarketGroup(WitnessLookup, dict):
+class LookupBettingMarketGroup(Lookup, dict):
 
     operation_update = "betting_market_group_update"
     operation_create = "betting_market_group_create"
 
     def __init__(self, sport, bmg):
         self.identifier = "{}/{}".format(sport, bmg)
-        super(WitnessLookupBettingMarketGroup, self).__init__()
+        super(LookupBettingMarketGroup, self).__init__()
         assert sport in self.data["sports"], "Sport {} not avaialble".format(
             sport
         )
