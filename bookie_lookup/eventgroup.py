@@ -1,5 +1,15 @@
+import sys
 from .lookup import Lookup
 from peerplays.eventgroup import EventGroups, EventGroup
+from . import log
+
+try:
+    from bookied_scrapers.sinks.mysql_data_sink import MysqlDataSink
+    from bookied_scrapers.sinks.db_data_sink_model import RawGameInfo, RawEvent, RawMarketsInfo, ResolvedGameEvent
+    from playhouse.shortcuts import model_to_dict
+except ImportError:
+    log.error("Please install bookied-scrapers")
+    sys.exit(1)
 
 
 class LookupEventGroup(Lookup, dict):
@@ -9,8 +19,10 @@ class LookupEventGroup(Lookup, dict):
 
     def __init__(self, sport, eventgroup):
         from .sport import LookupSport
+        self.sport_name = sport
         self.sport = LookupSport(sport)
-        self.identifier = "{}/{}".format(sport, eventgroup)
+        self.eventgroup = eventgroup
+        self.identifier = "{}/{}".format(self.sport_name, eventgroup)
         super(LookupEventGroup, self).__init__()
         assert sport in self.data["sports"], "Sport {} not avaialble".format(
             sport
@@ -68,20 +80,69 @@ class LookupEventGroup(Lookup, dict):
     def propose_new(self):
         sport_id = self.obtain_parent_id(self.sport)
         names = [[k, v] for k, v in self["name"].items()]
-        self._use_proposal_buffer()
         self.peerplays.event_group_create(
             names,
             sport_id=sport_id,
-            account=self.proposing_account
+            account=self.proposing_account,
+            append_to=Lookup.proposal_buffer
         )
 
     def propose_update(self):
         sport_id = self.obtain_parent_id(self.sport)
         names = [[k, v] for k, v in self["name"].items()]
-        self._use_proposal_buffer()
         self.peerplays.event_group_update(
             self["id"],
             names=names,
             sport_id=sport_id,
-            account=self.proposing_account
+            account=self.proposing_account,
+            append_to=Lookup.proposal_buffer
         )
+
+    def find_event(self):
+        pass
+
+    def list_events(self):
+        class Db:
+            name = "db_peerplays"
+            user = "peerplays"
+            password = "I<3storage"
+
+        MysqlDataSink(Db.name, Db.user, Db.password)
+        """
+        events = (
+            RawEvent.select(
+                RawEvent, RawGameInfo
+            ).join(
+                RawGameInfo
+            ).where(
+                (RawGameInfo.game == self.sport_name) &
+                (RawGameInfo.league == self.eventgroup)
+            ).order_by(RawEvent.update_time.desc()))
+        """
+        events = (
+            ResolvedGameEvent.select(
+                ResolvedGameEvent
+            ).where(
+                (ResolvedGameEvent.game == self.sport["identifier"]) &
+                (ResolvedGameEvent.league == self.eventgroup)
+            )
+        )
+        from pprint import pprint
+        from .event import LookupEvent
+        ret = list()
+        for e in events:
+            event = model_to_dict(e)
+            # set name
+            event.update({"name": {"en": event["teams"]}})
+
+            # eventgroup_name
+            event.update({"eventgroup_identifier": event["league"]})
+
+            # sport
+            event.update({"sport_identifier": event["game"]})
+
+            # id
+            event.update({"id": None})
+
+            ret.append(LookupEvent(event))
+        return ret

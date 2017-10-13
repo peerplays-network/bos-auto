@@ -17,7 +17,14 @@ class LookupSport(Lookup, dict):
         assert sport in self.data["sports"], "Sport {} not avaialble".format(
             sport
         )
-        dict.__init__(self, self.data["sports"][sport])
+        if sport in self.data["sports"]:
+            # Load from name
+            dict.__init__(self, self.data["sports"][sport])
+        else:
+            # Load from identifier
+            for s in self.data["sports"]:
+                if s["identifier"] == sport:
+                    dict.__init__(self, s)
 
     @property
     def eventgroups(self):
@@ -73,15 +80,15 @@ class LookupSport(Lookup, dict):
 
     def propose_new(self):
         names = [[k, v] for k, v in self["name"].items()]
-        self._use_proposal_buffer()
         self.peerplays.sport_create(
             names,
-            account=self.proposing_account)
+            account=self.proposing_account,
+            append_to=Lookup.proposal_buffer)
 
     def propose_update(self):
         names = [[k, v] for k, v in self["name"].items()]
-        self._use_proposal_buffer()
         self.peerplays.sport_update(
             self["id"],
             names=names,
-            account=self.proposing_account)
+            account=self.proposing_account,
+            append_to=Lookup.proposal_buffer)

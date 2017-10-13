@@ -1,9 +1,20 @@
+from pprint import pprint
 from getpass import getpass
-from witnesslookup.lookup import WitnessLookup
-from witnesslookup.sport import WitnessLookupSport
+from bookie_lookup.eventgroup import LookupEventGroup
 
 
 if __name__ == "__main__":
+    eventgroup = LookupEventGroup("AmericanFootball", "NFL#RegSeas")
+    eventgroup.peerplays.wallet.unlock(getpass())
+    eventgroup.sport.update()
+#    events = eventgroup.list_events()
+#    event = events[0]
+#    pprint(event.update())
+
+    pprint(eventgroup.proposal_buffer.parent.json())
+    eventgroup.broadcast()
+
+    """
     w = WitnessLookup()
     w.peerplays.wallet.unlock(getpass())
     w.peerplays.nobroadcast = True
@@ -18,14 +29,19 @@ if __name__ == "__main__":
 
     w.broadcast()
     """
+
+    """
     for b in sport.bettingmarketgroups:
         b.update()
     for p in sport.participants:
         p.update()
     """
+
+    """
     # sport.update()
     # eventgroup = WitnessLookupEventGroup("AmericanFootball", "NFL#PreSeas")
     # eventgroup.update()
+    """
 
     """
     print(json.dumps(w, indent=4))

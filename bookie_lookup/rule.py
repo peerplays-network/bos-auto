@@ -40,20 +40,20 @@ class LookupRules(Lookup, dict):
     def propose_new(self):
         names = [[k, v] for k, v in self["name"].items()]
         descriptions = [[k, v] for k, v in self["description"].items()]
-        self._use_proposal_buffer()
         self.peerplays.betting_market_rules_create(
             names,
             descriptions,
-            account=self.proposing_account
+            account=self.proposing_account,
+            append_to=Lookup.proposal_buffer
         )
 
     def propose_update(self):
         names = [[k, v] for k, v in self["name"].items()]
         descriptions = [[k, v] for k, v in self["description"].items()]
-        self._use_proposal_buffer()
         self.peerplays.sport_update(
             self["id"],
             names=names,
             descriptions=descriptions,
-            account=self.proposing_account
+            account=self.proposing_account,
+            append_to=Lookup.proposal_buffer
         )

@@ -39,7 +39,6 @@ class Lookup(dict):
                 proposing_account = config["default_account"]
             else:
                 proposing_account = proposing_account
-        self.peerplays.proposer = proposing_account
         self.proposing_account = proposing_account
 
         if not approving_account:
@@ -51,9 +50,11 @@ class Lookup(dict):
 
         # We define two transaction buffers
         if not Lookup.direct_buffer:
-            Lookup.direct_buffer = self.peerplays.new_txbuffer()
+            Lookup.direct_buffer = self.peerplays.new_tx()
         if not Lookup.proposal_buffer:
-            Lookup.proposal_buffer = self.peerplays.new_txbuffer(
+            Lookup.proposal_buffer_tx = self.peerplays.new_tx()
+            Lookup.proposal_buffer = self.peerplays.new_proposal(
+                Lookup.proposal_buffer_tx,
                 proposer=self.proposing_account)
 
         if not self.data:
@@ -83,21 +84,13 @@ class Lookup(dict):
             # _tests
             self._tests()
 
-    def _use_direct_buffer(self):
-        self.peerplays.set_txbuffer(self.direct_buffer)
-
-    def _use_proposal_buffer(self):
-        self.peerplays.set_txbuffer(self.proposal_buffer)
-
     def broadcast(self):
         """ Since we are using multiple txbuffers, we need to do multiple
             broadcasts
         """
         from pprint import pprint
-        self._use_direct_buffer()
-        pprint(self.peerplays.txbuffer.broadcast())
-        self._use_proposal_buffer()
-        pprint(self.peerplays.txbuffer.broadcast())
+        pprint(Lookup.direct_buffer.broadcast())
+        pprint(Lookup.proposal_buffer.broadcast())
 
     def _loadyaml(self, f):
         """ Load a YAML file
@@ -305,7 +298,7 @@ class Lookup(dict):
                 ))
                 self.propose_update()
 
-    def get_pending_operations(self, account="-account"):
+    def get_pending_operations(self, account="witness-account"):
         pending_proposals = Proposals(account)
         for proposal in pending_proposals:
             if not proposal["id"] in Lookup.approval_map:
@@ -318,9 +311,9 @@ class Lookup(dict):
     def get_buffered_operations(self):
         # Obtain the proposals that we have in our buffer
         from peerplaysbase.operationids import getOperationNameForId
-        txbuffer = self.peerplays.get_txbuffer(Lookup.proposal_buffer)
-        txbuffer.constructTx()
-        for oid, operation in enumerate(txbuffer.json()["operations"]):
+        for oid, operation in enumerate(
+            Lookup.proposal_buffer.list_operations()
+        ):
             if getOperationNameForId(operation[0]) == "proposal_create":
                 for poid, props in enumerate(
                     operation[1].get("proposed_ops", [])
@@ -353,16 +346,15 @@ class Lookup(dict):
         approved_read_for_delete = []
         for p in Lookup.approval_map:
             if all(Lookup.approval_map[p].values()):
-                self._use_direct_buffer()
                 proposal = Proposal(p)
                 account = Account(self.approving_account)
                 if account["id"] not in proposal["available_active_approvals"]:
                     log.info("Approving proposal {}".format(p))
                     approved_read_for_delete.append(p)
-                    self._use_direct_buffer()
                     self.peerplays.approveproposal(
                         p,
-                        account=self.approving_account
+                        account=self.approving_account,
+                        append_to=Lookup.direct_buffer
                     )
                 else:
                     log.info(
@@ -417,6 +409,23 @@ class Lookup(dict):
                 self.__class__.__name__,
                 str(self))
             return id
+
+    @property
+    def id(self):
+        """ Returns the id of the object on chain
+
+            :raises IdNotFoundError: if the object couldn't be matched to an
+                object on chain
+        """
+        if "id" in self and self["id"]:
+            return self["id"]
+        found = self.find_id()
+        assert found, \
+            "Object not found on chain: {}: {}".format(
+                self.__class__.__name__,
+                str(self.items())
+            )
+        return found
 
     # Prototypes #############################################################
     def test_operation_equal(self, sport):
