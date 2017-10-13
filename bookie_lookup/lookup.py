@@ -398,18 +398,6 @@ class Lookup(dict):
                 if self.test_operation_equal(op[1]):
                     return pid, oid
 
-    def obtain_parent_id(self, parent, key="id"):
-        """ Try to obtain the id of the parent object
-        """
-        if key in self and self[key]:
-            return self[key]
-        else:
-            _, id = parent.has_pending_new()
-            assert id, "Could not identify parent id in {}/{}".format(
-                self.__class__.__name__,
-                str(self))
-            return id
-
     @property
     def id(self):
         """ Returns the id of the object on chain
@@ -426,6 +414,24 @@ class Lookup(dict):
                 str(self.items())
             )
         return found
+
+    def obtain_parent_id(self, parent, key="id"):
+        """ Try to obtain the id of the parent object
+        """
+        if key in parent and parent[key]:
+            return parent[key]
+        elif parent.id:
+            return parent.id
+        else:
+            _, id = parent.has_pending_new()
+            assert id, "Could not identify parent id in {}/{}".format(
+                self.__class__.__name__,
+                str(self))
+            return id
+
+    @property
+    def parent_id(self):
+        return self.obtain_parent_id(self.parent)
 
     # Prototypes #############################################################
     def test_operation_equal(self, sport):

@@ -5,14 +5,19 @@ from bookie_lookup.eventgroup import LookupEventGroup
 
 if __name__ == "__main__":
     eventgroup = LookupEventGroup("AmericanFootball", "NFL#RegSeas")
-    eventgroup.peerplays.wallet.unlock(getpass())
+#    eventgroup.peerplays.wallet.unlock(getpass())
     eventgroup.sport.update()
-#    events = eventgroup.list_events()
-#    event = events[0]
-#    pprint(event.update())
+    eventgroup.update()
+    for event in eventgroup.events:
+        # event.update()
+        for bmg in event.bettingmarketgroups:
+            # bmg.update()
+            pprint(bmg)
+            break
+        break
 
-    pprint(eventgroup.proposal_buffer.parent.json())
-    eventgroup.broadcast()
+    pprint(eventgroup.proposal_buffer.json())
+#    pprint(eventgroup.broadcast())
 
     """
     w = WitnessLookup()

@@ -9,20 +9,38 @@ class LookupBettingMarketGroup(Lookup, dict):
     operation_update = "betting_market_group_update"
     operation_create = "betting_market_group_create"
 
-    def __init__(self, sport, bmg):
-        self.identifier = "{}/{}".format(sport, bmg)
-        super(LookupBettingMarketGroup, self).__init__()
-        assert sport in self.data["sports"], "Sport {} not avaialble".format(
-            sport
+    def __init__(self, bmg, event):
+        Lookup.__init__(self)
+        self.identifier = "{}/{}".format(
+            event["name"]["en"],
+            bmg["name"]["en"]
         )
-        assert bmg in self.data["sports"][sport]["bettingmarketgroups"], \
-            "Bettingmarketgroup {} not avaialble in sport {}".format(
-                bmg, sport)
+        self.parent = event
         dict.__init__(
             self,
-            self.data["sports"][sport]["bettingmarketgroups"][bmg]
+            bmg
         )
 
+        """
+        {'bettingmarkets': [{'name': {'en': {'HomeTeam': None}}},
+                            {'name': {'en': {'AwayTeam': None}}},
+                            {'name': {'en': 'Draw'}}],
+        'dynamic': False,
+        'is_live': True,
+        'name': {'de': 'Handy Cap - {HC}',
+                'display_name': 'Handy Cap - {HC}',
+                'en': 'Handy Cap - {HC}'},
+        'name_parameters': {'HC': 'handy_cap'},
+        'number_betting_markets': 3,
+        'rules': 'R_NFL_MO_1'}
+        """
+
+        # Figure out if the name has a variable
+        # Figure out if this is a dynamic bmg
+        # define self.rules()
+        # define self.bettingmarkets()
+
+    """
     def test_operation_equal(self, bmg):
         lookupdescr = [[k, v] for k, v in self["name"].items()]
         chainsdescr = [[]]
@@ -93,3 +111,4 @@ class LookupBettingMarketGroup(Lookup, dict):
         #    names=names,
         #    descriptions=descriptions,
         #    account=self.proposing_account)
+    """

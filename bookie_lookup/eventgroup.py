@@ -21,6 +21,7 @@ class LookupEventGroup(Lookup, dict):
         from .sport import LookupSport
         self.sport_name = sport
         self.sport = LookupSport(sport)
+        self.parent = self.sport
         self.eventgroup = eventgroup
         self.identifier = "{}/{}".format(self.sport_name, eventgroup)
         super(LookupEventGroup, self).__init__()
@@ -78,47 +79,35 @@ class LookupEventGroup(Lookup, dict):
         return False
 
     def propose_new(self):
-        sport_id = self.obtain_parent_id(self.sport)
         names = [[k, v] for k, v in self["name"].items()]
         self.peerplays.event_group_create(
             names,
-            sport_id=sport_id,
+            sport_id=self.parent_id,
             account=self.proposing_account,
             append_to=Lookup.proposal_buffer
         )
 
     def propose_update(self):
-        sport_id = self.obtain_parent_id(self.sport)
         names = [[k, v] for k, v in self["name"].items()]
         self.peerplays.event_group_update(
             self["id"],
             names=names,
-            sport_id=sport_id,
+            sport_id=self.parent_id,
             account=self.proposing_account,
             append_to=Lookup.proposal_buffer
         )
 
-    def find_event(self):
-        pass
+    @property
+    def events(self):
+        from .event import LookupEvent
 
-    def list_events(self):
+        # FIXME
         class Db:
             name = "db_peerplays"
             user = "peerplays"
             password = "I<3storage"
 
         MysqlDataSink(Db.name, Db.user, Db.password)
-        """
-        events = (
-            RawEvent.select(
-                RawEvent, RawGameInfo
-            ).join(
-                RawGameInfo
-            ).where(
-                (RawGameInfo.game == self.sport_name) &
-                (RawGameInfo.league == self.eventgroup)
-            ).order_by(RawEvent.update_time.desc()))
-        """
         events = (
             ResolvedGameEvent.select(
                 ResolvedGameEvent
@@ -127,9 +116,6 @@ class LookupEventGroup(Lookup, dict):
                 (ResolvedGameEvent.league == self.eventgroup)
             )
         )
-        from pprint import pprint
-        from .event import LookupEvent
-        ret = list()
         for e in events:
             event = model_to_dict(e)
             # set name
@@ -144,5 +130,7 @@ class LookupEventGroup(Lookup, dict):
             # id
             event.update({"id": None})
 
-            ret.append(LookupEvent(event))
-        return ret
+            # searson
+            event.update({"season": []})
+
+            yield LookupEvent(event)
