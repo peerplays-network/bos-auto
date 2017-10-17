@@ -1,4 +1,7 @@
 from .lookup import Lookup
+from .rule import LookupRules
+from peerplays.event import Event
+from peerplays.asset import Asset
 from peerplays.rule import Rules
 from peerplays.bettingmarketgroup import (
     BettingMarketGroups, BettingMarketGroup)
@@ -15,100 +18,119 @@ class LookupBettingMarketGroup(Lookup, dict):
             event["name"]["en"],
             bmg["name"]["en"]
         )
+        self.event = event
         self.parent = event
         dict.__init__(
             self,
             bmg
         )
+        # FIXME: Figure out if the name has a variable
+        # FIXME: Figure out if this is a dynamic bmg
 
-        """
-        {'bettingmarkets': [{'name': {'en': {'HomeTeam': None}}},
-                            {'name': {'en': {'AwayTeam': None}}},
-                            {'name': {'en': 'Draw'}}],
-        'dynamic': False,
-        'is_live': True,
-        'name': {'de': 'Handy Cap - {HC}',
-                'display_name': 'Handy Cap - {HC}',
-                'en': 'Handy Cap - {HC}'},
-        'name_parameters': {'HC': 'handy_cap'},
-        'number_betting_markets': 3,
-        'rules': 'R_NFL_MO_1'}
-        """
+    @property
+    def sport(self):
+        return self.parent.sport
 
-        # Figure out if the name has a variable
-        # Figure out if this is a dynamic bmg
-        # define self.rules()
-        # define self.bettingmarkets()
+    @property
+    def rules(self):
+        assert self["rules"] in self.sport["rules"]
+        return LookupRules(self.sport["identifier"], self["rules"])
 
-    """
     def test_operation_equal(self, bmg):
-        lookupdescr = [[k, v] for k, v in self["name"].items()]
+        def is_update(bmg):
+            return any([x in bmg for x in [
+                "betting_market_group_id", "new_description",
+                "new_event_id", "new_rules_id"]])
+
+        lookupdescr = self.names
         chainsdescr = [[]]
-        if "description" in bmg:
-            chainsdescr = bmg["description"]
-            rulesid = bmg["rules_id"]
-            # freeze = ""
-            # delay_bets = ""
-        elif "new_description" in bmg:
-            chainsdescr = bmg["new_description"]
-            rulesid = bmg["new_rules_id"]
-            # freeze = bmg["freeze"]
-            # delay_bets = bmg["delay_bets"]
+        prefix = "new_" if is_update(bmg) else ""
+        chainsdescr = bmg[prefix + "description"]
+        rules_id = bmg[prefix + "rules_id"]
+        event_id = bmg[prefix + "event_id"]
+        if is_update(bmg):
+            frozen = bmg["frozen"]
+            delay_bets = bmg["delay_bets"]
         else:
-            raise ValueError
-        parts = rulesid.split(".")
-        assert len(parts) == 3, \
-            "{} is a strange rule object id".format(rulesid)
-        if int(parts[0]) == 0:
-            rules = False
-        else:
-            rules = Rules(rulesid)
+            frozen = False
+            delay_bets = False
+
+        if rules_id[0] == 1:
+            rules = Rules(rules_id)
+        if event_id[0] == 1:
+            rules = Event(event_id)
+
         if (all([a in chainsdescr for a in lookupdescr]) and
                 all([b in lookupdescr for b in chainsdescr]) and
-                (rules and self["grading"]["rules"] in rules["name"])):
-            # FIXME: How to deal with 'freeze' and 'delay_bets'?!?
+                (event_id == self.event.id) and
+                (rules_id == self.rules.id) and
+                (self.get("frozen", False) == frozen) and
+                (self.get("delay_bets", False) == delay_bets)
+            ):
             return True
 
     def find_id(self):
-        return False
+        # In case the parent is a proposal, we won't
+        # be able to find an id for a child
+        if self.parent.id[0] == "0":
+            return
 
         bmgs = BettingMarketGroups(
-            event_id="0.0.0",         # FIXME: This requires an event
+            event_id=self.parent.id,
             peerplays_instance=self.peerplays)
+        en_descrp = next(filter(lambda x: x[0] == "en", self.names))
+
         for bmg in bmgs:
-            if (
-                ["en", self["name"]["en"]] in bmg["description"]
-            ):
+            if en_descrp in bmg["description"]:
                 return bmg["id"]
 
     def is_synced(self):
         if "id" in self:
-            sport = BettingMarketGroup(self["id"])
-            if self.test_operation_equal(sport):
+            bmg = BettingMarketGroup(self["id"])
+            if self.test_operation_equal(bmg):
                 return True
         return False
 
     def propose_new(self):
-        descriptions = [[k, v] for k, v in self["description"].items()]
-        self._use_proposal_buffer()
-        self.peerplays.betting_market_rules_create(
-            descriptions,
-            event_id=self["event_id"],
-            rules_id=0,
-            account=self.proposing_account
+        asset = Asset(
+            self["asset"],
+            peerplays_instance=self.peerplays)
+        self.peerplays.betting_market_group_create(
+            self.names,
+            event_id=self.event.id,
+            rules_id=self.rules.id,
+            asset=asset["id"],
+            account=self.proposing_account,
+            append_to=Lookup.proposal_buffer
         )
-        # FIXME --- get rules ID by looking through the rules associated with
-        # this sport and see if an id is provided .. if not, complain!
 
     def propose_update(self):
-        pass
-        # names = [[k, v] for k, v in self["name"].items()]
-        # descriptions = [[k, v] for k, v in self["description"].items()]
-        # self._use_proposal_buffer()
-        # FIXME here!
-        # self.peerplays.sport_update(
-        #    self["id"],
-        #    names=names,
-        #    descriptions=descriptions,
-        #    account=self.proposing_account)
-    """
+        asset = Asset(
+            self["asset"],
+            peerplays_instance=self.peerplays)
+        self.peerplays.betting_market_group_update(
+            self.id,
+            self.names,
+            event_id=self.event.id,
+            rules_id=self.rules.id,
+            frozen=self.get("frozen", False),
+            delay_bets=self.get("delay_bets", False),
+            account=self.proposing_account,
+            append_to=Lookup.proposal_buffer
+        )
+
+    @property
+    def bettingmarkets(self):
+        from pprint import pprint
+        from .bettingmarket import LookupBettingMarket
+        for market in self["bettingmarkets"]:
+            yield LookupBettingMarket(market, self)
+
+    @property
+    def names(self):
+        return [
+            [
+                k,
+                v
+            ] for k, v in self["name"].items()
+        ]

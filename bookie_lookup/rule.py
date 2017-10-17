@@ -37,6 +37,20 @@ class LookupRules(Lookup, dict):
                 return True
         return False
 
+    def test_operation_equal(self, operation):
+        lookupnames = [[k, v] for k, v in self["description"].items()]
+        chainsnames = [[]]
+        if "name" in operation:
+            chainsnames = operation["description"]
+        elif "new_name" in operation:
+            chainsnames = operation["new_description"]
+        else:
+            raise ValueError
+
+        if (all([a in chainsnames for a in lookupnames]) and
+                all([b in lookupnames for b in chainsnames])):
+            return True
+
     def propose_new(self):
         names = [[k, v] for k, v in self["name"].items()]
         descriptions = [[k, v] for k, v in self["description"].items()]

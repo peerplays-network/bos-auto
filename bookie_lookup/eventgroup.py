@@ -37,7 +37,7 @@ class LookupEventGroup(Lookup, dict):
         )
 
     def test_operation_equal(self, eventgroup):
-        lookupnames = [[k, v] for k, v in self["name"].items()]
+        lookupnames = self.names
         chainsnames = [[]]
         if "name" in eventgroup:
             chainsnames = eventgroup["name"]
@@ -56,20 +56,26 @@ class LookupEventGroup(Lookup, dict):
 
         if (all([a in chainsnames for a in lookupnames]) and
                 all([b in lookupnames for b in chainsnames]) and
-                (sport_id and self["sport_id"] == sport_id)):
+                (sport_id and self.parent.id == sport_id)):
             return True
 
     def find_id(self):
-        if "sport_id" in self and self["sport_id"]:
-            egs = EventGroups(
-                self["sport_id"],
-                peerplays_instance=self.peerplays)
-            for eg in egs:
-                if (
-                    ["en", self["name"]["en"]] in eg["name"] and
-                    self["sport_id"] == eg["sport_id"]
-                ):
-                    return eg["id"]
+        # In case the parent is a proposal, we won't
+        # be able to find an id for a child
+        if self.parent.id[0] == "0":
+            return
+
+        egs = EventGroups(
+            self.parent.id,
+            peerplays_instance=self.peerplays)
+        en_descrp = next(filter(lambda x: x[0] == "en", self.names))
+
+        for eg in egs:
+            if (
+                en_descrp in eg["name"] and
+                self.parent.id == eg["sport_id"]
+            ):
+                return eg["id"]
 
     def is_synced(self):
         if "id" in self:
@@ -79,19 +85,17 @@ class LookupEventGroup(Lookup, dict):
         return False
 
     def propose_new(self):
-        names = [[k, v] for k, v in self["name"].items()]
         self.peerplays.event_group_create(
-            names,
+            self.names,
             sport_id=self.parent_id,
             account=self.proposing_account,
             append_to=Lookup.proposal_buffer
         )
 
     def propose_update(self):
-        names = [[k, v] for k, v in self["name"].items()]
         self.peerplays.event_group_update(
             self["id"],
-            names=names,
+            names=self.names,
             sport_id=self.parent_id,
             account=self.proposing_account,
             append_to=Lookup.proposal_buffer
@@ -134,3 +138,12 @@ class LookupEventGroup(Lookup, dict):
             event.update({"season": []})
 
             yield LookupEvent(event)
+
+    @property
+    def names(self):
+        return [
+            [
+                k,
+                v
+            ] for k, v in self["name"].items()
+        ]

@@ -1,3 +1,4 @@
+import re
 import sys
 from .lookup import Lookup
 from .sport import LookupSport
@@ -30,6 +31,21 @@ class LookupEvent(Lookup, dict):
         self.identifier = "{}/{}".format(
             self.parent["name"]["en"], self["name"]["en"])
 
+        teams = re.split(r"[:@]", self["teams"])
+        assert len(teams) == 2, (
+            "Only matches with two players are allowed! "
+            "Here: {}".format(str(teams))
+        )
+        self["teams"] = teams
+
+    @property
+    def sport(self):
+        return LookupSport(self["sport_identifier"])
+
+    @property
+    def teams(self):
+        return self["teams"]
+
     @property
     def eventgroup(self):
         """ Get the event group that corresponds to this event
@@ -40,7 +56,7 @@ class LookupEvent(Lookup, dict):
             self["eventgroup_identifier"]))
 
     def test_operation_equal(self, event):
-        lookupnames = [[k, v] for k, v in self["name"].items()]
+        lookupnames = self.names
         chainsnames = [[]]
         if "name" in event:
             chainsnames = event["name"]
@@ -63,11 +79,18 @@ class LookupEvent(Lookup, dict):
             return True
 
     def find_id(self):
+        # In case the parent is a proposal, we won't
+        # be able to find an id for a child
+        if self.parent.id[0] == "0":
+            return
+
         events = Events(
             self.parent_id,
             peerplays_instance=self.peerplays)
+        en_descrp = next(filter(lambda x: x[0] == "en", self.names))
+
         for event in events:
-            if ["en", self["name"]["en"]] in event["name"]:
+            if en_descrp in event["name"]:
                 return event["id"]
 
     def is_synced(self):
@@ -78,9 +101,8 @@ class LookupEvent(Lookup, dict):
         return False
 
     def propose_new(self):
-        names = [[k, v] for k, v in self["name"].items()]
         self.peerplays.event_create(
-            names,
+            self.names,
             self["season"],
             self["start_time"],
             event_group_id=self.parent_id,
@@ -89,20 +111,15 @@ class LookupEvent(Lookup, dict):
         )
 
     def propose_update(self):
-        names = [[k, v] for k, v in self["name"].items()]
         self.peerplays.event_update(
             self["id"],
-            names,
+            self.names,
             self["season"],
             self["start_time"],
             event_group_id=self.parent_id,
             account=self.proposing_account,
             append_to=Lookup.proposal_buffer
         )
-
-    @property
-    def eventscheme(self):
-        return self.eventgroup["eventscheme"]
 
     def lookup_participants(self):
         name = self.eventgroup["participants"]
@@ -114,7 +131,19 @@ class LookupEvent(Lookup, dict):
             yield self.eventgroup.sport["bettingmarketgroups"][name]
 
     @property
+    def names(self):
+        return [
+            [
+                k,
+                v
+            ] for k, v in self["name"].items()
+        ]
+
+    @property
+    def eventscheme(self):
+        return self.eventgroup["eventscheme"]
+
+    @property
     def bettingmarketgroups(self):
-        from pprint import pprint
         for bmg in self.lookup_bettingmarketgroups():
             yield LookupBettingMarketGroup(bmg, event=self)

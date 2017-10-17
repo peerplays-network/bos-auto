@@ -51,7 +51,7 @@ class LookupSport(Lookup, dict):
                 self.identifier, e)
 
     def test_operation_equal(self, sport):
-        lookupnames = [[k, v] for k, v in self["name"].items()]
+        lookupnames = self.names
         chainsnames = [[]]
         if "name" in sport:
             chainsnames = sport["name"]
@@ -65,10 +65,9 @@ class LookupSport(Lookup, dict):
 
     def find_id(self):
         sports = Sports(peerplays_instance=self.peerplays)
+        en_descrp = next(filter(lambda x: x[0] == "en", self.names))
         for sport in sports:
-            if (
-                ["en", self["name"]["en"]] in sport["name"]
-            ):
+            if en_descrp in sport["name"]:
                 return sport["id"]
 
     def is_synced(self):
@@ -79,16 +78,23 @@ class LookupSport(Lookup, dict):
         return False
 
     def propose_new(self):
-        names = [[k, v] for k, v in self["name"].items()]
         self.peerplays.sport_create(
-            names,
+            self.names,
             account=self.proposing_account,
             append_to=Lookup.proposal_buffer)
 
     def propose_update(self):
-        names = [[k, v] for k, v in self["name"].items()]
         self.peerplays.sport_update(
             self["id"],
-            names=names,
+            names=self.names,
             account=self.proposing_account,
             append_to=Lookup.proposal_buffer)
+
+    @property
+    def names(self):
+        return [
+            [
+                k,
+                v
+            ] for k, v in self["name"].items()
+        ]

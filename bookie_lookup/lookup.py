@@ -9,6 +9,10 @@ from peerplays.storage import configStorage as config
 from . import log, UPDATE_PENDING_NEW, UPDATE_PROPOSING_NEW
 
 
+class ObjectNotFoundError(Exception):
+    pass
+
+
 class Lookup(dict):
 
     #: Singelton to store data and prevent rereading if Lookup is
@@ -262,7 +266,7 @@ class Lookup(dict):
             if id:
                 log.error((
                     "Object {} carries id {} on the blockchain. "
-                    "Please update your  lookup"
+                    "Please update your lookup"
                 ).format(self.identifier, id))
                 self["id"] = id
             elif has_pending_new:
@@ -311,17 +315,10 @@ class Lookup(dict):
     def get_buffered_operations(self):
         # Obtain the proposals that we have in our buffer
         from peerplaysbase.operationids import getOperationNameForId
-        for oid, operation in enumerate(
+        for oid, op in enumerate(
             Lookup.proposal_buffer.list_operations()
         ):
-            if getOperationNameForId(operation[0]) == "proposal_create":
-                for poid, props in enumerate(
-                    operation[1].get("proposed_ops", [])
-                ):
-                    yield props["op"], "0.0.0", "0.0.%d" % poid
-            # If we refer to an object within a transaction, we can use 0.0.x
-            # with x being the index of the operation in the transaction
-            yield operation, "0.0.0", "0.0.%d" % oid
+            yield op.json(), "0.0.0", "0.0.%d" % oid
 
     def approve(self, pid, oid):
         """ Approve a proposal
@@ -342,6 +339,9 @@ class Lookup(dict):
             :param str pid: Proposal id
             :param int oid: Operation number within the proposal
         """
+        if pid == "0.0.0":
+            log.info("Cannot approve pending-for-broadcast proposals")
+            return
         Lookup.approval_map[pid][oid] = True
         approved_read_for_delete = []
         for p in Lookup.approval_map:
@@ -405,14 +405,23 @@ class Lookup(dict):
             :raises IdNotFoundError: if the object couldn't be matched to an
                 object on chain
         """
+        # Do we already know the id?
         if "id" in self and self["id"]:
             return self["id"]
+        # Try find the id on the blockchain
         found = self.find_id()
-        assert found, \
+        if found:
+            return found
+
+        # Try find the id in the pending proposals
+        found = self.has_pending_new()
+        if found:
+            return found[1]
+
+        raise ObjectNotFoundError(
             "Object not found on chain: {}: {}".format(
                 self.__class__.__name__,
-                str(self.items())
-            )
+                str(self.items())))
         return found
 
     def obtain_parent_id(self, parent, key="id"):
@@ -431,7 +440,7 @@ class Lookup(dict):
 
     @property
     def parent_id(self):
-        return self.obtain_parent_id(self.parent)
+        return self.parent.id
 
     # Prototypes #############################################################
     def test_operation_equal(self, sport):
