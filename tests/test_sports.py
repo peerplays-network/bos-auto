@@ -10,6 +10,7 @@ class Testcases(unittest.TestCase):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+        Lookup._clear()
         self.lookup = Lookup(
             os.path.join(
                 os.path.dirname(os.path.realpath(__file__)),
@@ -30,9 +31,9 @@ class Testcases(unittest.TestCase):
         for sport in sports:
             self.assertIsInstance(sport, LookupSport)
         self.assertEqual(len(sports), 1)
-        self.assertEquals(sports[0]["identifier"], "AmericanFootball")
+        self.assertEqual(sports[0]["identifier"], "AmericanFootball")
 
     def test_get_sport(self):
         sport = self.lookup.get_sport("AmericanFootball")
-        self.assertEquals(sport["identifier"], "AmericanFootball")
-        self.assertEquals(sport["id"], sport.id)
+        self.assertEqual(sport["identifier"], "AmericanFootball")
+        self.assertEqual(sport["id"], sport.id)

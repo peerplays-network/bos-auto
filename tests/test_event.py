@@ -40,6 +40,7 @@ class Testcases(unittest.TestCase):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+        Lookup._clear()
         Lookup(
             os.path.join(
                 os.path.dirname(os.path.realpath(__file__)),

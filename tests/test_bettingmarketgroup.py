@@ -8,6 +8,7 @@ from peerplays.eventgroup import EventGroups
 from bookie_lookup.lookup import Lookup
 from bookie_lookup.eventgroup import LookupEventGroup
 from bookie_lookup.event import LookupEvent, MissingMandatoryValue
+from bookie_lookup.bettingmarketgroup import LookupBettingMarketGroup
 from peerplays.utils import parse_time
 import datetime
 
@@ -44,6 +45,7 @@ class Testcases(unittest.TestCase):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+        Lookup._clear()
         Lookup(
             os.path.join(
                 os.path.dirname(os.path.realpath(__file__)),
@@ -56,6 +58,9 @@ class Testcases(unittest.TestCase):
         )
         event = LookupEvent(miniumum_event_dict)
         self.lookup = next(event.bettingmarketgroups)
+
+    def test_init(self):
+        self.assertIsInstance(self.lookup, LookupBettingMarketGroup)
 
     def test_test_operation_equal(self):
         for x in test_operation_dicts:
@@ -85,6 +90,7 @@ class Testcases(unittest.TestCase):
             # Ensure our id is XXX
             tmp = self.lookup.get("id", None)
             self.lookup["id"] = "XXX"
+            pprint(self.lookup)
             self.assertTrue(self.lookup.is_synced())
             self.lookup["id"] = tmp
 

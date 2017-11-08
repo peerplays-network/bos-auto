@@ -8,6 +8,7 @@ from peerplays.eventgroup import EventGroups
 from bookie_lookup.lookup import Lookup
 from bookie_lookup.eventgroup import LookupEventGroup
 from bookie_lookup.event import LookupEvent, MissingMandatoryValue
+from bookie_lookup.bettingmarket import LookupBettingMarket
 from peerplays.utils import parse_time
 import datetime
 
@@ -40,6 +41,7 @@ class Testcases(unittest.TestCase):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+        Lookup._clear()
         Lookup(
             os.path.join(
                 os.path.dirname(os.path.realpath(__file__)),
@@ -55,6 +57,9 @@ class Testcases(unittest.TestCase):
         # overwrite the BMG id since we cannot look on the chain
         bmg["id"] = "1.20.0"
         self.lookup = next(bmg.bettingmarkets)
+
+    def test_init(self):
+        self.assertIsInstance(self.lookup, LookupBettingMarket)
 
     def test_test_operation_equal(self):
         for x in test_operation_dicts:

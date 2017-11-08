@@ -49,9 +49,8 @@ class Lookup(dict):
         # self._cwd = os.path.dirname(os.path.realpath(__file__))
         self._cwd = os.getcwd()
 
-        if not sports_folder and not Lookup.sports_folder:
-            sports_folder = "bookiesports"
-        Lookup.sports_folder = sports_folder
+        if Lookup.sports_folder is None:
+            Lookup.sports_folder = sports_folder or "bookiesports"
 
         if not proposing_account:
             if "default_account" in config:
@@ -79,9 +78,11 @@ class Lookup(dict):
                 os.path.join(
                     self._cwd,
                     Lookup.sports_folder)):
+                # Reset the sports_folder (since it is a singelton)
+                Lookup.sports_folder = None
                 raise SportsNotFoundError(
                     "You need to clone the bookiesports repository into your "
-                    "working directory first!"
+                    "working directory first! ({})".format(Lookup.sports_folder)
                 )
 
             # Load sports
@@ -90,6 +91,14 @@ class Lookup(dict):
             # _tests
             self._tests()
 
+    @staticmethod
+    def _clear():
+        Lookup.data = dict()
+        Lookup.approval_map = {}
+        Lookup.direct_buffer = None
+        Lookup.proposal_buffer = None
+        Lookup.sports_folder = None
+
     def clear_proposal_buffer(self):
         Lookup.proposal_buffer_tx = self.peerplays.new_tx()
         Lookup.proposal_buffer = self.peerplays.new_proposal(
@@ -97,7 +106,7 @@ class Lookup(dict):
             proposer=self.proposing_account)
 
     def clear_direct_buffer(self):
-            Lookup.direct_buffer = self.peerplays.new_tx()
+        Lookup.direct_buffer = self.peerplays.new_tx()
 
     def broadcast(self):
         """ Since we are using multiple txbuffers, we need to do multiple
