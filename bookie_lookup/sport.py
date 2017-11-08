@@ -78,13 +78,13 @@ class LookupSport(Lookup, dict):
         return False
 
     def propose_new(self):
-        self.peerplays.sport_create(
+        return self.peerplays.sport_create(
             self.names,
             account=self.proposing_account,
             append_to=Lookup.proposal_buffer)
 
     def propose_update(self):
-        self.peerplays.sport_update(
+        return self.peerplays.sport_update(
             self["id"],
             names=self.names,
             account=self.proposing_account,

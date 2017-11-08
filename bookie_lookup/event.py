@@ -1,5 +1,6 @@
 import re
 import sys
+import datetime
 from .lookup import Lookup
 from .sport import LookupSport
 from peerplays.event import Event, Events
@@ -8,12 +9,9 @@ from .eventgroup import LookupEventGroup
 from .bettingmarketgroup import LookupBettingMarketGroup
 from . import log
 
-try:
-    from bookied_scrapers.sinks.mysql_data_sink import MysqlDataSink
-    from bookied_scrapers.sinks.db_data_sink_model import RawGameInfo, RawEvent, RawMarketsInfo, ResolvedGameEvent
-except ImportError:
-    log.error("Please install bookied-scrapers")
-    sys.exit(1)
+
+class MissingMandatoryValue(Exception):
+    pass
 
 
 class LookupEvent(Lookup, dict):
@@ -21,12 +19,35 @@ class LookupEvent(Lookup, dict):
     operation_update = "event_update"
     operation_create = "event_create"
 
-    def __init__(self, *args):
+    def __init__(self, *args, **kwargs):
         Lookup.__init__(self)
+
+        # Initialise our 'dict'
         if len(args) == 1 and isinstance(args[0], dict):
             dict.__init__(self, args[0])
+        elif len(args) == 0 and isinstance(kwargs, dict):
+            dict.__init__(self, **kwargs)
         else:
             raise ValueError
+
+        for mandatory in [
+            "name",
+            "teams",
+            "eventgroup_identifier",
+            "sport_identifier",
+            "season",
+            "start_time"
+        ]:
+            if mandatory not in self:
+                raise MissingMandatoryValue(
+                    "A value for '{}' is mandatory".format(
+                        mandatory
+                    )
+                )
+
+        if not isinstance(self["start_time"], datetime.datetime):
+            raise ValueError("'start_time' must be instance of datetime.datetime()")
+
         self.parent = self.eventgroup
         self.identifier = "{}/{}".format(
             self.parent["name"]["en"], self["name"]["en"])
@@ -36,7 +57,7 @@ class LookupEvent(Lookup, dict):
             "Only matches with two players are allowed! "
             "Here: {}".format(str(teams))
         )
-        self["teams"] = teams
+        self["teams"] = [t.strip() for t in teams]
 
     @property
     def sport(self):
@@ -56,6 +77,8 @@ class LookupEvent(Lookup, dict):
             self["eventgroup_identifier"]))
 
     def test_operation_equal(self, event):
+        # FIXME: This might need additional data to ensure the events are equal
+        # start_time, is_live_market
         lookupnames = self.names
         chainsnames = [[]]
         if "name" in event:
@@ -75,7 +98,7 @@ class LookupEvent(Lookup, dict):
 
         if (all([a in chainsnames for a in lookupnames]) and
                 all([b in lookupnames for b in chainsnames]) and
-                (event_group_id and self.parent_id == event_group_id)):
+                (not event_group_id or self.parent_id == event_group_id)):
             return True
 
     def find_id(self):
@@ -101,9 +124,9 @@ class LookupEvent(Lookup, dict):
         return False
 
     def propose_new(self):
-        self.peerplays.event_create(
+        return self.peerplays.event_create(
             self.names,
-            self["season"],
+            self.season,
             self["start_time"],
             event_group_id=self.parent_id,
             account=self.proposing_account,
@@ -111,10 +134,10 @@ class LookupEvent(Lookup, dict):
         )
 
     def propose_update(self):
-        self.peerplays.event_update(
+        return self.peerplays.event_update(
             self["id"],
             self.names,
-            self["season"],
+            self.season,
             self["start_time"],
             event_group_id=self.parent_id,
             account=self.proposing_account,
@@ -137,6 +160,15 @@ class LookupEvent(Lookup, dict):
                 k,
                 v
             ] for k, v in self["name"].items()
+        ]
+
+    @property
+    def season(self):
+        return [
+            [
+                k,
+                v
+            ] for k, v in self["season"].items()
         ]
 
     @property

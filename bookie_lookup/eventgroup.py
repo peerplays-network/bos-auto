@@ -1,5 +1,5 @@
 import sys
-from .lookup import Lookup
+from .lookup import Lookup, LookupDatabaseConfig
 from peerplays.eventgroup import EventGroups, EventGroup
 from . import log
 
@@ -56,7 +56,7 @@ class LookupEventGroup(Lookup, dict):
 
         if (all([a in chainsnames for a in lookupnames]) and
                 all([b in lookupnames for b in chainsnames]) and
-                (sport_id and self.parent.id == sport_id)):
+                (not sport_id or self.parent.id == sport_id)):
             return True
 
     def find_id(self):
@@ -78,14 +78,14 @@ class LookupEventGroup(Lookup, dict):
                 return eg["id"]
 
     def is_synced(self):
-        if "id" in self:
+        if "id" in self and self["id"]:
             eventgroup = EventGroup(self["id"])
             if self.test_operation_equal(eventgroup):
                 return True
         return False
 
     def propose_new(self):
-        self.peerplays.event_group_create(
+        return self.peerplays.event_group_create(
             self.names,
             sport_id=self.parent_id,
             account=self.proposing_account,
@@ -93,7 +93,7 @@ class LookupEventGroup(Lookup, dict):
         )
 
     def propose_update(self):
-        self.peerplays.event_group_update(
+        return self.peerplays.event_group_update(
             self["id"],
             names=self.names,
             sport_id=self.parent_id,
@@ -105,13 +105,10 @@ class LookupEventGroup(Lookup, dict):
     def events(self):
         from .event import LookupEvent
 
-        # FIXME
-        class Db:
-            name = "db_peerplays"
-            user = "peerplays"
-            password = "I<3storage"
-
-        MysqlDataSink(Db.name, Db.user, Db.password)
+        MysqlDataSink(
+            LookupDatabaseConfig.name,
+            LookupDatabaseConfig.user,
+            LookupDatabaseConfig.password)
         events = (
             ResolvedGameEvent.select(
                 ResolvedGameEvent

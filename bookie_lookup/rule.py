@@ -38,7 +38,7 @@ class LookupRules(Lookup, dict):
         return False
 
     def test_operation_equal(self, operation):
-        lookupnames = [[k, v] for k, v in self["description"].items()]
+        lookupnames = self.descriptions
         chainsnames = [[]]
         if "name" in operation:
             chainsnames = operation["description"]
@@ -52,22 +52,36 @@ class LookupRules(Lookup, dict):
             return True
 
     def propose_new(self):
-        names = [[k, v] for k, v in self["name"].items()]
-        descriptions = [[k, v] for k, v in self["description"].items()]
-        self.peerplays.betting_market_rules_create(
-            names,
-            descriptions,
+        return self.peerplays.betting_market_rules_create(
+            self.names,
+            self.descriptions,
             account=self.proposing_account,
             append_to=Lookup.proposal_buffer
         )
 
     def propose_update(self):
-        names = [[k, v] for k, v in self["name"].items()]
-        descriptions = [[k, v] for k, v in self["description"].items()]
-        self.peerplays.sport_update(
+        return self.peerplays.betting_market_rules_update(
             self["id"],
-            names=names,
-            descriptions=descriptions,
+            names=self.names,
+            descriptions=self.descriptions,
             account=self.proposing_account,
             append_to=Lookup.proposal_buffer
         )
+
+    @property
+    def names(self):
+        return [
+            [
+                k,
+                v
+            ] for k, v in self["name"].items()
+        ]
+
+    @property
+    def descriptions(self):
+        return [
+            [
+                k,
+                v
+            ] for k, v in self["description"].items()
+        ]

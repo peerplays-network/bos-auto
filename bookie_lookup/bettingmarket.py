@@ -37,23 +37,18 @@ class LookupBettingMarket(Lookup, dict):
     def group(self):
         return self.parent
 
-    @property
-    def description(self):
-        """ This method ensures that the description has the proper format as
-            well as the proper string replacements for teams
-        """
-        return [
-            [
-                k,
-                v.format(**self)   # replace variables
-            ] for k, v in self["name"].items()
-        ]
-
     def test_operation_equal(self, bmg):
         def is_update(bmg):
             return any([x in bmg for x in [
                 "new_group_id", "new_description",
-                "new_payout_condition", "betting_market_id"]])
+                "betting_market_id"]])
+
+        def is_create(bmg):
+            return any([x in bmg for x in [
+                "group_id", "description"]])
+
+        if not is_create(bmg) and not is_update(bmg):
+            raise ValueError
 
         lookupdescr = self.description
         chainsdescr = [[]]
@@ -61,13 +56,15 @@ class LookupBettingMarket(Lookup, dict):
         chainsdescr = bmg[prefix + "description"]
         group_id = bmg[prefix + "group_id"]
 
-        if group_id[0] == 1:
+        test_group = group_id[0] == 1
+        if test_group:
             BettingMarketGroup(group_id)
 
         if (all([a in chainsdescr for a in lookupdescr]) and
                 all([b in lookupdescr for b in chainsdescr]) and
-                (group_id == self.group.id)):
+                (not test_group or group_id == self.group.id)):
             return True
+        return False
 
     def find_id(self):
         # In case the parent is a proposal, we won't
@@ -76,7 +73,7 @@ class LookupBettingMarket(Lookup, dict):
             return
 
         bms = BettingMarkets(
-            betting_market_group_id=self.parent.id,
+            self.parent.id,
             peerplays_instance=self.peerplays)
         en_descrp = next(filter(lambda x: x[0] == "en", self.description))
 
@@ -92,7 +89,7 @@ class LookupBettingMarket(Lookup, dict):
         return False
 
     def propose_new(self):
-        self.peerplays.betting_market_create(
+        return self.peerplays.betting_market_create(
             description=self.description,
             payout_condition=[],
             group_id=self.parent.id,
@@ -101,11 +98,23 @@ class LookupBettingMarket(Lookup, dict):
         )
 
     def propose_update(self):
-        self.peerplays.betting_market_group_update(
+        return self.peerplays.betting_market_update(
             self.id,
             payout_condition=[],
-            descriptions=self.description,
+            description=self.description,
             group_id=self.parent.id,
             account=self.proposing_account,
             append_to=Lookup.proposal_buffer
         )
+
+    @property
+    def description(self):
+        """ This method ensures that the description has the proper format as
+            well as the proper string replacements for teams
+        """
+        return [
+            [
+                k,
+                v.format(**self)   # replace variables
+            ] for k, v in self["name"].items()
+        ]

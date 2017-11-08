@@ -13,6 +13,16 @@ class ObjectNotFoundError(Exception):
     pass
 
 
+class SportsNotFoundError(Exception):
+    pass
+
+
+class LookupDatabaseConfig:
+    name = "db_peerplays"
+    user = "peerplays"
+    password = "I<3storage"
+
+
 class Lookup(dict):
 
     #: Singelton to store data and prevent rereading if Lookup is
@@ -22,10 +32,11 @@ class Lookup(dict):
 
     direct_buffer = None
     proposal_buffer = None
+    sports_folder = None
 
     def __init__(
         self,
-        sports_folder="bookiesports",
+        sports_folder=None,
         peerplays_instance=None,
         proposing_account=None,
         approving_account=None,
@@ -37,6 +48,10 @@ class Lookup(dict):
         self.peerplays = peerplays_instance or shared_peerplays_instance()
         # self._cwd = os.path.dirname(os.path.realpath(__file__))
         self._cwd = os.getcwd()
+
+        if not sports_folder and not Lookup.sports_folder:
+            sports_folder = "bookiesports"
+        Lookup.sports_folder = sports_folder
 
         if not proposing_account:
             if "default_account" in config:
@@ -54,39 +69,35 @@ class Lookup(dict):
 
         # We define two transaction buffers
         if not Lookup.direct_buffer:
-            Lookup.direct_buffer = self.peerplays.new_tx()
+            self.clear_direct_buffer()
         if not Lookup.proposal_buffer:
-            Lookup.proposal_buffer_tx = self.peerplays.new_tx()
-            Lookup.proposal_buffer = self.peerplays.new_proposal(
-                Lookup.proposal_buffer_tx,
-                proposer=self.proposing_account)
+            self.clear_proposal_buffer()
 
-        if not self.data:
+        # Do not reload sports if already stored in data
+        if not Lookup.data:
             if not os.path.isdir(
                 os.path.join(
                     self._cwd,
-                    sports_folder)):
-                log.error(
+                    Lookup.sports_folder)):
+                raise SportsNotFoundError(
                     "You need to clone the bookiesports repository into your "
                     "working directory first!"
                 )
-                sys.exit(1)
-            """
-            # Read general data
-            data = self._loadyaml(
-                os.path.join(
-                    self._cwd,
-                    sports_folder,
-                    "index.yaml"
-                ))
-            super(Lookup, self).__init__(data)
-            """
 
             # Load sports
-            self.data["sports"] = self._loadSports(sports_folder)
+            self.data["sports"] = self._loadSports(Lookup.sports_folder)
 
             # _tests
             self._tests()
+
+    def clear_proposal_buffer(self):
+        Lookup.proposal_buffer_tx = self.peerplays.new_tx()
+        Lookup.proposal_buffer = self.peerplays.new_proposal(
+            Lookup.proposal_buffer_tx,
+            proposer=self.proposing_account)
+
+    def clear_direct_buffer(self):
+            Lookup.direct_buffer = self.peerplays.new_tx()
 
     def broadcast(self):
         """ Since we are using multiple txbuffers, we need to do multiple
@@ -102,7 +113,8 @@ class Lookup(dict):
             :param str f: YAML File location
         """
         try:
-            t = yaml.load(open(f))
+            with open(f) as fid:
+                t = yaml.load(fid)
             return t
         except yaml.YAMLError as exc:
             log.error("Error in configuration file {}: {}".format(f, exc))
@@ -314,7 +326,7 @@ class Lookup(dict):
 
     def get_buffered_operations(self):
         # Obtain the proposals that we have in our buffer
-        from peerplaysbase.operationids import getOperationNameForId
+        # from peerplaysbase.operationids import getOperationNameForId
         for oid, op in enumerate(
             Lookup.proposal_buffer.list_operations()
         ):
@@ -408,6 +420,7 @@ class Lookup(dict):
         # Do we already know the id?
         if "id" in self and self["id"]:
             return self["id"]
+
         # Try find the id on the blockchain
         found = self.find_id()
         if found:
@@ -424,23 +437,10 @@ class Lookup(dict):
                 str(self.items())))
         return found
 
-    def obtain_parent_id(self, parent, key="id"):
-        """ Try to obtain the id of the parent object
-        """
-        if key in parent and parent[key]:
-            return parent[key]
-        elif parent.id:
-            return parent.id
-        else:
-            _, id = parent.has_pending_new()
-            assert id, "Could not identify parent id in {}/{}".format(
-                self.__class__.__name__,
-                str(self))
-            return id
-
     @property
     def parent_id(self):
-        return self.parent.id
+        if hasattr(self, "parent"):
+            return self.parent.id
 
     # Prototypes #############################################################
     def test_operation_equal(self, sport):
