@@ -1,7 +1,6 @@
 import os
 import mock
 import unittest
-from pprint import pprint
 from peerplays import PeerPlays
 from peerplays.event import Event
 from peerplays.eventgroup import EventGroups
@@ -32,8 +31,8 @@ test_operation_dicts = [
         "asset_id": "1.3.0",
     }
 ]
-test_find_object_mock = dict(id="XXX", **test_operation_dicts[0])
-test_issynced_object_mock = dict(id="XXX", **test_operation_dicts[0])
+test_find_object_mock = dict(id="YYY", **test_operation_dicts[0])
+test_issynced_object_mock = dict(id="YYY", **test_operation_dicts[0])
 wif = "5KQwrPbwdL6PhXujxW37FSSQZ1JiwsST4cqQzDeyXtP79zkvFD3"
 this_id = "1.20.0"
 is_synced_mock = "peerplays.bettingmarketgroup.BettingMarketGroup.refresh"
@@ -77,7 +76,7 @@ class Testcases(unittest.TestCase):
             find_id_mock,
             new=mockedClass
         ):
-            self.assertEqual(self.lookup.find_id(), "XXX")
+            self.assertEqual(self.lookup.find_id(), "YYY")
 
     def test_is_synced(self):
         def mockedClass(m, *args, **kwargs):
@@ -87,10 +86,9 @@ class Testcases(unittest.TestCase):
             is_synced_mock,
             new=mockedClass
         ):
-            # Ensure our id is XXX
+            # Ensure our id is YYY
             tmp = self.lookup.get("id", None)
-            self.lookup["id"] = "XXX"
-            pprint(self.lookup)
+            self.lookup["id"] = "YYY"
             self.assertTrue(self.lookup.is_synced())
             self.lookup["id"] = tmp
 

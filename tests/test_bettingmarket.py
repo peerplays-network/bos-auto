@@ -1,7 +1,6 @@
 import os
 import mock
 import unittest
-from pprint import pprint
 from peerplays import PeerPlays
 from peerplays.event import Event
 from peerplays.eventgroup import EventGroups

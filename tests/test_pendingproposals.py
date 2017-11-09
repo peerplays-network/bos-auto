@@ -1,7 +1,6 @@
 import os
 import mock
 import unittest
-from pprint import pprint
 from peerplays import PeerPlays
 from bookie_lookup.lookup import Lookup
 from bookie_lookup.sport import LookupSport
@@ -28,6 +27,10 @@ class Testcases(unittest.TestCase):
             )
         )
         self.lookup = LookupSport("AmericanFootball")
+
+    def setUp(self):
+        self.lookup.clear_proposal_buffer()
+        self.lookup.clear_direct_buffer()
 
     def test_search_pending_props(self):
         # Proposal creation

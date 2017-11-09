@@ -13,8 +13,8 @@ test_operation_dicts = [
             "name": [["de", "Amerikanisches Football"], ["en", "American Football"]],
         }
 ]
-test_find_object_mock = dict(id="XXX", **test_operation_dicts[0])
-test_issynced_object_mock = dict(id="XXX", **test_operation_dicts[0])
+test_find_object_mock = dict(id="ZZZ", **test_operation_dicts[0])
+test_issynced_object_mock = dict(id="ZZZ", **test_operation_dicts[0])
 wif = "5KQwrPbwdL6PhXujxW37FSSQZ1JiwsST4cqQzDeyXtP79zkvFD3"
 this_id = "1.16.0"
 is_synced_mock = "peerplays.sport.Sport.refresh"
@@ -54,7 +54,7 @@ class Testcases(unittest.TestCase):
             find_id_mock,
             new=mockedClass
         ):
-            self.assertEqual(self.lookup.find_id(), "XXX")
+            self.assertEqual(self.lookup.find_id(), "ZZZ")
 
     def test_is_synced(self):
         def mockedClass(m, *args, **kwargs):
@@ -64,9 +64,9 @@ class Testcases(unittest.TestCase):
             is_synced_mock,
             new=mockedClass
         ):
-            # Ensure our id is XXX
+            # Ensure our id is ZZZ
             tmp = self.lookup["id"]
-            self.lookup["id"] = "XXX"
+            self.lookup["id"] = "ZZZ"
             self.assertTrue(self.lookup.is_synced())
             self.lookup["id"] = tmp
 

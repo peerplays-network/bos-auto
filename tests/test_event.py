@@ -27,8 +27,8 @@ test_operation_dicts = [
         "start_time": parse_time("2017-09-04T08:00:00")
     }
 ]
-test_find_object_mock = dict(id="XXX", **test_operation_dicts[0])
-test_issynced_object_mock = dict(id="XXX", **test_operation_dicts[0])
+test_find_object_mock = dict(id="ABC", **test_operation_dicts[0])
+test_issynced_object_mock = dict(id="ABC", **test_operation_dicts[0])
 wif = "5KQwrPbwdL6PhXujxW37FSSQZ1JiwsST4cqQzDeyXtP79zkvFD3"
 this_id = "1.18.0"
 is_synced_mock = "peerplays.event.Event.refresh"
@@ -88,7 +88,7 @@ class Testcases(unittest.TestCase):
             find_id_mock,
             new=mockedClass
         ):
-            self.assertEqual(self.lookup.find_id(), "XXX")
+            self.assertEqual(self.lookup.find_id(), "ABC")
 
     def test_is_synced(self):
         def mockedClass(m, *args, **kwargs):
@@ -98,9 +98,9 @@ class Testcases(unittest.TestCase):
             is_synced_mock,
             new=mockedClass
         ):
-            # Ensure our id is XXX
+            # Ensure our id is ABC
             tmp = self.lookup.get("id", None)
-            self.lookup["id"] = "XXX"
+            self.lookup["id"] = "ABC"
             self.assertTrue(self.lookup.is_synced())
             self.lookup["id"] = tmp
 

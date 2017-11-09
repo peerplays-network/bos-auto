@@ -51,6 +51,10 @@ class Lookup(dict):
 
         if Lookup.sports_folder is None:
             Lookup.sports_folder = sports_folder or "bookiesports"
+        elif sports_folder and sports_folder != Lookup.sports_folder:
+            # clear .data
+            Lookup._clear()
+            Lookup.sports_folder = sports_folder
 
         if not proposing_account:
             if "default_account" in config:
@@ -128,7 +132,7 @@ class Lookup(dict):
         except yaml.YAMLError as exc:
             log.error("Error in configuration file {}: {}".format(f, exc))
             sys.exit(1)
-        except:
+        except Exception as e:
             log.error("The file {} is required but doesn't exist!".format(f))
             sys.exit(1)
 

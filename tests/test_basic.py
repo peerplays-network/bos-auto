@@ -1,16 +1,15 @@
 import os
 import unittest
-from pprint import pprint
 from peerplays import PeerPlays
 from bookie_lookup.lookup import Lookup, SportsNotFoundError
 
 
 class Testcases(unittest.TestCase):
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
+    def setUp(self):
         Lookup._clear()
+
+    def test_lookup(self):
         self.lookup = Lookup(
             os.path.join(
                 os.path.dirname(os.path.realpath(__file__)),
@@ -18,8 +17,6 @@ class Testcases(unittest.TestCase):
             ),
             peerplays_instance=PeerPlays(nobroadcast=True)
         )
-
-    def test_lookup(self):
         self.assertIsInstance(self.lookup, dict)
         self.assertIsInstance(self.lookup.peerplays, PeerPlays)
         self.assertTrue(self.lookup.peerplays.nobroadcast)
@@ -39,7 +36,6 @@ class Testcases(unittest.TestCase):
         self.assertEqual(lookup.approving_account, "init1")
         self.assertEqual(lookup.proposing_account, "init0")
 
+    def test_nonexistingsports(self):
         with self.assertRaises(SportsNotFoundError):
-            Lookup._clear()
             Lookup("/tmp/random-non-exiting-sport")
-            Lookup._clear()

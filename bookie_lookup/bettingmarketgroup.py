@@ -55,8 +55,6 @@ class LookupBettingMarketGroup(Lookup, dict):
 
     def test_operation_equal(self, bmg):
         def is_update(bmg):
-            from pprint import pprint
-            pprint(bmg.items())
             return any([x in bmg for x in [
                 "betting_market_group_id", "new_description",
                 "new_event_id", "new_rules_id"]])

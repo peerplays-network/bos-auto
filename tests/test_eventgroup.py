@@ -28,8 +28,8 @@ test_operation_dicts = [
             "new_sport_id": "0.0.0"
         }
 ]
-test_find_object_mock = dict(id="XXX", **test_operation_dicts[0])
-test_issynced_object_mock = dict(id="XXX", **test_operation_dicts[0])
+test_find_object_mock = dict(id="ABB", **test_operation_dicts[0])
+test_issynced_object_mock = dict(id="ABB", **test_operation_dicts[0])
 wif = "5KQwrPbwdL6PhXujxW37FSSQZ1JiwsST4cqQzDeyXtP79zkvFD3"
 this_id = "1.17.0"
 is_synced_mock = "peerplays.eventgroup.EventGroup.refresh"
@@ -80,7 +80,7 @@ class Testcases(unittest.TestCase):
             find_id_mock,
             new=mockedClass
         ):
-            self.assertEqual(self.lookup.find_id(), "XXX")
+            self.assertEqual(self.lookup.find_id(), "ABB")
 
     def test_is_synced(self):
         def mockedClass(m, *args, **kwargs):
@@ -90,9 +90,9 @@ class Testcases(unittest.TestCase):
             is_synced_mock,
             new=mockedClass
         ):
-            # Ensure our id is XXX
+            # Ensure our id is ABB
             tmp = self.lookup["id"]
-            self.lookup["id"] = "XXX"
+            self.lookup["id"] = "ABB"
             self.assertTrue(self.lookup.is_synced())
             self.lookup["id"] = tmp
 
