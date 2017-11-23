@@ -12,11 +12,24 @@ class MissingMandatoryValue(Exception):
 
 
 class LookupBettingMarketGroup(Lookup, dict):
+    """ Lookup Class for betting market groups
+
+        :param dict bmg: Lookup content (files) for the BMG
+        :param LookupEvent event: Parent LookupEvent for BMG
+        :param dict extra_data: Optionally provide additional data that is
+               stored in the same dictionary
+
+    """
 
     operation_update = "betting_market_group_update"
     operation_create = "betting_market_group_create"
 
-    def __init__(self, bmg, event):
+    def __init__(
+        self,
+        bmg,
+        event,
+        extra_data={}
+    ):
         Lookup.__init__(self)
         self.identifier = "{}/{}".format(
             event["name"]["en"],
@@ -24,7 +37,8 @@ class LookupBettingMarketGroup(Lookup, dict):
         )
         self.event = event
         self.parent = event
-        dict.__init__(
+        dict.__init__(self, extra_data)
+        dict.update(
             self,
             bmg
         )
@@ -46,14 +60,21 @@ class LookupBettingMarketGroup(Lookup, dict):
 
     @property
     def sport(self):
+        """ Return the sport for this BMG
+        """
         return self.parent.sport
 
     @property
     def rules(self):
+        """ Return instance of LookupRules for this BMG
+        """
         assert self["rules"] in self.sport["rules"]
         return LookupRules(self.sport["identifier"], self["rules"])
 
     def test_operation_equal(self, bmg):
+        """ This method checks if an object or operation on the blockchain
+            has the same content as an object in the  lookup
+        """
         def is_update(bmg):
             return any([x in bmg for x in [
                 "betting_market_group_id", "new_description",
@@ -101,6 +122,12 @@ class LookupBettingMarketGroup(Lookup, dict):
         return False
 
     def find_id(self):
+        """ Try to find an id for the object of the  lookup on the
+            blockchain
+
+            ... note:: This only checks if a sport exists with the same name in
+                       **ENGLISH**!
+        """
         # In case the parent is a proposal, we won't
         # be able to find an id for a child
         if self.parent.id[0] == "0":
@@ -116,6 +143,8 @@ class LookupBettingMarketGroup(Lookup, dict):
                 return bmg["id"]
 
     def is_synced(self):
+        """ Test if data on chain matches lookup
+        """
         if "id" in self:
             bmg = BettingMarketGroup(self["id"])
             if self.test_operation_equal(bmg):
@@ -123,6 +152,8 @@ class LookupBettingMarketGroup(Lookup, dict):
         return False
 
     def propose_new(self):
+        """ Propose operation to create this object
+        """
         asset = Asset(
             self["asset"],
             peerplays_instance=self.peerplays)
@@ -136,6 +167,8 @@ class LookupBettingMarketGroup(Lookup, dict):
         )
 
     def propose_update(self):
+        """ Propose to update this object to match  lookup
+        """
         return self.peerplays.betting_market_group_update(
             self.id,
             self.names,
@@ -149,12 +182,19 @@ class LookupBettingMarketGroup(Lookup, dict):
 
     @property
     def bettingmarkets(self):
+        """ Return instances of LookupBettingMarket for this BMG
+        """
         from .bettingmarket import LookupBettingMarket
         for market in self["bettingmarkets"]:
-            yield LookupBettingMarket(market, self)
+            yield LookupBettingMarket(
+                name=market["name"],
+                bmg=self
+            )
 
     @property
     def names(self):
+        """ Properly format names for internal use
+        """
         return [
             [
                 k,

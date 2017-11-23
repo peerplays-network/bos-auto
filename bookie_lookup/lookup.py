@@ -274,11 +274,11 @@ class Lookup(dict):
             It works like this:
 
             1. Test if the  lookup knows the "id" of the object on chain
-            1.1. If it does not, try to identify the object from the blockchain
-                  * if available, warn about existing id
-                  * if pending creation proposal, approve it
-                  * if none of the above, create proposal
-            1.2. Test if  lookup and blockchain data match, if not
+            2. If it does not, try to identify the object from the blockchain
+                * if available, warn about existing id
+                * if pending creation proposal, approve it
+                * if none of the above, create proposal
+            3. Test if  lookup and blockchain data match, if not
                 * if exists proposal for update, approve
                 * if not, create proposal to update
         """
@@ -472,7 +472,7 @@ class Lookup(dict):
         pass
 
     def is_synced(self):
-        """ Test if data on chain matches  lookup
+        """ Test if data on chain matches lookup
         """
         # Compare blockchain content with  lookup
 

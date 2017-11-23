@@ -15,56 +15,74 @@ class MissingMandatoryValue(Exception):
 
 
 class LookupEvent(Lookup, dict):
+    """ Lookup Class for an Event
+
+        :param str name: Name of the Event
+        :param list teams: Teams (first element is **HomeTeam**)
+        :param str eventgroup_identifier: Identifier of the event group
+        :param str sport_identifier: Identifier of the sport
+        :param list season: Internationalized string for the season
+        :param datetime.datetime start_time: Datetime the event starts
+        :param dict extra_data: Optionally provide additional data that is
+               stored in the same dictionary
+
+        ... note:: Please note that the list of teams begins with the **home**
+                   team! Only two teams per event are supported!
+    """
 
     operation_update = "event_update"
     operation_create = "event_create"
 
-    def __init__(self, *args, **kwargs):
+    def __init__(
+        self,
+        name,
+        teams,
+        eventgroup_identifier,
+        sport_identifier,
+        season,
+        start_time,
+        extra_data={}
+    ):
         Lookup.__init__(self)
 
-        # Initialise our 'dict'
-        if len(args) == 1 and isinstance(args[0], dict):
-            dict.__init__(self, args[0])
-        elif len(args) == 0 and isinstance(kwargs, dict):
-            dict.__init__(self, **kwargs)
-        else:
-            raise ValueError
+        # Also store all the stuff in kwargs
+        dict.__init__(self, extra_data)
+        dict.update(self, {
+                "name": name,
+                "teams": teams,
+                "eventgroup_identifier": eventgroup_identifier,
+                "sport_identifier": sport_identifier,
+                "season": season,
+                "start_time": start_time})
 
-        for mandatory in [
-            "name",
-            "teams",
-            "eventgroup_identifier",
-            "sport_identifier",
-            "season",
-            "start_time"
-        ]:
-            if mandatory not in self:
-                raise MissingMandatoryValue(
-                    "A value for '{}' is mandatory".format(
-                        mandatory
-                    )
-                )
-
-        if not isinstance(self["start_time"], datetime.datetime):
-            raise ValueError("'start_time' must be instance of datetime.datetime()")
+        # Define "id" if not present
+        self["id"] = self.get("id", None)
 
         self.parent = self.eventgroup
         self.identifier = "{}/{}".format(
             self.parent["name"]["en"], self["name"]["en"])
 
-        teams = re.split(r"[:@]", self["teams"])
-        assert len(teams) == 2, (
+        if not isinstance(self["start_time"], datetime.datetime):
+            raise ValueError("'start_time' must be instance of datetime.datetime()")
+        if not len(self["teams"]) == 2:
+            raise ValueError(
             "Only matches with two players are allowed! "
-            "Here: {}".format(str(teams))
+            "Here: {}".format(str(self["teams"]))
         )
-        self["teams"] = [t.strip() for t in teams]
 
     @property
     def sport(self):
+        """ Return LookupSport instance for this event
+        """
         return LookupSport(self["sport_identifier"])
 
     @property
     def teams(self):
+        """ Return the list of teams
+
+            ... note:: The first element is the **home** team!
+
+        """
         return self["teams"]
 
     @property
@@ -77,6 +95,9 @@ class LookupEvent(Lookup, dict):
             self["eventgroup_identifier"]))
 
     def test_operation_equal(self, event):
+        """ This method checks if an object or operation on the blockchain
+            has the same content as an object in the  lookup
+        """
         # FIXME: This might need additional data to ensure the events are equal
         # start_time, is_live_market
         lookupnames = self.names
@@ -102,6 +123,12 @@ class LookupEvent(Lookup, dict):
             return True
 
     def find_id(self):
+        """ Try to find an id for the object of the  lookup on the
+            blockchain
+
+            ... note:: This only checks if a sport exists with the same name in
+                       **ENGLISH**!
+        """
         # In case the parent is a proposal, we won't
         # be able to find an id for a child
         if self.parent.id[0] == "0":
@@ -117,6 +144,8 @@ class LookupEvent(Lookup, dict):
                 return event["id"]
 
     def is_synced(self):
+        """ Test if data on chain matches lookup
+        """
         if "id" in self and self["id"]:
             event = Event(self["id"])
             if self.test_operation_equal(event):
@@ -124,6 +153,8 @@ class LookupEvent(Lookup, dict):
         return False
 
     def propose_new(self):
+        """ Propose operation to create this object
+        """
         return self.peerplays.event_create(
             self.names,
             self.season,
@@ -134,6 +165,8 @@ class LookupEvent(Lookup, dict):
         )
 
     def propose_update(self):
+        """ Propose to update this object to match  lookup
+        """
         return self.peerplays.event_update(
             self["id"],
             self.names,
@@ -145,16 +178,22 @@ class LookupEvent(Lookup, dict):
         )
 
     def lookup_participants(self):
+        """ Return content of participants in this event
+        """
         name = self.eventgroup["participants"]
         return self.eventgroup.sport["participants"][name]["participants"]
 
     def lookup_bettingmarketgroups(self):
+        """ Return content of betting market groups
+        """
         names = self.eventgroup["bettingmarketgroups"]
         for name in names:
             yield self.eventgroup.sport["bettingmarketgroups"][name]
 
     @property
     def names(self):
+        """ Properly format names for internal use
+        """
         return [
             [
                 k,
@@ -164,6 +203,8 @@ class LookupEvent(Lookup, dict):
 
     @property
     def season(self):
+        """ Properly format season for internal use
+        """
         return [
             [
                 k,
@@ -173,9 +214,13 @@ class LookupEvent(Lookup, dict):
 
     @property
     def eventscheme(self):
+        """ Obtain Event scheme from event group
+        """
         return self.eventgroup["eventscheme"]
 
     @property
     def bettingmarketgroups(self):
+        """ Return instances of LookupBettingMarketGroup for this event
+        """
         for bmg in self.lookup_bettingmarketgroups():
             yield LookupBettingMarketGroup(bmg, event=self)

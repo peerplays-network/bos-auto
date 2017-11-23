@@ -11,21 +11,23 @@ if __name__ == "__main__":
     # Rules
     for r in eventgroup.sport.rules:
         r.update()
+    pprint(dict(eventgroup))
     for event in eventgroup.events:
         print("EVENT")
         print("=" * 80)
-        event.update()
-        pprint(dict(event.items()))
+        pprint(dict(event))
+#        event.update()
         for bmg in event.bettingmarketgroups:
             print("BMG")
             print("=" * 80)
-            bmg.update()
-            pprint(dict(bmg.items()))
+#            bmg.update()
+#            pprint(dict(bmg.items()))
             for bm in bmg.bettingmarkets:
                 print("BM")
                 print("=" * 80)
-                bm.update()
-                pprint(dict(bm.items()))
+                pprint(dict(bm))
+#                bm.update()
+#                pprint(dict(bm.items()))
                 break
             break
         break

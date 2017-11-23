@@ -10,6 +10,15 @@ Welcome to Bookied's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   lookup
+   sport
+   eventgroup
+   event
+   bettingmarketgroup
+   bettingmarket
+   rule
+   participant
+
 
 
 Indices and tables

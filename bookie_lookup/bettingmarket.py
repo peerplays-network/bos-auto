@@ -7,20 +7,35 @@ from peerplays.bettingmarketgroup import (
 
 
 class LookupBettingMarket(Lookup, dict):
+    """ Lookup Class for Betting Market
+
+        :param dict name: list of internationalized names
+        :param LookupBettingMarketGroup bmg: Parent element
+        :param dict extra_data: Optionally provide additional data that is
+               stored in the same dictionary
+
+    """
     operation_update = "betting_market_update"
     operation_create = "betting_market_create"
 
-    def __init__(self, market, bmg):
+    def __init__(
+        self,
+        name,
+        bmg,
+        extra_data={}
+    ):
         Lookup.__init__(self)
         self.identifier = "{}/{}".format(
             bmg["name"]["en"],
-            market["name"]["en"]
+            name["en"]
         )
         self.bmg = bmg
         self.parent = bmg
-        dict.__init__(
-            self,
-            market
+        dict.__init__(self, extra_data)
+        dict.update(
+            self, {
+                "name": name
+            }
         )
         # FIXME: Figure out if the name has a variable
         # FIXME: Figure out if this is a dynamic bmg
@@ -31,13 +46,20 @@ class LookupBettingMarket(Lookup, dict):
 
     @property
     def event(self):
+        """ Return parent Event
+        """
         return self.parent.event
 
     @property
     def group(self):
+        """ Return parent BMG
+        """
         return self.parent
 
     def test_operation_equal(self, bmg):
+        """ This method checks if an object or operation on the blockchain
+            has the same content as an object in the  lookup
+        """
         def is_update(bmg):
             return any([x in bmg for x in [
                 "new_group_id", "new_description",
@@ -67,6 +89,12 @@ class LookupBettingMarket(Lookup, dict):
         return False
 
     def find_id(self):
+        """ Try to find an id for the object of the  lookup on the
+            blockchain
+
+            ... note:: This only checks if a sport exists with the same name in
+                       **ENGLISH**!
+        """
         # In case the parent is a proposal, we won't
         # be able to find an id for a child
         if self.parent.id[0] == "0":
@@ -82,6 +110,8 @@ class LookupBettingMarket(Lookup, dict):
                 return bm["id"]
 
     def is_synced(self):
+        """ Test if data on chain matches lookup
+        """
         if "id" in self:
             bmg = BettingMarket(self["id"])
             if self.test_operation_equal(bmg):
@@ -89,6 +119,8 @@ class LookupBettingMarket(Lookup, dict):
         return False
 
     def propose_new(self):
+        """ Propose operation to create this object
+        """
         return self.peerplays.betting_market_create(
             description=self.description,
             payout_condition=[],
@@ -98,6 +130,8 @@ class LookupBettingMarket(Lookup, dict):
         )
 
     def propose_update(self):
+        """ Propose to update this object to match  lookup
+        """
         return self.peerplays.betting_market_update(
             self.id,
             payout_condition=[],

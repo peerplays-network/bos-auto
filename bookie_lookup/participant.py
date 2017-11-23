@@ -2,6 +2,11 @@ from .lookup import Lookup
 
 
 class LookupParticipants(Lookup, dict):
+    """ Lookup Class for participants
+
+        :param str sport: Identifier for sport
+        :param str participants: Identifier for Participants
+    """
 
     operation_update = ""
     operation_create = ""

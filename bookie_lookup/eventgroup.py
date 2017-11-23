@@ -1,18 +1,17 @@
+import re
 import sys
 from .lookup import Lookup, LookupDatabaseConfig
 from peerplays.eventgroup import EventGroups, EventGroup
 from . import log
 
-try:
-    from bookied_scrapers.sinks.mysql_data_sink import MysqlDataSink
-    from bookied_scrapers.sinks.db_data_sink_model import RawGameInfo, RawEvent, RawMarketsInfo, ResolvedGameEvent
-    from playhouse.shortcuts import model_to_dict
-except ImportError:
-    log.error("Please install bookied-scrapers")
-    sys.exit(1)
-
 
 class LookupEventGroup(Lookup, dict):
+    """ Lookup Class for Event Group
+
+        :param str sport: Identifier of the Sport
+        :param str eventgroup: Identifier of the Eventgroup
+
+    """
 
     operation_update = "event_group_update"
     operation_create = "event_group_create"
@@ -37,6 +36,9 @@ class LookupEventGroup(Lookup, dict):
         )
 
     def test_operation_equal(self, eventgroup):
+        """ This method checks if an object or operation on the blockchain
+            has the same content as an object in the  lookup
+        """
         lookupnames = self.names
         chainsnames = [[]]
         if "name" in eventgroup:
@@ -60,6 +62,12 @@ class LookupEventGroup(Lookup, dict):
             return True
 
     def find_id(self):
+        """ Try to find an id for the object of the  lookup on the
+            blockchain
+
+            ... note:: This only checks if a sport exists with the same name in
+                       **ENGLISH**!
+        """
         # In case the parent is a proposal, we won't
         # be able to find an id for a child
         if self.parent.id[0] == "0":
@@ -78,6 +86,8 @@ class LookupEventGroup(Lookup, dict):
                 return eg["id"]
 
     def is_synced(self):
+        """ Test if data on chain matches lookup
+        """
         if "id" in self and self["id"]:
             eventgroup = EventGroup(self["id"])
             if self.test_operation_equal(eventgroup):
@@ -85,6 +95,8 @@ class LookupEventGroup(Lookup, dict):
         return False
 
     def propose_new(self):
+        """ Propose operation to create this object
+        """
         return self.peerplays.event_group_create(
             self.names,
             sport_id=self.parent_id,
@@ -93,6 +105,8 @@ class LookupEventGroup(Lookup, dict):
         )
 
     def propose_update(self):
+        """ Propose to update this object to match  lookup
+        """
         return self.peerplays.event_group_update(
             self["id"],
             names=self.names,
@@ -103,6 +117,15 @@ class LookupEventGroup(Lookup, dict):
 
     @property
     def events(self):
+        """ Return all events that our local database believes correspond to
+            this event group
+        """
+        try:
+            from bookied_scrapers.sinks.mysql_data_sink import MysqlDataSink
+            from bookied_scrapers.sinks.db_data_sink_model import RawGameInfo, RawEvent, RawMarketsInfo, ResolvedGameEvent
+            from playhouse.shortcuts import model_to_dict
+        except ImportError:
+            raise ImportError("Please install bookied-scrapers")
         from .event import LookupEvent
 
         MysqlDataSink(
@@ -119,25 +142,23 @@ class LookupEventGroup(Lookup, dict):
         )
         for e in events:
             event = model_to_dict(e)
-            # set name
-            event.update({"name": {"en": event["teams"]}})
-
-            # eventgroup_name
-            event.update({"eventgroup_identifier": event["league"]})
-
-            # sport
-            event.update({"sport_identifier": event["game"]})
-
-            # id
-            event.update({"id": None})
-
-            # searson
-            event.update({"season": []})
-
-            yield LookupEvent(event)
+            # Replace id since mysql uses different ids
+            event["id"] = None
+            teams = re.split(r"[:@]", event["teams"])
+            yield LookupEvent(
+                name={"en": event["teams"]},
+                teams=[t.strip() for t in teams],
+                eventgroup_identifier=event["league"],
+                sport_identifier=event["game"],
+                season={},
+                start_time=event["start_time"],
+                extra_data=event,
+            )
 
     @property
     def names(self):
+        """ Properly format names for internal use
+        """
         return [
             [
                 k,
