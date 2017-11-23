@@ -13,7 +13,7 @@ import datetime
 
 
 miniumum_event_dict = {
-    "id": "1.0.0",
+    "id": "1.20.0",
     "name": {"en": "Demo vs. Foobar"},
     "teams": "Demo: Foobar",
     "eventgroup_identifier": "NFL#PreSeas",
@@ -92,33 +92,16 @@ class Testcases(unittest.TestCase):
             self.lookup["id"] = tmp
 
     def test_propose_new(self):
-        from peerplaysbase.operationids import operations
-        self.lookup.clear_proposal_buffer()
-        tx = self.lookup.propose_new()
-        tx = tx.json()
-        self.assertIsInstance(tx, dict)
-        self.assertIn("operations", tx)
-        self.assertIn("ref_block_num", tx)
-        self.assertEqual(tx["operations"][0][0], 22)
-        self.assertEqual(
-            tx["operations"][0][1]["proposed_ops"][0]["op"][0],
-            operations[self.lookup.operation_create]
-        )
-
-    def test_propose_update(self):
-        from peerplaysbase.operationids import operations
-
         def mockedClass(m, *args, **kwargs):
-            # Make sure we can find the object that we want to replace
-            dict.__init__(m, {"id": "1.21.0"})
+            dict.__init__(m, test_issynced_object_mock)
 
         with mock.patch(
-            is_synced_mock,
+            "peerplays.bettingmarketgroup.BettingMarketGroup.refresh",
             new=mockedClass
         ):
-            self.lookup["id"] = this_id
+            from peerplaysbase.operationids import operations
             self.lookup.clear_proposal_buffer()
-            tx = self.lookup.propose_update()
+            tx = self.lookup.propose_new()
             tx = tx.json()
             self.assertIsInstance(tx, dict)
             self.assertIn("operations", tx)
@@ -126,5 +109,36 @@ class Testcases(unittest.TestCase):
             self.assertEqual(tx["operations"][0][0], 22)
             self.assertEqual(
                 tx["operations"][0][1]["proposed_ops"][0]["op"][0],
-                operations[self.lookup.operation_update]
+                operations[self.lookup.operation_create]
             )
+
+    def test_propose_update(self):
+        from peerplaysbase.operationids import operations
+
+        def mockedClass(m, *args, **kwargs):
+            dict.__init__(m, {"id": "1.21.0"})
+
+        def mockedClass2(m, *args, **kwargs):
+            dict.__init__(m, test_issynced_object_mock)
+
+        with mock.patch(
+            is_synced_mock,
+            new=mockedClass
+        ):
+            with mock.patch(
+                "peerplays.bettingmarketgroup.BettingMarketGroup.refresh",
+                new=mockedClass
+            ):
+
+                self.lookup["id"] = this_id
+                self.lookup.clear_proposal_buffer()
+                tx = self.lookup.propose_update()
+                tx = tx.json()
+                self.assertIsInstance(tx, dict)
+                self.assertIn("operations", tx)
+                self.assertIn("ref_block_num", tx)
+                self.assertEqual(tx["operations"][0][0], 22)
+                self.assertEqual(
+                    tx["operations"][0][1]["proposed_ops"][0]["op"][0],
+                    operations[self.lookup.operation_update]
+                )

@@ -13,7 +13,7 @@ import datetime
 
 
 miniumum_event_dict = {
-    "id": "1.0.0",
+    "id": "1.18.0",
     "name": {"en": "Demo vs. Foobar"},
     "teams": "Demo: Foobar",
     "eventgroup_identifier": "NFL#PreSeas",
@@ -107,10 +107,11 @@ class Testcases(unittest.TestCase):
         )
 
     def test_propose_update(self):
-        from peerplaysbase.operationids import operations
         def mockedClass(m, *args, **kwargs):
             # Make sure we can find the object that we want to replace
             dict.__init__(m, {"id": "1.20.0"})
+
+        from peerplaysbase.operationids import operations
 
         with mock.patch(
             is_synced_mock,
