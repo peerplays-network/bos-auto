@@ -7,13 +7,13 @@ from peerplays.event import Event
 from peerplays.eventgroup import EventGroups
 from bookie_lookup.lookup import Lookup
 from bookie_lookup.eventgroup import LookupEventGroup
-from bookie_lookup.event import LookupEvent, MissingMandatoryValue
+from bookie_lookup.event import LookupEvent
 from peerplays.utils import parse_time
 import datetime
 
 miniumum_init_dict = {
     "name": {"en": "Demo vs. Foobar"},
-    "teams": "Demo: Foobar",
+    "teams": ["Demo", "Foobar"],
     "eventgroup_identifier": "NFL#PreSeas",
     "sport_identifier": "AmericanFootball",
     "season": {"en": "2017-00-00"},
@@ -51,7 +51,7 @@ class Testcases(unittest.TestCase):
                 wif=[wif]   # ensure we can sign
             )
         )
-        self.lookup = LookupEvent(miniumum_init_dict)
+        self.lookup = LookupEvent(**miniumum_init_dict)
 
     def test_eventgroup(self):
 
@@ -61,9 +61,9 @@ class Testcases(unittest.TestCase):
 
         def mockedClass(m, *args, **kwargs):
             dict.__init__(m, {
-            "name": [["en", "NFL - Pre-Season"], ["de", "NFL - Vorseason"]],
-            "sport_id": "1.16.0"
-        })
+                "name": [["en", "NFL - Pre-Season"], ["de", "NFL - Vorseason"]],
+                "sport_id": "1.16.0"
+            })
 
         with mock.patch(
             "peerplays.eventgroup.EventGroup.refresh",
@@ -135,68 +135,78 @@ class Testcases(unittest.TestCase):
 
     def test_init(self):
         self.assertIsInstance(self.lookup, LookupEvent)
-        self.assertIsInstance(LookupEvent({
+        self.assertIsInstance(LookupEvent(**{
             "name": {"en": "Demo Event"},
-            "teams": "Demo : Foobar",
+            "teams": ["Demo", "Foobar"],
             "eventgroup_identifier": "NFL#PreSeas",
             "sport_identifier": "AmericanFootball",
             "season": "2017-00-00",
             "start_time": datetime.datetime.utcnow()
         }), LookupEvent)
 
-        with self.assertRaises(MissingMandatoryValue):
-            self.assertIsInstance(LookupEvent({
-                "teams": "Demo : Foobar",
+        with self.assertRaises(ValueError):
+            self.assertIsInstance(LookupEvent(**{
+                "name": {"en": "Demo Event"},
+                "teams": ["Demo", "Foobar"],
                 "eventgroup_identifier": "NFL#PreSeas",
                 "sport_identifier": "AmericanFootball",
                 "season": "2017-00-00",
-                "start_time": datetime.datetime.utcnow()
-            }), LookupEvent)
-
-        with self.assertRaises(MissingMandatoryValue):
-            self.assertIsInstance(LookupEvent({
-                "name": {"en": "Demo Event"},
-                "eventgroup_identifier": "NFL#PreSeas",
-                "sport_identifier": "AmericanFootball",
-                "season": "2017-00-00",
-                "start_time": datetime.datetime.utcnow()
-            }), LookupEvent)
-
-        with self.assertRaises(MissingMandatoryValue):
-            self.assertIsInstance(LookupEvent({
-                "name": {"en": "Demo Event"},
-                "teams": "Demo : Foobar",
-                "sport_identifier": "AmericanFootball",
-                "season": "2017-00-00",
-                "start_time": datetime.datetime.utcnow()
-            }), LookupEvent)
-
-        with self.assertRaises(MissingMandatoryValue):
-            self.assertIsInstance(LookupEvent({
-                "name": {"en": "Demo Event"},
-                "teams": "Demo : Foobar",
-                "eventgroup_identifier": "NFL#PreSeas",
-                "season": "2017-00-00",
-                "start_time": datetime.datetime.utcnow()
-            }), LookupEvent)
-
-        with self.assertRaises(MissingMandatoryValue):
-            self.assertIsInstance(LookupEvent({
-                "name": {"en": "Demo Event"},
-                "teams": "Demo : Foobar",
-                "eventgroup_identifier": "NFL#PreSeas",
-                "sport_identifier": "AmericanFootball",
-                "start_time": datetime.datetime.utcnow()
+                "start_time": "SOME STRING"
             }), LookupEvent)
 
         with self.assertRaises(ValueError):
-            self.assertIsInstance(LookupEvent({
+            self.assertIsInstance(LookupEvent(**{
                 "name": {"en": "Demo Event"},
-                "teams": "Demo : Foobar",
+                "teams": ["Demo", "Foobar", "third TEAM"],
                 "eventgroup_identifier": "NFL#PreSeas",
                 "sport_identifier": "AmericanFootball",
                 "season": "2017-00-00",
-                "start_time": "Foobar"
+                "start_time": datetime.datetime.utcnow()
+            }), LookupEvent)
+
+        with self.assertRaises(TypeError):
+            self.assertIsInstance(LookupEvent(**{
+                "teams": ["Demo", "Foobar"],
+                "eventgroup_identifier": "NFL#PreSeas",
+                "sport_identifier": "AmericanFootball",
+                "season": "2017-00-00",
+                "start_time": datetime.datetime.utcnow()
+            }), LookupEvent)
+
+        with self.assertRaises(TypeError):
+            self.assertIsInstance(LookupEvent(**{
+                "name": {"en": "Demo Event"},
+                "eventgroup_identifier": "NFL#PreSeas",
+                "sport_identifier": "AmericanFootball",
+                "season": "2017-00-00",
+                "start_time": datetime.datetime.utcnow()
+            }), LookupEvent)
+
+        with self.assertRaises(TypeError):
+            self.assertIsInstance(LookupEvent(**{
+                "name": {"en": "Demo Event"},
+                "teams": ["Demo", "Foobar"],
+                "sport_identifier": "AmericanFootball",
+                "season": "2017-00-00",
+                "start_time": datetime.datetime.utcnow()
+            }), LookupEvent)
+
+        with self.assertRaises(TypeError):
+            self.assertIsInstance(LookupEvent(**{
+                "name": {"en": "Demo Event"},
+                "teams": ["Demo", "Foobar"],
+                "eventgroup_identifier": "NFL#PreSeas",
+                "season": "2017-00-00",
+                "start_time": datetime.datetime.utcnow()
+            }), LookupEvent)
+
+        with self.assertRaises(TypeError):
+            self.assertIsInstance(LookupEvent({
+                "name": {"en": "Demo Event"},
+                "teams": ["Demo", "Foobar"],
+                "eventgroup_identifier": "NFL#PreSeas",
+                "sport_identifier": "AmericanFootball",
+                "start_time": datetime.datetime.utcnow()
             }), LookupEvent)
 
         self.assertIsInstance(self.lookup["teams"], list)

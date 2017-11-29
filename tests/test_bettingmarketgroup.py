@@ -6,7 +6,7 @@ from peerplays.event import Event
 from peerplays.eventgroup import EventGroups
 from bookie_lookup.lookup import Lookup
 from bookie_lookup.eventgroup import LookupEventGroup
-from bookie_lookup.event import LookupEvent, MissingMandatoryValue
+from bookie_lookup.event import LookupEvent
 from bookie_lookup.bettingmarketgroup import LookupBettingMarketGroup
 from peerplays.utils import parse_time
 import datetime
@@ -15,7 +15,7 @@ import datetime
 miniumum_event_dict = {
     "id": "1.18.0",
     "name": {"en": "Demo vs. Foobar"},
-    "teams": "Demo: Foobar",
+    "teams": ["Demo", "Foobar"],
     "eventgroup_identifier": "NFL#PreSeas",
     "sport_identifier": "AmericanFootball",
     "season": {"en": "2017-00-00"},
@@ -55,7 +55,7 @@ class Testcases(unittest.TestCase):
                 wif=[wif]   # ensure we can sign
             )
         )
-        event = LookupEvent(miniumum_event_dict)
+        event = LookupEvent(**miniumum_event_dict)
         self.lookup = next(event.bettingmarketgroups)
 
     def test_init(self):

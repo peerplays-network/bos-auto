@@ -1,5 +1,4 @@
 import re
-import sys
 import datetime
 from .lookup import Lookup
 from .sport import LookupSport
@@ -8,10 +7,6 @@ from peerplays.eventgroup import EventGroup
 from .eventgroup import LookupEventGroup
 from .bettingmarketgroup import LookupBettingMarketGroup
 from . import log
-
-
-class MissingMandatoryValue(Exception):
-    pass
 
 
 class LookupEvent(Lookup, dict):
@@ -41,19 +36,22 @@ class LookupEvent(Lookup, dict):
         sport_identifier,
         season,
         start_time,
-        extra_data={}
+        id=None,
+        extra_data={},
+        **kwargs
     ):
         Lookup.__init__(self)
 
         # Also store all the stuff in kwargs
         dict.__init__(self, extra_data)
         dict.update(self, {
-                "name": name,
-                "teams": teams,
-                "eventgroup_identifier": eventgroup_identifier,
-                "sport_identifier": sport_identifier,
-                "season": season,
-                "start_time": start_time})
+            "name": name,
+            "teams": teams,
+            "eventgroup_identifier": eventgroup_identifier,
+            "sport_identifier": sport_identifier,
+            "season": season,
+            "start_time": start_time,
+            "id": id})
 
         # Define "id" if not present
         self["id"] = self.get("id", None)
@@ -63,12 +61,20 @@ class LookupEvent(Lookup, dict):
             self.parent["name"]["en"], self["name"]["en"])
 
         if not isinstance(self["start_time"], datetime.datetime):
-            raise ValueError("'start_time' must be instance of datetime.datetime()")
+            raise ValueError(
+                "'start_time' must be instance of datetime.datetime()")
+
+        """
+        # Ensure "teams" is a list
+        if isinstance(self["teams"], str):
+            self["teams"] = re.split(r"[:@]", self["teams"])
+        """
+
         if not len(self["teams"]) == 2:
             raise ValueError(
-            "Only matches with two players are allowed! "
-            "Here: {}".format(str(self["teams"]))
-        )
+                "Only matches with two players are allowed! "
+                "Here: {}".format(str(self["teams"]))
+            )
 
     @property
     def sport(self):

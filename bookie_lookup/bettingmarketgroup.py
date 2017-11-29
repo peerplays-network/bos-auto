@@ -1,14 +1,11 @@
 from .lookup import Lookup
 from .rule import LookupRules
+from .exceptions import MissingMandatoryValue
 from peerplays.event import Event
 from peerplays.rule import Rule
 from peerplays.asset import Asset
 from peerplays.bettingmarketgroup import (
     BettingMarketGroups, BettingMarketGroup)
-
-
-class MissingMandatoryValue(Exception):
-    pass
 
 
 class LookupBettingMarketGroup(Lookup, dict):
