@@ -12,7 +12,6 @@ from peerplays.utils import parse_time
 import datetime
 
 miniumum_init_dict = {
-    "name": {"en": "Demo vs. Foobar"},
     "teams": ["Demo", "Foobar"],
     "eventgroup_identifier": "NFL#PreSeas",
     "sport_identifier": "AmericanFootball",
@@ -21,7 +20,7 @@ miniumum_init_dict = {
 }
 test_operation_dicts = [
     {
-        "name": [["en", "Demo vs. Foobar"]],
+        "name": [["en", "Demo : Foobar"], ['en_us', 'Foobar @ Demo']],
         "event_group_id": "1.17.16",
         "season": [["en", "2017-00-00"]],
         "start_time": parse_time("2017-09-04T08:00:00")
@@ -57,7 +56,6 @@ class Testcases(unittest.TestCase):
 
         self.assertIsInstance(self.lookup, dict)
         self.assertIsInstance(self.lookup.peerplays, PeerPlays)
-        self.assertEqual(self.lookup["name"]["en"], miniumum_init_dict["name"]["en"])
 
         def mockedClass(m, *args, **kwargs):
             dict.__init__(m, {
@@ -72,6 +70,16 @@ class Testcases(unittest.TestCase):
             self.assertTrue(self.lookup.parent)
             self.assertTrue(self.lookup.parent_id)
             self.assertEqual(self.lookup.parent["id"], self.lookup.parent_id)
+
+    def test_eventscheme_namecreation(self):
+        self.assertIn(
+            ['en', 'Demo : Foobar'],
+            self.lookup.names
+        )
+        self.assertIn(
+            ['en_us', 'Foobar @ Demo'],
+            self.lookup.names
+        )
 
     def test_test_operation_equal(self):
         for x in test_operation_dicts:
@@ -136,7 +144,6 @@ class Testcases(unittest.TestCase):
     def test_init(self):
         self.assertIsInstance(self.lookup, LookupEvent)
         self.assertIsInstance(LookupEvent(**{
-            "name": {"en": "Demo Event"},
             "teams": ["Demo", "Foobar"],
             "eventgroup_identifier": "NFL#PreSeas",
             "sport_identifier": "AmericanFootball",
@@ -146,7 +153,6 @@ class Testcases(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             self.assertIsInstance(LookupEvent(**{
-                "name": {"en": "Demo Event"},
                 "teams": ["Demo", "Foobar"],
                 "eventgroup_identifier": "NFL#PreSeas",
                 "sport_identifier": "AmericanFootball",
@@ -156,7 +162,6 @@ class Testcases(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             self.assertIsInstance(LookupEvent(**{
-                "name": {"en": "Demo Event"},
                 "teams": ["Demo", "Foobar", "third TEAM"],
                 "eventgroup_identifier": "NFL#PreSeas",
                 "sport_identifier": "AmericanFootball",
@@ -166,7 +171,6 @@ class Testcases(unittest.TestCase):
 
         with self.assertRaises(TypeError):
             self.assertIsInstance(LookupEvent(**{
-                "teams": ["Demo", "Foobar"],
                 "eventgroup_identifier": "NFL#PreSeas",
                 "sport_identifier": "AmericanFootball",
                 "season": "2017-00-00",
@@ -175,16 +179,6 @@ class Testcases(unittest.TestCase):
 
         with self.assertRaises(TypeError):
             self.assertIsInstance(LookupEvent(**{
-                "name": {"en": "Demo Event"},
-                "eventgroup_identifier": "NFL#PreSeas",
-                "sport_identifier": "AmericanFootball",
-                "season": "2017-00-00",
-                "start_time": datetime.datetime.utcnow()
-            }), LookupEvent)
-
-        with self.assertRaises(TypeError):
-            self.assertIsInstance(LookupEvent(**{
-                "name": {"en": "Demo Event"},
                 "teams": ["Demo", "Foobar"],
                 "sport_identifier": "AmericanFootball",
                 "season": "2017-00-00",
@@ -193,7 +187,6 @@ class Testcases(unittest.TestCase):
 
         with self.assertRaises(TypeError):
             self.assertIsInstance(LookupEvent(**{
-                "name": {"en": "Demo Event"},
                 "teams": ["Demo", "Foobar"],
                 "eventgroup_identifier": "NFL#PreSeas",
                 "season": "2017-00-00",
@@ -202,7 +195,6 @@ class Testcases(unittest.TestCase):
 
         with self.assertRaises(TypeError):
             self.assertIsInstance(LookupEvent({
-                "name": {"en": "Demo Event"},
                 "teams": ["Demo", "Foobar"],
                 "eventgroup_identifier": "NFL#PreSeas",
                 "sport_identifier": "AmericanFootball",

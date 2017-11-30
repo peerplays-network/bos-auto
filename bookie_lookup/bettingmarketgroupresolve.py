@@ -33,8 +33,7 @@ class LookupBettingMarketGroupResolve(Lookup, dict):
         )
         assert isinstance(result, list) and len(result) == 2, \
             "Result must be a list of length 2."
-        dict.update(
-            self, {
+        dict.update(self, {
             "result": result
         })
 

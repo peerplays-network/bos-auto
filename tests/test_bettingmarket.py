@@ -14,7 +14,6 @@ import datetime
 
 miniumum_event_dict = {
     "id": "1.20.0",
-    "name": {"en": "Demo vs. Foobar"},
     "teams": ["Demo", "Foobar"],
     "eventgroup_identifier": "NFL#PreSeas",
     "sport_identifier": "AmericanFootball",

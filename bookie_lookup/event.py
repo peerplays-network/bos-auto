@@ -1,23 +1,21 @@
-import re
 import datetime
 from .lookup import Lookup
 from .sport import LookupSport
 from peerplays.event import Event, Events
-from peerplays.eventgroup import EventGroup
 from .eventgroup import LookupEventGroup
 from .bettingmarketgroup import LookupBettingMarketGroup
-from . import log
+# from . import log
 
 
 class LookupEvent(Lookup, dict):
     """ Lookup Class for an Event
 
-        :param str name: Name of the Event
         :param list teams: Teams (first element is **HomeTeam**)
         :param str eventgroup_identifier: Identifier of the event group
         :param str sport_identifier: Identifier of the sport
         :param list season: Internationalized string for the season
         :param datetime.datetime start_time: Datetime the event starts
+               (required when creating an event)
         :param dict extra_data: Optionally provide additional data that is
                stored in the same dictionary
 
@@ -30,12 +28,11 @@ class LookupEvent(Lookup, dict):
 
     def __init__(
         self,
-        name,
         teams,
         eventgroup_identifier,
         sport_identifier,
         season,
-        start_time,
+        start_time=None,
         id=None,
         extra_data={},
         **kwargs
@@ -45,7 +42,6 @@ class LookupEvent(Lookup, dict):
         # Also store all the stuff in kwargs
         dict.__init__(self, extra_data)
         dict.update(self, {
-            "name": name,
             "teams": teams,
             "eventgroup_identifier": eventgroup_identifier,
             "sport_identifier": sport_identifier,
@@ -56,25 +52,26 @@ class LookupEvent(Lookup, dict):
         # Define "id" if not present
         self["id"] = self.get("id", None)
 
-        self.parent = self.eventgroup
-        self.identifier = "{}/{}".format(
-            self.parent["name"]["en"], self["name"]["en"])
-
-        if not isinstance(self["start_time"], datetime.datetime):
-            raise ValueError(
-                "'start_time' must be instance of datetime.datetime()")
-
-        """
-        # Ensure "teams" is a list
-        if isinstance(self["teams"], str):
-            self["teams"] = re.split(r"[:@]", self["teams"])
-        """
-
         if not len(self["teams"]) == 2:
             raise ValueError(
                 "Only matches with two players are allowed! "
                 "Here: {}".format(str(self["teams"]))
             )
+
+        self.parent = self.eventgroup
+        self.identifier = "{}/{}/{}".format(
+            self.parent["name"]["en"],
+            teams[0],
+            teams[1])
+
+        if start_time and not isinstance(
+            self["start_time"], datetime.datetime
+        ):
+            raise ValueError(
+                "'start_time' must be instance of datetime.datetime()")
+
+        # Initialize name key
+        dict.update(self, dict(name=self.names_json))
 
     @property
     def sport(self):
@@ -104,16 +101,18 @@ class LookupEvent(Lookup, dict):
         """ This method checks if an object or operation on the blockchain
             has the same content as an object in the  lookup
         """
-        # FIXME: This might need additional data to ensure the events are equal
-        # start_time, is_live_market
         lookupnames = self.names
+        lookupseason = self.season
         chainsnames = [[]]
+        chainseason = [[]]
         if "name" in event:
             chainsnames = event["name"]
             event_group_id = event["event_group_id"]
+            chainseason = event["season"]
         elif "new_name" in event:
             chainsnames = event["new_name"]
             event_group_id = event["new_sport_id"]
+            chainseason = event["new_season"]
         else:
             raise ValueError
 
@@ -125,6 +124,9 @@ class LookupEvent(Lookup, dict):
 
         if (all([a in chainsnames for a in lookupnames]) and
                 all([b in lookupnames for b in chainsnames]) and
+                (lookupseason and  # only test if a season is provided
+                    all([b in lookupseason for b in chainseason]) and
+                    all([b in chainseason for b in lookupseason])) and
                 (not event_group_id or self.parent_id == event_group_id)):
             return True
 
@@ -204,8 +206,26 @@ class LookupEvent(Lookup, dict):
             [
                 k,
                 v
-            ] for k, v in self["name"].items()
+            ] for k, v in self.names_json.items()
         ]
+
+    @property
+    def names_json(self):
+        """ This property derives the names for each language provided in the
+            eventscheme and fills in the variables.
+
+            :rtype dict
+        """
+        class Teams:
+            home = self["teams"][0]
+            away = self["teams"][1]
+
+        ret = dict()
+        for lang, name in self.eventscheme.get("name", {}).items():
+            ret[lang] = name.format(
+                teams=Teams
+            )
+        return ret
 
     @property
     def season(self):
