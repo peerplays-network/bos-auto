@@ -1,10 +1,26 @@
 import datetime
 from .lookup import Lookup
 from .sport import LookupSport
-from peerplays.event import Event, Events
 from .eventgroup import LookupEventGroup
 from .bettingmarketgroup import LookupBettingMarketGroup
+from peerplays.event import Event, Events
+from peerplays.utils import formatTime
 # from . import log
+
+
+def subsitution(teams, scheme):
+    class Teams:
+        home = " ".join([
+            x.capitalize() for x in teams[0].split(" ")])
+        away = " ".join([
+            x.capitalize() for x in teams[1].split(" ")])
+
+    ret = dict()
+    for lang, name in scheme.items():
+        ret[lang] = name.format(
+            teams=Teams
+        )
+    return ret
 
 
 class LookupEvent(Lookup, dict):
@@ -70,8 +86,41 @@ class LookupEvent(Lookup, dict):
             raise ValueError(
                 "'start_time' must be instance of datetime.datetime()")
 
+        if not isinstance(self["season"], dict):
+            raise ValueError(
+                "'season' must be (language) dictionary"
+            )
+
         # Initialize name key
         dict.update(self, dict(name=self.names_json))
+
+    @classmethod
+    def find_event(
+        cls,
+        sport_identifier,
+        eventgroup_identifier,
+        teams,
+        start_time=None
+    ):
+        """ This class method is used to find an event by providing:
+
+            :param str sport_identifier: Identifier string for the sport
+            :param str eventgroup_identifier: Identifier string for the eventgroup/league
+            :param list teams: list of teams
+
+        """
+        sport = LookupSport(sport_identifier)
+        eventgroup = LookupEventGroup(sport, eventgroup_identifier)
+        events = Events(eventgroup.id)  # This is a pypeerplays class!
+        # Format teams into proper names according to event scheme
+        names = subsitution(teams, eventgroup["eventscheme"]["name"])
+        names = [[k, v] for k, v in names.items()]
+        for event in events:
+            if (
+                any([x in event["name"] for x in names]) and
+                (not start_time or formatTime(start_time) == formatTime(event["start_time"]))
+            ):
+                return event
 
     @property
     def sport(self):
@@ -145,6 +194,7 @@ class LookupEvent(Lookup, dict):
         events = Events(
             self.parent_id,
             peerplays_instance=self.peerplays)
+        # FIXME: Might be we also need to look for season
         en_descrp = next(filter(lambda x: x[0] == "en", self.names))
 
         for event in events:
@@ -216,16 +266,9 @@ class LookupEvent(Lookup, dict):
 
             :rtype dict
         """
-        class Teams:
-            home = self["teams"][0]
-            away = self["teams"][1]
-
-        ret = dict()
-        for lang, name in self.eventscheme.get("name", {}).items():
-            ret[lang] = name.format(
-                teams=Teams
-            )
-        return ret
+        teams = self["teams"]
+        scheme = self.eventscheme.get("name", {})
+        return subsitution(teams, scheme)
 
     @property
     def season(self):

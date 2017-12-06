@@ -2,6 +2,7 @@ import re
 import sys
 from .lookup import Lookup, LookupDatabaseConfig
 from peerplays.eventgroup import EventGroups, EventGroup
+from .exceptions import ObjectNotFoundInLookup
 from . import log
 
 
@@ -18,22 +19,44 @@ class LookupEventGroup(Lookup, dict):
 
     def __init__(self, sport, eventgroup):
         from .sport import LookupSport
+        self.identifier = eventgroup
+
+        if isinstance(sport, LookupSport):
+            sport = sport.get("identifier")
+
         self.sport_name = sport
         self.sport = LookupSport(sport)
         self.parent = self.sport
         self.eventgroup = eventgroup
-        self.identifier = "{}/{}".format(self.sport_name, eventgroup)
         super(LookupEventGroup, self).__init__()
-        assert sport in self.data["sports"], "Sport {} not avaialble".format(
-            sport
-        )
-        assert eventgroup in self.data["sports"][sport]["eventgroups"], \
-            "Eventgroup {} not avaialble in sport {}".format(
-                eventgroup, sport)
-        dict.__init__(
-            self,
-            self.data["sports"][sport]["eventgroups"][eventgroup]
-        )
+
+        if eventgroup.lower() in self.data["sports"][sport]["eventgroups"]:
+            dict.__init__(
+                self,
+                self.data["sports"][sport]["eventgroups"][eventgroup]
+            )
+        else:
+            found = False
+            for name, evg in self.data["sports"][sport]["eventgroups"].items():
+                if (
+                    # Name
+                    name.lower() == eventgroup.lower() or
+                    # Identifier
+                    evg.get("identifier", "").lower() == eventgroup.lower() or
+                    # List of languages
+                    eventgroup.lower() in [
+                        x.lower()for x in evg.get("name", {}).values()] or
+                    # List of aliases
+                    eventgroup.lower() in [
+                        x.lower() for x in evg.get("aliases", [])]
+                ):
+                    found = True
+                    dict.__init__(self, evg)
+
+            if not found:
+                raise ObjectNotFoundInLookup(
+                    "Eventgroup {} not avaialble in sport {}".format(
+                        eventgroup, sport))
 
     def test_operation_equal(self, eventgroup):
         """ This method checks if an object or operation on the blockchain

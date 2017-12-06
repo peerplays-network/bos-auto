@@ -29,7 +29,7 @@ class LookupBettingMarketGroup(Lookup, dict):
     ):
         Lookup.__init__(self)
         self.identifier = "{}/{}".format(
-            event["name"]["en"],
+            event.names_json["en"],
             bmg["name"]["en"]
         )
         self.event = event
@@ -181,10 +181,27 @@ class LookupBettingMarketGroup(Lookup, dict):
     def bettingmarkets(self):
         """ Return instances of LookupBettingMarket for this BMG
         """
+
         from .bettingmarket import LookupBettingMarket
+
+        # Allow to overwrite the variables that might be in the betting market
+        # definition (such as home team and away team names)
+        class Teams:
+            home = " ".join([
+                x.capitalize() for x in self.event["teams"][0].split(" ")])
+            away = " ".join([
+                x.capitalize() for x in self.event["teams"][1].split(" ")])
+
         for market in self["bettingmarkets"]:
+            name = dict()
+
+            # Overwrite the name with with proper replacement of variables
+            for k, v in market["name"].items():
+                name[k] = v.format(
+                    teams=Teams
+                )
             yield LookupBettingMarket(
-                name=market["name"],
+                name=name,
                 bmg=self
             )
 

@@ -40,10 +40,6 @@ class LookupBettingMarket(Lookup, dict):
         # FIXME: Figure out if the name has a variable
         # FIXME: Figure out if this is a dynamic bmg
 
-        # First team is Home Team, second is away team
-        self["HomeTeam"] = self.event["teams"][0]
-        self["AwayTeam"] = self.event["teams"][1]
-
     @property
     def event(self):
         """ Return parent Event

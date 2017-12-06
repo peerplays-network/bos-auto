@@ -95,6 +95,29 @@ class Lookup(dict):
             # _tests
             self._tests()
 
+    def pack(self):
+        return dict(
+            data=dict(self.data),
+            approval_map=self.approval_map,
+            sports_folder=self.sports_folder,
+            approving_account=self.approving_account,
+            proposing_account=self.proposing_account
+        )
+
+    @classmethod
+    def unpack(cls, pack):
+        inst = cls()
+        dict.__init__(inst, pack.get("data", {}))
+        inst.approval_map = pack["approval_map"]
+        inst.sports_folder = pack["sports_folder"]
+        inst.approving_account = pack["approving_account"]
+        inst.proposing_account = pack["proposing_account"]
+        return inst
+
+    @property
+    def wallet(self):
+        return self.peerplays.wallet
+
     @staticmethod
     def _clear():
         Lookup.data = dict()
@@ -290,19 +313,19 @@ class Lookup(dict):
             has_pending_new = self.has_pending_new()
             if id:
                 log.error((
-                    "Object {} carries id {} on the blockchain. "
+                    "Object \"{}\" carries id {} on the blockchain. "
                     "Please update your lookup"
                 ).format(self.identifier, id))
                 self["id"] = id
             elif has_pending_new:
                 log.warn((
-                    "Object {} has pending update proposal. Approving ..."
+                    "Object \"{}\" has pending update proposal. Approving ..."
                 ).format(self.identifier))
                 self.approve(*has_pending_new)
                 return UPDATE_PENDING_NEW
             else:
                 log.warn((
-                    "Object {} does not exist on chain. Proposing ..."
+                    "Object \"{}\" does not exist on chain. Proposing ..."
                 ).format(self.identifier))
                 self.propose_new()
                 return UPDATE_PROPOSING_NEW

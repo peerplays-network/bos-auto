@@ -23,7 +23,7 @@ test_operation_dicts = [
         "name": [["en", "Demo : Foobar"], ['en_us', 'Foobar @ Demo']],
         "event_group_id": "1.17.16",
         "season": [["en", "2017-00-00"]],
-        "start_time": parse_time("2017-09-04T08:00:00")
+        "start_time": miniumum_init_dict["start_time"]
     }
 ]
 test_find_object_mock = dict(id="ABC", **test_operation_dicts[0])
@@ -147,7 +147,7 @@ class Testcases(unittest.TestCase):
             "teams": ["Demo", "Foobar"],
             "eventgroup_identifier": "NFL#PreSeas",
             "sport_identifier": "AmericanFootball",
-            "season": "2017-00-00",
+            "season": {"en": "2017-00-00"},
             "start_time": datetime.datetime.utcnow()
         }), LookupEvent)
 
@@ -156,7 +156,7 @@ class Testcases(unittest.TestCase):
                 "teams": ["Demo", "Foobar"],
                 "eventgroup_identifier": "NFL#PreSeas",
                 "sport_identifier": "AmericanFootball",
-                "season": "2017-00-00",
+                "season": {"en": "2017-00-00"},
                 "start_time": "SOME STRING"
             }), LookupEvent)
 
@@ -165,7 +165,7 @@ class Testcases(unittest.TestCase):
                 "teams": ["Demo", "Foobar", "third TEAM"],
                 "eventgroup_identifier": "NFL#PreSeas",
                 "sport_identifier": "AmericanFootball",
-                "season": "2017-00-00",
+                "season": {"en": "2017-00-00"},
                 "start_time": datetime.datetime.utcnow()
             }), LookupEvent)
 
@@ -173,7 +173,7 @@ class Testcases(unittest.TestCase):
             self.assertIsInstance(LookupEvent(**{
                 "eventgroup_identifier": "NFL#PreSeas",
                 "sport_identifier": "AmericanFootball",
-                "season": "2017-00-00",
+                "season": {"en": "2017-00-00"},
                 "start_time": datetime.datetime.utcnow()
             }), LookupEvent)
 
@@ -181,7 +181,7 @@ class Testcases(unittest.TestCase):
             self.assertIsInstance(LookupEvent(**{
                 "teams": ["Demo", "Foobar"],
                 "sport_identifier": "AmericanFootball",
-                "season": "2017-00-00",
+                "season": {"en": "2017-00-00"},
                 "start_time": datetime.datetime.utcnow()
             }), LookupEvent)
 
@@ -189,7 +189,7 @@ class Testcases(unittest.TestCase):
             self.assertIsInstance(LookupEvent(**{
                 "teams": ["Demo", "Foobar"],
                 "eventgroup_identifier": "NFL#PreSeas",
-                "season": "2017-00-00",
+                "season": {"en": "2017-00-00"},
                 "start_time": datetime.datetime.utcnow()
             }), LookupEvent)
 
@@ -204,3 +204,20 @@ class Testcases(unittest.TestCase):
         self.assertIsInstance(self.lookup["teams"], list)
         self.assertEqual(self.lookup["teams"][0], "Demo")
         self.assertEqual(self.lookup["teams"][1], "Foobar")
+
+    def test_find_event(self):
+        def newEvents(m, *args, **kwargs):
+            list.__init__(m, [test_find_object_mock])
+
+        with mock.patch(
+            "peerplays.event.Events.__init__",
+            new=newEvents
+        ):
+            event = LookupEvent.find_event(
+                sport_identifier=miniumum_init_dict["sport_identifier"],
+                eventgroup_identifier=miniumum_init_dict["eventgroup_identifier"],
+                teams=miniumum_init_dict["teams"],
+                start_time=miniumum_init_dict["start_time"]
+            )
+            self.assertTrue(event)
+            self.assertEqual(event["id"], "ABC")

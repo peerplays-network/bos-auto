@@ -5,3 +5,7 @@ pyyaml
 pytest
 coverage
 mock
+
+# Flask Redis Queue
+flask
+flask-rq

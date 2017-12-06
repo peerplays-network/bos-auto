@@ -4,6 +4,7 @@ from .eventgroup import LookupEventGroup
 from .rule import LookupRules
 from .bettingmarketgroup import LookupBettingMarketGroup
 from .participant import LookupParticipants
+from .exceptions import ObjectNotFoundInLookup
 
 
 class LookupSport(Lookup, dict):
@@ -19,17 +20,32 @@ class LookupSport(Lookup, dict):
     def __init__(self, sport):
         self.identifier = sport
         super(LookupSport, self).__init__()
-        assert sport in self.data["sports"], "Sport {} not avaialble".format(
-            sport
-        )
-        if sport in self.data["sports"]:
-            # Load from name
+
+        if sport.lower() in [x.lower() for x in self.data["sports"]]:
+            # Easy, the sports name is the key
             dict.__init__(self, self.data["sports"][sport])
         else:
+            found = False
             # Load from identifier
-            for s in self.data["sports"]:
-                if s["identifier"] == sport:
+            for name, s in self.data["sports"].items():
+                if (
+                    # Name
+                    name.lower() == sport.lower() or
+                    # Identifier
+                    s.get("identifier", "").lower() == sport.lower() or
+                    # List of languages
+                    sport.lower() in [
+                        x.lower()for x in s.get("name", {}).values()] or
+                    # List of aliases
+                    sport.lower() in [
+                        x.lower() for x in s.get("aliases", [])]
+                ):
+                    found = True
                     dict.__init__(self, s)
+
+            if not found:
+                raise ObjectNotFoundInLookup("Not Found: {}".format(
+                    sport))
 
     @property
     def eventgroups(self):

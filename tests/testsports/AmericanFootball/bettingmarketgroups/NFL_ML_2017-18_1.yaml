@@ -25,8 +25,8 @@ rules: R_NFL_MO_1
 
 bettingmarkets:
      - name:
-         en: '{HomeTeam}'
+         en: '{teams.home} win'
      - name:
-         en: '{AwayTeam}'
+         en: '{teams.away} win'
      - name:
          en: Draw
