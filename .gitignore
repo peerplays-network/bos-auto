@@ -61,3 +61,8 @@ target/
 *.swp
 
 peerplays
+bookiesports
+bookied_scrapers
+test-scraping-data
+test_*.py
+worker-config.yaml
