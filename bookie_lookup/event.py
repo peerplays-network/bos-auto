@@ -4,7 +4,7 @@ from .sport import LookupSport
 from .eventgroup import LookupEventGroup
 from .bettingmarketgroup import LookupBettingMarketGroup
 from peerplays.event import Event, Events
-from peerplays.utils import formatTime
+from peerplays.utils import formatTime, parse_time
 # from . import log
 
 
@@ -47,7 +47,7 @@ class LookupEvent(Lookup, dict):
         teams,
         eventgroup_identifier,
         sport_identifier,
-        season,
+        season={},
         start_time=None,
         id=None,
         extra_data={},
@@ -100,13 +100,14 @@ class LookupEvent(Lookup, dict):
         sport_identifier,
         eventgroup_identifier,
         teams,
-        start_time=None
+        start_time
     ):
         """ This class method is used to find an event by providing:
 
             :param str sport_identifier: Identifier string for the sport
             :param str eventgroup_identifier: Identifier string for the eventgroup/league
             :param list teams: list of teams
+            :param datetime.datetime start_time: Time of start
 
         """
         sport = LookupSport(sport_identifier)
@@ -118,9 +119,16 @@ class LookupEvent(Lookup, dict):
         for event in events:
             if (
                 any([x in event["name"] for x in names]) and
-                (not start_time or formatTime(start_time) == formatTime(event["start_time"]))
+                formatTime(start_time) == event["start_time"]
             ):
-                return event
+                return cls(
+                    id=event["id"],
+                    teams=teams,
+                    eventgroup_identifier=eventgroup_identifier,
+                    sport_identifier=sport_identifier,
+                    start_time=start_time,
+                    season={x[0]: x[1] for x in event["season"]}
+                )
 
     @property
     def sport(self):
@@ -188,12 +196,14 @@ class LookupEvent(Lookup, dict):
         """
         # In case the parent is a proposal, we won't
         # be able to find an id for a child
-        if self.parent.id[0] == "0":
+        parent_id = self.parent.id
+        if parent_id[0] == "0" or parent_id[:4] == "1.10":
             return
 
         events = Events(
             self.parent_id,
             peerplays_instance=self.peerplays)
+
         # FIXME: Might be we also need to look for season
         en_descrp = next(filter(lambda x: x[0] == "en", self.names))
 

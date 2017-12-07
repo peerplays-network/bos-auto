@@ -7,14 +7,7 @@ from peerplays.account import Account
 from peerplays.proposal import Proposal, Proposals
 from peerplays.storage import configStorage as config
 from . import log, UPDATE_PENDING_NEW, UPDATE_PROPOSING_NEW
-
-
-class ObjectNotFoundError(Exception):
-    pass
-
-
-class SportsNotFoundError(Exception):
-    pass
+from .exceptions import ObjectNotFoundError, SportsNotFoundError
 
 
 class LookupDatabaseConfig:
@@ -257,7 +250,7 @@ class Lookup(dict):
             for rule in sport["rules"]:
                 pass
             for bmgname, bmg in sport["bettingmarketgroups"].items():
-                self._test_required_attributes(bmg, bmgname, ["name"])
+                self._test_required_attributes(bmg, bmgname, ["description"])
 
                 # Test that each used rule is defined
                 assert bmg["rules"] in sport["rules"], \
@@ -270,7 +263,7 @@ class Lookup(dict):
                     self._test_required_attributes(
                         bettingmarkets,
                         bmgname,
-                        ["name"]
+                        ["description"]
                     )
 
     def _test_required_attributes(self, data, name, checks):
@@ -352,13 +345,15 @@ class Lookup(dict):
 
     def get_pending_operations(self, account="witness-account"):
         pending_proposals = Proposals(account)
+        ret = []
         for proposal in pending_proposals:
             if not proposal["id"] in Lookup.approval_map:
                 Lookup.approval_map[proposal["id"]] = {}
             for oid, operations in enumerate(proposal.proposed_operations):
                 if oid not in Lookup.approval_map[proposal["id"]]:
                     Lookup.approval_map[proposal["id"]][oid] = False
-                yield operations, proposal["id"], oid
+                ret.append((operations, proposal["id"], oid))
+        return ret
 
     def get_buffered_operations(self):
         # Obtain the proposals that we have in our buffer
@@ -387,7 +382,7 @@ class Lookup(dict):
             :param str pid: Proposal id
             :param int oid: Operation number within the proposal
         """
-        if pid == "0.0.0":
+        if pid[:3] == "0.0":
             log.info("Cannot approve pending-for-broadcast proposals")
             return
         Lookup.approval_map[pid][oid] = True
@@ -408,13 +403,16 @@ class Lookup(dict):
                     log.info(
                         "Proposal {} has already been approved by us".format(p)
                     )
+
+        log.info("Approval Map: {}".format(str(Lookup.approval_map)))
+
         # In order not to approve the same proposal again and again, we remove
         # it from the map
         for p in approved_read_for_delete:
             del Lookup.approval_map[p]
 
     def has_pending_new(self):
-        """ This call tests if a pending proposal would create this object
+        """ This call tests if a proposal that would create this object is pending on-chain
 
             It only returns true if the exact content is proposed
         """
@@ -424,14 +422,20 @@ class Lookup(dict):
                 if self.test_operation_equal(op[1]):
                     return pid, oid
 
+    def has_buffered_new(self):
+        """ This call tests if an operation is buffered for proposal
+
+            It only returns true if the exact content is proposed
+        """
+        from peerplaysbase.operationids import getOperationNameForId
         for op, pid, oid in self.get_buffered_operations():
             if getOperationNameForId(op[0]) == self.operation_create:
                 if self.test_operation_equal(op[1]):
                     return pid, oid
 
     def has_pending_update(self):
-        """ Test if there is an update to properly match blockchain content
-            with  lookup content
+        """ Test if there is an update on-chain to properly match blockchain
+            content with lookup content
 
             It only returns true if the exact content is proposed
         """
@@ -441,6 +445,13 @@ class Lookup(dict):
                 if self.test_operation_equal(op[1]):
                     return pid, oid
 
+    def has_buffered_update(self):
+        """ Test if there is an update buffered locally to properly match
+            blockchain content with  lookup content
+
+            It only returns true if the exact content is proposed
+        """
+        from peerplaysbase.operationids import getOperationNameForId
         for op, pid, oid in self.get_buffered_operations():
             if getOperationNameForId(op[0]) == self.operation_update:
                 if self.test_operation_equal(op[1]):
@@ -454,7 +465,12 @@ class Lookup(dict):
                 object on chain
         """
         # Do we already know the id?
-        if "id" in self and self["id"]:
+        if (
+            "id" in self and
+            self["id"] and
+            isinstance(self["id"], str) and
+            len(self["id"].split(".")) == 3
+        ):
             return self["id"]
 
         # Try find the id on the blockchain
@@ -462,8 +478,13 @@ class Lookup(dict):
         if found:
             return found
 
-        # Try find the id in the pending proposals
+        # Try find the id in the pending on-chain proposals
         found = self.has_pending_new()
+        if found:
+            return found[0]
+
+        # Try find the id in the locally buffered proposals
+        found = self.has_buffered_new()
         if found:
             return found[1]
 

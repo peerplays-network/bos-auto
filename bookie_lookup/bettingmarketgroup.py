@@ -30,7 +30,7 @@ class LookupBettingMarketGroup(Lookup, dict):
         Lookup.__init__(self)
         self.identifier = "{}/{}".format(
             event.names_json["en"],
-            bmg["name"]["en"]
+            bmg["description"]["en"]
         )
         self.event = event
         self.parent = event
@@ -40,7 +40,7 @@ class LookupBettingMarketGroup(Lookup, dict):
             bmg
         )
         for mandatory in [
-            "name",
+            "description",
             "asset",
             "bettingmarkets",
             "rules",
@@ -84,7 +84,7 @@ class LookupBettingMarketGroup(Lookup, dict):
         if not is_create(bmg) and not is_update(bmg):
             raise ValueError
 
-        lookupdescr = self.names
+        lookupdescr = self.description
         chainsdescr = [[]]
         prefix = "new_" if is_update(bmg) else ""
         chainsdescr = bmg[prefix + "description"]
@@ -127,13 +127,14 @@ class LookupBettingMarketGroup(Lookup, dict):
         """
         # In case the parent is a proposal, we won't
         # be able to find an id for a child
-        if self.parent.id[0] == "0":
+        parent_id = self.parent.id
+        if parent_id[0] == "0" or parent_id[:4] == "1.10":
             return
 
         bmgs = BettingMarketGroups(
             self.parent.id,
             peerplays_instance=self.peerplays)
-        en_descrp = next(filter(lambda x: x[0] == "en", self.names))
+        en_descrp = next(filter(lambda x: x[0] == "en", self.description))
 
         for bmg in bmgs:
             if en_descrp in bmg["description"]:
@@ -155,7 +156,7 @@ class LookupBettingMarketGroup(Lookup, dict):
             self["asset"],
             peerplays_instance=self.peerplays)
         return self.peerplays.betting_market_group_create(
-            self.names,
+            self.description,
             event_id=self.event.id,
             rules_id=self.rules.id,
             asset=asset["id"],
@@ -168,7 +169,7 @@ class LookupBettingMarketGroup(Lookup, dict):
         """
         return self.peerplays.betting_market_group_update(
             self.id,
-            self.names,
+            self.description,
             event_id=self.event.id,
             rules_id=self.rules.id,
             frozen=self.get("frozen", False),
@@ -193,25 +194,25 @@ class LookupBettingMarketGroup(Lookup, dict):
                 x.capitalize() for x in self.event["teams"][1].split(" ")])
 
         for market in self["bettingmarkets"]:
-            name = dict()
+            description = dict()
 
-            # Overwrite the name with with proper replacement of variables
-            for k, v in market["name"].items():
-                name[k] = v.format(
+            # Overwrite the description with with proper replacement of variables
+            for k, v in market["description"].items():
+                description[k] = v.format(
                     teams=Teams
                 )
             yield LookupBettingMarket(
-                name=name,
+                description=description,
                 bmg=self
             )
 
     @property
-    def names(self):
-        """ Properly format names for internal use
+    def description(self):
+        """ Properly format description for internal use
         """
         return [
             [
                 k,
                 v
-            ] for k, v in self["name"].items()
+            ] for k, v in self["description"].items()
         ]

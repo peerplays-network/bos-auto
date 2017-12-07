@@ -9,7 +9,7 @@ from peerplays.bettingmarketgroup import (
 class LookupBettingMarket(Lookup, dict):
     """ Lookup Class for Betting Market
 
-        :param dict name: list of internationalized names
+        :param dict description: list of internationalized descriptions
         :param LookupBettingMarketGroup bmg: Parent element
         :param dict extra_data: Optionally provide additional data that is
                stored in the same dictionary
@@ -20,21 +20,21 @@ class LookupBettingMarket(Lookup, dict):
 
     def __init__(
         self,
-        name,
+        description,
         bmg,
         extra_data={}
     ):
         Lookup.__init__(self)
         self.identifier = "{}/{}".format(
-            bmg["name"]["en"],
-            name["en"]
+            bmg["description"]["en"],
+            description["en"]
         )
         self.bmg = bmg
         self.parent = bmg
         dict.__init__(self, extra_data)
         dict.update(
             self, {
-                "name": name
+                "description": description
             }
         )
         # FIXME: Figure out if the name has a variable
@@ -88,12 +88,13 @@ class LookupBettingMarket(Lookup, dict):
         """ Try to find an id for the object of the  lookup on the
             blockchain
 
-            ... note:: This only checks if a sport exists with the same name in
-                       **ENGLISH**!
+            ... note:: This only checks if a sport exists with the
+                        same description in **ENGLISH**!
         """
         # In case the parent is a proposal, we won't
         # be able to find an id for a child
-        if self.parent.id[0] == "0":
+        parent_id = self.parent.id
+        if parent_id[0] == "0" or parent_id[:4] == "1.10":
             return
 
         bms = BettingMarkets(
@@ -146,5 +147,5 @@ class LookupBettingMarket(Lookup, dict):
             [
                 k,
                 v.format(**self)   # replace variables
-            ] for k, v in self["name"].items()
+            ] for k, v in self["description"].items()
         ]

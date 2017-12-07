@@ -32,8 +32,8 @@ test_operation_dicts = [
     }
 ]
 list_test_bms = [
-    {"id": "1.21.257", "description": [["en", "Demo"]], "group_id": "1.18.0"},
-    {"id": "1.21.258", "description": [["en", "Foobar"]], "group_id": "1.18.0"},
+    {"id": "1.21.257", "description": [["en", "Demo wins"]], "group_id": "1.18.0"},
+    {"id": "1.21.258", "description": [["en", "Foobar wins"]], "group_id": "1.18.0"},
     {"id": "1.21.259", "description": [["en", "Draw"]], "group_id": "1.18.0"},
 ]
 test_find_object_mock = dict(id="YYY", **test_operation_dicts[0])

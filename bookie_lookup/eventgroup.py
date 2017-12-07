@@ -93,7 +93,8 @@ class LookupEventGroup(Lookup, dict):
         """
         # In case the parent is a proposal, we won't
         # be able to find an id for a child
-        if self.parent.id[0] == "0":
+        parent_id = self.parent.id
+        if parent_id[0] == "0" or parent_id[:4] == "1.10":
             return
 
         egs = EventGroups(

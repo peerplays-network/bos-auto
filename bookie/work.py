@@ -11,6 +11,7 @@ from bookie_lookup.bettingmarketgroup import LookupBettingMarketGroup
 from bookie_lookup.bettingmarketgroupresolve import LookupBettingMarketGroupResolve
 from bookie_lookup.bettingmarket import LookupBettingMarket
 from bookie_lookup.rule import LookupRules
+from bookie_lookup.exceptions import ObjectNotFoundError
 from dateutil.parser import parse
 from . import log
 
@@ -58,15 +59,31 @@ class Process():
         self.start_time = parse(
             self.id.get("start_time", ""))
 
-    def getEvent(self):
-        return LookupEvent.find_event(
+    def getEvent(self, allowNew=False):
+        existing = LookupEvent.find_event(
             teams=self.teams,
             start_time=self.start_time,
             eventgroup_identifier=self.eventgroup.identifier,
             sport_identifier=self.sport.identifier
         )
-        return
-        event.update()
+        if existing:
+            return existing
+        elif allowNew:
+            return LookupEvent(
+                teams=self.teams,
+                start_time=self.start_time,
+                eventgroup_identifier=self.eventgroup.identifier,
+                sport_identifier=self.sport.identifier
+            )
+        else:
+            log.error("Event could not be found: {}".format(
+                str(dict(
+                    teams=self.teams,
+                    start_time=self.start_time,
+                    eventgroup_identifier=self.eventgroup.identifier,
+                    sport_identifier=self.sport.identifier
+                ))))
+            return
 
     def create(self, args):
         """ Process the 'create' message
@@ -75,9 +92,14 @@ class Process():
         if isinstance(season, str):
             season = {"en": season}
 
-        event = self.getEvent()
+        # Obtain event
+        event = self.getEvent(allowNew=True)
 
+        # Set parameters
+        event["season"] = season
 
+        # Update event
+        event.update()
         # Go through all Betting Market groups
         for bmg in event.bettingmarketgroups:
             # Skip dynamic bmgs
@@ -90,8 +112,6 @@ class Process():
 
         log.debug(event.proposal_buffer.json())
 
-        return event
-
     def in_progress(self, args):
         whistle_start_time = args.get("whistle_start_time")
 
@@ -101,6 +121,22 @@ class Process():
     def result(self, args):
         away_score = args.get("away_score")
         home_score = args.get("home_score")
+
+        event = self.getEvent()
+        if not event:
+            return
+
+        for bmg in event.bettingmarketgroups:
+
+            # Skip those bmgs that coudn't be found
+            if not bmg.find_id():
+                continue
+
+            resolve = LookupBettingMarketGroupResolve(
+                bmg,
+                [home_score, away_score]
+            )
+            resolve.update()
 
 
 #
@@ -122,22 +158,29 @@ def process(
     # Obtain arguments
     args = message.get("arguments")
 
+    log.info("processing {} call with args {}".format(
+        call, str(args)
+    ))
+
     if call == "create":
-        obj = processing.create(args)
+        processing.create(args)
 
     elif call == "in_progress":
-        obj = processing.in_progress(args)
+        processing.in_progress(args)
 
     elif call == "finish":
-        obj = processing.finish(args)
+        processing.finish(args)
 
     elif call == "result":
-        obj = processing.result(args)
+        processing.result(args)
 
     else:
         pass
 
     if not config.get("nobroadcast", False):
-        obj.broadcast()
+        lookup.broadcast()
     else:
-        obj.clear_proposal_buffer()
+        pprint(Lookup.direct_buffer.json())
+        pprint(Lookup.proposal_buffer.json())
+        lookup.clear_proposal_buffer()
+        lookup.clear_direct_buffer()

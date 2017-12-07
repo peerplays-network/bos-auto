@@ -9,6 +9,7 @@ from bookie_lookup.lookup import Lookup
 from bookie_lookup.eventgroup import LookupEventGroup
 from bookie_lookup.event import LookupEvent
 from peerplays.utils import parse_time
+from peerplays.utils import formatTime
 import datetime
 
 miniumum_init_dict = {
@@ -23,7 +24,7 @@ test_operation_dicts = [
         "name": [["en", "Demo : Foobar"], ['en_us', 'Foobar @ Demo']],
         "event_group_id": "1.17.16",
         "season": [["en", "2017-00-00"]],
-        "start_time": miniumum_init_dict["start_time"]
+        "start_time": formatTime(miniumum_init_dict["start_time"])
     }
 ]
 test_find_object_mock = dict(id="ABC", **test_operation_dicts[0])
