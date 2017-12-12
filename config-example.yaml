@@ -1,2 +1,4 @@
 nobroadcast: False
 passphrase: super-secret-wallet-passphrase
+
+redis_password:

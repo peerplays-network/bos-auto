@@ -1,4 +1,3 @@
-import yaml
 import os
 import time
 from pprint import pprint
@@ -14,15 +13,10 @@ from bookie_lookup.rule import LookupRules
 from bookie_lookup.exceptions import ObjectNotFoundError
 from dateutil.parser import parse
 from . import log
+from .config import config
 
 lookup = Lookup("bookiesports")
 
-# Load wallet passphrase from config
-if not os.path.isfile("worker-config.yaml"):
-    raise Exception("No 'worker-config.yaml' file found")
-
-with open("worker-config.yaml", "r") as fid:
-    config = yaml.load(fid)
 
 if "passphrase" not in config:
     raise ValueError("No 'passphrase' found in configuration!")

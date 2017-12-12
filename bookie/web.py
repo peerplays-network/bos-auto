@@ -1,16 +1,18 @@
+from redis import Redis
+from rq import use_connection, Queue
 from flask import Flask, request, jsonify
-from flask_rq import RQ, get_queue
 from . import work
+from .config import config
 
 # Flask app and parameters
 app = Flask(__name__)
-app.config['RQ_OTHER_HOST'] = 'localhost'
-app.config['RQ_OTHER_PORT'] = 6379
-app.config['RQ_OTHER_PASSWORD'] = None
-app.config['RQ_OTHER_DB'] = 0
-
-# Flask based Redis Queue
-rq = RQ(app)
+redis = Redis(
+    config.get("redis_host", 'localhost'),
+    config.get("redis_port", 6379),
+    password=config.get("redis_password")
+)
+use_connection(redis)
+q = Queue(connection=redis)
 
 
 @app.route('/', methods=["GET", "POST"])
@@ -33,7 +35,6 @@ def home():
                     key), 503
 
         # Send to redis
-        q = get_queue()
         job = q.enqueue(
             work.process,
             args=(j,),
@@ -47,3 +48,4 @@ def home():
             id=job.id))
 
     return "", 503
+

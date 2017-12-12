@@ -45,6 +45,8 @@ setup(
         "pyyaml",
         "colorlog",
         "flask",
+        "flask-rq",
+        "dateutils",
         # "bookied-scrapers",
     ],
     setup_requires=['pytest-runner'],

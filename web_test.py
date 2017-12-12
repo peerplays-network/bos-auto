@@ -14,7 +14,7 @@ with open("test-scraping-data/{}".format(
     data = json.load(fid)
 
 x = requests.post(
-    "http://localhost:5000",
+    "http://94.130.229.63:8012",
     json=data,
     headers={'Content-Type': 'application/json'}
 )
