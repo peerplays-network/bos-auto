@@ -44,6 +44,7 @@ setup(
         "click",
         "pyyaml",
         "colorlog",
+        "flask",
         # "bookied-scrapers",
     ],
     setup_requires=['pytest-runner'],
