@@ -3,12 +3,7 @@
 import click
 
 
-@click.group()
-def main():
-    pass
-
-
-@main.command()
+@click.command()
 @click.option(
     "--port",
     type=int,
@@ -29,10 +24,18 @@ def main():
     is_flag=True,
     default=False
 )
-def start(port, host, debug):
-    """ Start the webendpoint
+@click.option(
+    "--proposer"
+)
+@click.option(
+    "--approver"
+)
+def main(port, host, debug, proposer, approver):
+    """ Start the endpoint
     """
     from bookie.web import app
+    app.config["BOOKIE_PROPOSER"] = proposer
+    app.config["BOOKIE_APPROVER"] = approver
     app.run(
         host=host,
         port=port,

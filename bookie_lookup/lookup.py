@@ -88,6 +88,12 @@ class Lookup(dict):
             # _tests
             self._tests()
 
+    def set_approving_account(self, account):
+        self.approving_account = account
+
+    def set_proposing_account(self, account):
+        self.proposing_account = account
+
     def pack(self):
         return dict(
             data=dict(self.data),

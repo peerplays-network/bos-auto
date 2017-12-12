@@ -2,14 +2,17 @@ from redis import Redis
 from rq import use_connection, Queue
 from flask import Flask, request, jsonify
 from . import work
-from .config import config
+from bookie.config import loadConfig
+
+config = loadConfig()
 
 # Flask app and parameters
 app = Flask(__name__)
 redis = Redis(
-    config.get("redis_host", 'localhost'),
-    config.get("redis_port", 6379),
-    password=config.get("redis_password")
+    config.get("redis_host", 'localhost') or "localhost",
+    config.get("redis_port", 6379) or 6379,
+    password=config.get("redis_password"),
+    db=config.get("redis_db", 0) or 0
 )
 use_connection(redis)
 q = Queue(connection=redis)
@@ -38,7 +41,10 @@ def home():
         job = q.enqueue(
             work.process,
             args=(j,),
-            kwargs=dict()
+            kwargs=dict(
+                proposer=app.config.get("BOOKIE_PROPOSER"),
+                approver=app.config.get("BOOKIE_APPROVER")
+            )
         )
 
         # Return message with id
@@ -48,4 +54,3 @@ def home():
             id=job.id))
 
     return "", 503
-

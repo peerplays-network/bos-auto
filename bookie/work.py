@@ -13,8 +13,9 @@ from bookie_lookup.rule import LookupRules
 from bookie_lookup.exceptions import ObjectNotFoundError
 from dateutil.parser import parse
 from . import log
-from .config import config
+from .config import loadConfig
 
+config = loadConfig()
 lookup = Lookup("bookiesports")
 
 
@@ -25,16 +26,6 @@ if not lookup.wallet.created():
     raise Exception("Please create a wallet and import the keys first!")
 
 lookup.wallet.unlock(config.get("passphrase"))
-
-if (
-    not lookup.wallet.getActiveKeyForAccount(lookup.approving_account) or
-    not lookup.wallet.getActiveKeyForAccount(lookup.proposing_account)
-):
-    raise Exception(
-        "We couldn't find the key for %s or %s in the wallet!" % (
-            lookup.approving_account,
-            lookup.proposing_account)
-    )
 
 
 class Process():
@@ -107,10 +98,12 @@ class Process():
         log.debug(event.proposal_buffer.json())
 
     def in_progress(self, args):
-        whistle_start_time = args.get("whistle_start_time")
+        # whistle_start_time = args.get("whistle_start_time")
+        pass
 
     def finish(self, args):
-        whistle_end_time = args.get("whistle_end_time")
+        # whistle_end_time = args.get("whistle_end_time")
+        pass
 
     def result(self, args):
         away_score = args.get("away_score")
@@ -143,6 +136,14 @@ def process(
 ):
     assert isinstance(message, dict)
     assert "id" in message
+
+    approver = kwargs.get("approver")
+    if approver:
+        lookup.set_approving_account(approver)
+
+    proposer = kwargs.get("proposer")
+    if proposer:
+        lookup.set_proposing_account(proposer)
 
     processing = Process(message)
 
