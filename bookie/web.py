@@ -2,7 +2,9 @@ from redis import Redis
 from rq import use_connection, Queue
 from flask import Flask, request, jsonify
 from . import work
+from .endpointschema import schema
 from bookie.config import loadConfig
+from jsonschema import validate
 
 config = loadConfig()
 
@@ -18,8 +20,13 @@ use_connection(redis)
 q = Queue(connection=redis)
 
 
-@app.route('/', methods=["GET", "POST"])
+@app.route('/')
 def home():
+    return "", 404
+
+
+@app.route('/trigger', methods=["GET", "POST"])
+def trigger():
     """ This endpoint is used to submit data to the queue so we can process it
         asynchronously to the web requests. The webrequests should be answered
         fast, while the processing might take more time
@@ -27,6 +34,12 @@ def home():
     if request.method == 'POST':
         # Obtain message from request body
         j = request.get_json()
+
+        # Ensure it is json
+        try:
+            validate(j, schema)
+        except:
+            return "Invalid data format", 503
 
         # Make sure it has the proper format
         if any([x not in j for x in ["id", "call", "arguments"]]):

@@ -47,6 +47,7 @@ setup(
         "flask",
         "flask-rq",
         "dateutils",
+        "jsonschema"
         # "bookied-scrapers",
     ],
     setup_requires=['pytest-runner'],

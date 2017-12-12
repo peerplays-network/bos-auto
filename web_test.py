@@ -9,13 +9,13 @@ files = [
 ]
 
 with open("test-scraping-data/{}".format(
-    files[3]
+    files[0]
 )) as fid:
     data = json.load(fid)
 
 x = requests.post(
-    #"http://94.130.229.63:8011",
-    "http://localhost:8010",
+    # "http://94.130.229.63:8011/trigger",
+    "http://localhost:8010/trigger",
     json=data,
     headers={'Content-Type': 'application/json'}
 )

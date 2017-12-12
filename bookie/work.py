@@ -89,6 +89,8 @@ class Process():
         for bmg in event.bettingmarketgroups:
             # Skip dynamic bmgs
             if bmg["dynamic"]:
+                log.warning("Skipping dynamic BMG: {}".format(
+                    str(bmg.identifier)))
                 continue
             bmg.update()
             # Go through all betting markets
@@ -117,6 +119,8 @@ class Process():
 
             # Skip those bmgs that coudn't be found
             if not bmg.find_id():
+                log.error("BMG could not be found: {}".format(
+                    str(bmg.identifier)))
                 continue
 
             resolve = LookupBettingMarketGroupResolve(
@@ -144,6 +148,9 @@ def process(
     proposer = kwargs.get("proposer")
     if proposer:
         lookup.set_proposing_account(proposer)
+
+    log.info("Proposer account: {}".format(lookup.proposing_account))
+    log.info("Approver account: {}".format(lookup.approving_account))
 
     processing = Process(message)
 
