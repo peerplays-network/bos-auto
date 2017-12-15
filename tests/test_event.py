@@ -222,3 +222,21 @@ class Testcases(unittest.TestCase):
             )
             self.assertTrue(event)
             self.assertEqual(event["id"], "ABC")
+
+    def test_participants(self):
+        with self.assertRaises(ValueError):
+            LookupEvent(**{
+                "teams": ["Demo", "Foobar-Not"],
+                "eventgroup_identifier": "NFL#PreSeas",
+                "sport_identifier": "AmericanFootball",
+                "season": {"en": "2017-00-00"},
+                "start_time": datetime.datetime.utcnow()
+            })
+
+        LookupEvent(**{
+            "teams": ["Jets", "Buffy"],
+            "eventgroup_identifier": "NFL#PreSeas",
+            "sport_identifier": "AmericanFootball",
+            "season": {"en": "2017-00-00"},
+            "start_time": datetime.datetime.utcnow()
+        })

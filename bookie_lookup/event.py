@@ -88,11 +88,21 @@ class LookupEvent(Lookup, dict):
 
         if not isinstance(self["season"], dict):
             raise ValueError(
-                "'season' must be (language) dictionary"
-            )
+                "'season' must be (language) dictionary")
+
+        if not self.test_teams_valid():
+            raise ValueError(
+                "Team names not known: {}".format(
+                str(self["teams"])))
 
         # Initialize name key
         dict.update(self, dict(name=self.names_json))
+
+    def test_teams_valid(self):
+        return all(
+            self.participants.is_participant(t)
+            for t in self["teams"]
+        )
 
     @classmethod
     def find_event(
@@ -245,11 +255,14 @@ class LookupEvent(Lookup, dict):
             append_to=Lookup.proposal_buffer
         )
 
-    def lookup_participants(self):
+    @property
+    def participants(self):
         """ Return content of participants in this event
         """
+        from .participant import LookupParticipants
         name = self.eventgroup["participants"]
-        return self.eventgroup.sport["participants"][name]["participants"]
+        return LookupParticipants(
+            self["sport_identifier"], name)
 
     def lookup_bettingmarketgroups(self):
         """ Return content of betting market groups

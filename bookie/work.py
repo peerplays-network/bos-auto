@@ -34,10 +34,20 @@ class Process():
 
         # Obtain data for unique key
         self.id = message.get("id")
-        self.sport = LookupSport(self.id.get("sport"))
-        self.eventgroup = LookupEventGroup(
-            self.sport,
-            self.id.get("event_group_name"))
+        try:
+            self.sport = LookupSport(self.id.get("sport"))
+        except:
+            raise Exception(
+                "Sport {} not found".format(self.id.get("sport"))
+            )
+        try:
+            self.eventgroup = LookupEventGroup(
+                self.sport,
+                self.id.get("event_group_name"))
+        except:
+            raise Exception(
+                "Event group {} not found".format(self.id.get("event_group_name"))
+            )
         self.teams = [
             self.id.get("home"),
             self.id.get("away")]
@@ -152,7 +162,11 @@ def process(
     log.info("Proposer account: {}".format(lookup.proposing_account))
     log.info("Approver account: {}".format(lookup.approving_account))
 
-    processing = Process(message)
+    try:
+        processing = Process(message)
+    except Exception as e:
+        log.error(str(e))
+        return str(e), 503
 
     # Call
     call = message.get("call").lower()

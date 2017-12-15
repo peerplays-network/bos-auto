@@ -1,4 +1,8 @@
 participants:
+- name:
+   en: Foobar
+- name:
+   en: Demo
 - aliases:
   - BuffBill
   - Buffy
