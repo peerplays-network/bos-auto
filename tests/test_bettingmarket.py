@@ -22,7 +22,7 @@ miniumum_event_dict = {
 }
 test_operation_dicts = [
     {
-        "description": [["en", "Demo"]],
+        "description": [["en", "Demo wins"]],
         "group_id": "1.18.0",
     }
 ]

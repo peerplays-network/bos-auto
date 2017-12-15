@@ -36,7 +36,7 @@ class Process():
         self.id = message.get("id")
         try:
             self.sport = LookupSport(self.id.get("sport"))
-        except:
+        except Exception:
             raise Exception(
                 "Sport {} not found".format(self.id.get("sport"))
             )
@@ -44,7 +44,7 @@ class Process():
             self.eventgroup = LookupEventGroup(
                 self.sport,
                 self.id.get("event_group_name"))
-        except:
+        except Exception:
             raise Exception(
                 "Event group {} not found".format(self.id.get("event_group_name"))
             )

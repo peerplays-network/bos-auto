@@ -5,6 +5,7 @@ class ObjectNotFoundError(Exception):
 class SportsNotFoundError(Exception):
     pass
 
+
 class ObjectNotFoundInLookup(Exception):
     pass
 

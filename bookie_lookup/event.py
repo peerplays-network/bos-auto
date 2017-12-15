@@ -93,7 +93,7 @@ class LookupEvent(Lookup, dict):
         if not self.test_teams_valid():
             raise ValueError(
                 "Team names not known: {}".format(
-                str(self["teams"])))
+                    str(self["teams"])))
 
         # Initialize name key
         dict.update(self, dict(name=self.names_json))

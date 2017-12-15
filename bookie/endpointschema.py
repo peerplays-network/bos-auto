@@ -62,7 +62,7 @@ schema = {
                     "type": "string"
                 }
             }
-        },
-},
-"required": ["id", "call", "arguments"]
+        }
+    },
+    "required": ["id", "call", "arguments"]
 }

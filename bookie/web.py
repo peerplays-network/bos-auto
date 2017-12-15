@@ -38,7 +38,7 @@ def trigger():
         # Ensure it is json
         try:
             validate(j, schema)
-        except:
+        except Exception:
             return "Invalid data format", 503
 
         # Make sure it has the proper format
