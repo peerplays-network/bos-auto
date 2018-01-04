@@ -91,6 +91,14 @@ class Process():
         event = self.getEvent(allowNew=True)
 
         # Set parameters
+        if (
+            event["season"] and
+            event["season"].get("en") != season.get("en")
+        ):
+            raise Exception(
+                "Seasons don't match: {} != {}".format(
+                    season.get("en"),
+                    event["season"].get("en")))
         event["season"] = season
 
         # Update event

@@ -1,13 +1,13 @@
 import sys
 import os
 import yaml
-from glob import glob
 from peerplays.instance import shared_peerplays_instance
 from peerplays.account import Account
 from peerplays.proposal import Proposal, Proposals
 from peerplays.storage import configStorage as config
 from . import log, UPDATE_PENDING_NEW, UPDATE_PROPOSING_NEW
-from .exceptions import ObjectNotFoundError, SportsNotFoundError
+from .exceptions import ObjectNotFoundError
+from bookiesports import BookieSports
 
 
 class LookupDatabaseConfig:
@@ -25,7 +25,6 @@ class Lookup(dict):
 
     direct_buffer = None
     proposal_buffer = None
-    sports_folder = None
 
     def __init__(
         self,
@@ -41,13 +40,6 @@ class Lookup(dict):
         self.peerplays = peerplays_instance or shared_peerplays_instance()
         # self._cwd = os.path.dirname(os.path.realpath(__file__))
         self._cwd = os.getcwd()
-
-        if Lookup.sports_folder is None:
-            Lookup.sports_folder = sports_folder or "bookiesports"
-        elif sports_folder and sports_folder != Lookup.sports_folder:
-            # clear .data
-            Lookup._clear()
-            Lookup.sports_folder = sports_folder
 
         if not proposing_account:
             if "default_account" in config:
@@ -71,22 +63,8 @@ class Lookup(dict):
 
         # Do not reload sports if already stored in data
         if not Lookup.data:
-            if not os.path.isdir(
-                os.path.join(
-                    self._cwd,
-                    Lookup.sports_folder)):
-                # Reset the sports_folder (since it is a singelton)
-                Lookup.sports_folder = None
-                raise SportsNotFoundError(
-                    "You need to clone the bookiesports repository into your "
-                    "working directory first! ({})".format(Lookup.sports_folder)
-                )
-
             # Load sports
-            self.data["sports"] = self._loadSports(Lookup.sports_folder)
-
-            # _tests
-            self._tests()
+            self.data["sports"] = BookieSports(sports_folder)
 
     def set_approving_account(self, account):
         self.approving_account = account
@@ -98,7 +76,6 @@ class Lookup(dict):
         return dict(
             data=dict(self.data),
             approval_map=self.approval_map,
-            sports_folder=self.sports_folder,
             approving_account=self.approving_account,
             proposing_account=self.proposing_account
         )
@@ -108,7 +85,6 @@ class Lookup(dict):
         inst = cls()
         dict.__init__(inst, pack.get("data", {}))
         inst.approval_map = pack["approval_map"]
-        inst.sports_folder = pack["sports_folder"]
         inst.approving_account = pack["approving_account"]
         inst.proposing_account = pack["proposing_account"]
         return inst
@@ -123,7 +99,6 @@ class Lookup(dict):
         Lookup.approval_map = {}
         Lookup.direct_buffer = None
         Lookup.proposal_buffer = None
-        Lookup.sports_folder = None
 
     def clear_proposal_buffer(self):
         Lookup.proposal_buffer_tx = self.peerplays.new_tx()
@@ -155,126 +130,9 @@ class Lookup(dict):
             log.error("Error in configuration file {}: {}".format(f, exc))
             sys.exit(1)
         except Exception as e:
-            log.error("The file {} is required but doesn't exist!".format(f))
+            log.error("The file {} is required but doesn't exist! ({})".format(
+                f, e))
             sys.exit(1)
-
-    def _loadSports(self, sports_folder):
-        """ This loads all sports recursively from the ``sports/`` folder
-        """
-        ret = dict()
-        for sportDir in glob(
-            os.path.join(
-                self._cwd,
-                sports_folder,
-                "*")):
-            if not os.path.isdir(sportDir):
-                continue
-            sport = os.path.basename(sportDir)
-            ret[sport] = self._loadSport(sportDir)
-        return ret
-
-    def _loadSport(self, sportDir):
-        """ Load an individual sport, recursively
-        """
-        sport = self._loadyaml(os.path.join(sportDir, "index.yaml"))
-        eventgroups = dict()
-        for eventgroup in sport["eventgroups"]:
-            eventgroups[eventgroup] = self._loadEventGroup(
-                os.path.join(sportDir, eventgroup)
-            )
-            eventgroups[eventgroup]["sport_id"] = sport.get("id")
-        sport["eventgroups"] = eventgroups
-
-        # Rules
-        rulesDir = os.path.join(sportDir, "rules")
-        rules = dict()
-        for ruleDir in glob(os.path.join(rulesDir, "*")):
-            if ".yaml" not in ruleDir:
-                continue
-            rule = os.path.basename(ruleDir).replace(".yaml", "")
-            rules[rule] = self._loadyaml(ruleDir)
-        sport["rules"] = rules
-
-        # participants
-        participantsDir = os.path.join(sportDir, "participants")
-        participants = dict()
-        for participantDir in glob(os.path.join(participantsDir, "*")):
-            if ".yaml" not in participantDir:
-                continue
-            participant = os.path.basename(participantDir).replace(".yaml", "")
-            participants[participant] = self._loadyaml(participantDir)
-        sport["participants"] = participants
-
-        # def_bmgs
-        def_bmgsDir = os.path.join(sportDir, "bettingmarketgroups")
-        def_bmgs = dict()
-        for def_bmgDir in glob(os.path.join(def_bmgsDir, "*")):
-            if ".yaml" not in def_bmgDir:
-                continue
-            def_bmg = os.path.basename(def_bmgDir).replace(".yaml", "")
-            def_bmgs[def_bmg] = self._loadyaml(def_bmgDir)
-        sport["bettingmarketgroups"] = def_bmgs
-
-        return sport
-
-    def _loadEventGroup(self, eventgroupDir):
-        """ Load an event group (recursively)
-        """
-        eventgroup = self._loadyaml(os.path.join(eventgroupDir, "index.yaml"))
-
-        """
-        # Events
-        events = dict()
-        for event in eventgroup["events"]:
-            events[event] = self._loadEvent(os.path.join(eventgroupDir, event))
-        eventgroup["events"] = events
-        """
-
-        return eventgroup
-
-    def _tests(self):
-        """ Tests for consistencies and requirements
-        """
-        for sportname, sport in self.data["sports"].items():
-            self._test_required_attributes(sport, sportname, ["name", "id"])
-
-            for evengroupname, eventgroup in sport["eventgroups"].items():
-                self._test_required_attributes(
-                    eventgroup,
-                    evengroupname,
-                    ["name", "id"]
-                )
-
-                for bmg in eventgroup["bettingmarketgroups"]:
-                    # Test that each used BMG is deinfed
-                    assert bmg in sport["bettingmarketgroups"], (
-                        "Betting market group {} is used"
-                        "in {}:{} but wasn't defined!"
-                    ).format(
-                        bmg, sportname, evengroupname
-                    )
-            for rule in sport["rules"]:
-                pass
-            for bmgname, bmg in sport["bettingmarketgroups"].items():
-                self._test_required_attributes(bmg, bmgname, ["description"])
-
-                # Test that each used rule is defined
-                assert bmg["rules"] in sport["rules"], \
-                    "Rule {} is used in {}:{} but wasn't defined!".format(
-                        bmg["rules"],
-                        sportname,
-                        bmgname)
-
-                for bettingmarkets in bmg["bettingmarkets"]:
-                    self._test_required_attributes(
-                        bettingmarkets,
-                        bmgname,
-                        ["description"]
-                    )
-
-    def _test_required_attributes(self, data, name, checks):
-        for check in checks:
-            assert check in data, "{} is missing a {}".format(name, check)
 
     # List calls
     def list_sports(self):
@@ -418,7 +276,8 @@ class Lookup(dict):
             del Lookup.approval_map[p]
 
     def has_pending_new(self):
-        """ This call tests if a proposal that would create this object is pending on-chain
+        """ This call tests if a proposal that would create this object is
+            pending on-chain
 
             It only returns true if the exact content is proposed
         """

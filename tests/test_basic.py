@@ -1,7 +1,8 @@
 import os
 import unittest
 from peerplays import PeerPlays
-from bookie_lookup.lookup import Lookup, SportsNotFoundError
+from bookie_lookup.lookup import Lookup
+from bookiesports.exceptions import SportsNotFoundError
 
 
 class Testcases(unittest.TestCase):

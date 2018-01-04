@@ -8,6 +8,10 @@
 
 Modify `worker-config.yaml`.
 
+## Requirements
+
+* A Redis database
+
 ## Executation
 
     $ python3 worker.py      # Execute worker

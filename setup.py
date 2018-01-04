@@ -45,9 +45,10 @@ setup(
         "pyyaml",
         "colorlog",
         "flask",
+        "redis",
         "flask-rq",
         "dateutils",
-        "jsonschema"
+        "bookiesports",
         # "bookied-scrapers",
     ],
     setup_requires=['pytest-runner'],
