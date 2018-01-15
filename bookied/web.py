@@ -1,10 +1,10 @@
 from redis import Redis
 from rq import use_connection, Queue
 from flask import Flask, request, jsonify
-from . import work
-from .endpointschema import schema
-from bookie.config import loadConfig
 from jsonschema import validate
+from .endpointschema import schema
+from .config import loadConfig
+from . import work
 
 config = loadConfig()
 

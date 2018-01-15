@@ -1,4 +1,4 @@
-# Bookied Automation
+# Bookied Automation API
 
 ## Installation
 
@@ -6,7 +6,8 @@
 
 ## Configuration
 
-Modify `worker-config.yaml`.
+1. Rename `config-example.yaml` as `config.yaml`
+2. Modify `config.yaml`
 
 ## Requirements
 
@@ -14,9 +15,9 @@ Modify `worker-config.yaml`.
 
 ## Executation
 
-    $ python3 worker.py      # Execute worker
-    $ python3 cli.py start   # Start web endpoint
+    $ python3 cli.py worker &    # Execute worker
+    $ python3 cli.py api         # Start web endpoint
 
 ## Test
 
-    $ python3 web_test.py
+    $ python3 web_t.py

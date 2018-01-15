@@ -2,15 +2,15 @@ import os
 import time
 from pprint import pprint
 from flask_rq import job
-from bookie_lookup.lookup import Lookup
-from bookie_lookup.sport import LookupSport
-from bookie_lookup.eventgroup import LookupEventGroup
-from bookie_lookup.event import LookupEvent
-from bookie_lookup.bettingmarketgroup import LookupBettingMarketGroup
-from bookie_lookup.bettingmarketgroupresolve import LookupBettingMarketGroupResolve
-from bookie_lookup.bettingmarket import LookupBettingMarket
-from bookie_lookup.rule import LookupRules
-from bookie_lookup.exceptions import ObjectNotFoundError
+from bookie_sync.lookup import Lookup
+from bookie_sync.sport import LookupSport
+from bookie_sync.eventgroup import LookupEventGroup
+from bookie_sync.event import LookupEvent
+from bookie_sync.bettingmarketgroup import LookupBettingMarketGroup
+from bookie_sync.bettingmarketgroupresolve import LookupBettingMarketGroupResolve
+from bookie_sync.bettingmarket import LookupBettingMarket
+from bookie_sync.rule import LookupRules
+from bookie_sync.exceptions import ObjectNotFoundError
 from dateutil.parser import parse
 from . import log
 from .config import loadConfig

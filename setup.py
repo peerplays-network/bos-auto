@@ -11,8 +11,7 @@ setup(
     name='bookied',
     version=__VERSION__,
     description=(
-        'A daemon to keep the blockchain bookie DApp in sync (i.e., an oracle'
-        ' daemon)'
+        'A daemon to manage synchronization with the blockchain'
     ),
     long_description=open('README.md').read(),
     download_url='https://github.com/pbsa/bookied/tarball/' + __VERSION__,
@@ -23,8 +22,7 @@ setup(
     url='http://pbsa.info',
     keywords=['peerplays', 'bookie'],
     packages=[
-        "bookie",
-        "bookie_lookup"
+        "bookied",
     ],
     classifiers=[
         'License :: OSI Approved :: MIT License',
@@ -42,14 +40,14 @@ setup(
         "peerplays",
         "prettytable",
         "click",
+        "jsonschema",
         "pyyaml",
-        "colorlog",
         "flask",
         "redis",
         "flask-rq",
         "dateutils",
         "bookiesports",
-        # "bookied-scrapers",
+        "bookied_sync",
     ],
     setup_requires=['pytest-runner'],
     tests_require=['pytest'],

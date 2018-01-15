@@ -1,4 +1,11 @@
-nobroadcast: False
-passphrase: super-secret-wallet-passphrase
-
+# (optional) Redis configuration
+redis_host:
+redis_port:
 redis_password:
+redis_db:
+
+# Safe mode (if True)
+nobroadcast: False
+
+# Wallet passphrase of pypeerplays
+passphrase: super-secret-wallet-passphrase

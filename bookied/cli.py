@@ -2,15 +2,61 @@
 
 import click
 import sys
-from bookie.config import loadConfig
 from redis import Redis
 from rq import Connection, Worker
-from bookie import log
+from .config import loadConfig, log
+
+
+@click.group()
+def main():
+    pass
 
 
 @click.command()
+@click.option(
+    "--port",
+    type=int,
+    default=8010
+)
+@click.option(
+    "--host",
+    type=str,
+    default="127.0.0.1"
+)
+@click.option(
+    "--host",
+    type=str,
+    default="127.0.0.1"
+)
+@click.option(
+    '--debug',
+    is_flag=True,
+    default=False
+)
+@click.option(
+    "--proposer"
+)
+@click.option(
+    "--approver"
+)
+def api(port, host, debug, proposer, approver):
+    """ Start the API endpoint
+    """
+    from bookie.web import app
+    app.config["BOOKIE_PROPOSER"] = proposer
+    app.config["BOOKIE_APPROVER"] = approver
+    app.run(
+        host=host,
+        port=port,
+        debug=debug
+    )
+
+
+@main.command()
 @click.option("--config", default="config.yaml")
-def main(config):
+def worker(config):
+    """ Start the (redis queue) worker to deal with the received messages
+    """
     config = loadConfig(config)
 
     redis = Redis(
