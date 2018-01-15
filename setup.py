@@ -16,11 +16,11 @@ setup(
     long_description=open('README.md').read(),
     download_url='https://github.com/pbsa/bookied/tarball/' + __VERSION__,
     author='Fabian Schuh',
-    author_email='Fabian@chainsquad.com',
+    author_email='Fabian.Schuh@BlockchainProjectsBV.com',
     maintainer='Fabian Schuh',
-    maintainer_email='Fabian@chainsquad.com',
+    maintainer_email='Fabian.Schuh@BlockchainProjectsBV.com',
     url='http://pbsa.info',
-    keywords=['peerplays', 'bookie'],
+    keywords=['peerplays', 'bookied'],
     packages=[
         "bookied",
     ],
@@ -33,7 +33,7 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'bookied = bookie.cli:main'
+            'bookied = bookied.cli:main'
         ],
     },
     install_requires=[

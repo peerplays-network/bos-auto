@@ -2,30 +2,30 @@ import os
 import time
 from pprint import pprint
 from flask_rq import job
-from bookie_sync.lookup import Lookup
-from bookie_sync.sport import LookupSport
-from bookie_sync.eventgroup import LookupEventGroup
-from bookie_sync.event import LookupEvent
-from bookie_sync.bettingmarketgroup import LookupBettingMarketGroup
-from bookie_sync.bettingmarketgroupresolve import LookupBettingMarketGroupResolve
-from bookie_sync.bettingmarket import LookupBettingMarket
-from bookie_sync.rule import LookupRules
-from bookie_sync.exceptions import ObjectNotFoundError
+from bookied_sync.lookup import Lookup
+from bookied_sync.sport import LookupSport
+from bookied_sync.eventgroup import LookupEventGroup
+from bookied_sync.event import LookupEvent
+from bookied_sync.bettingmarketgroup import LookupBettingMarketGroup
+from bookied_sync.bettingmarketgroupresolve import LookupBettingMarketGroupResolve
+from bookied_sync.bettingmarket import LookupBettingMarket
+from bookied_sync.rule import LookupRules
+from bookied_sync.exceptions import ObjectNotFoundError
 from dateutil.parser import parse
 from . import log
 from .config import loadConfig
 
-config = loadConfig()
-lookup = Lookup("bookiesports")
+if __name__ == "__main__":
+    config = loadConfig()
+    lookup = Lookup("bookiesports")
 
+    if "passphrase" not in config:
+        raise ValueError("No 'passphrase' found in configuration!")
 
-if "passphrase" not in config:
-    raise ValueError("No 'passphrase' found in configuration!")
+    if not lookup.wallet.created():
+        raise Exception("Please create a wallet and import the keys first!")
 
-if not lookup.wallet.created():
-    raise Exception("Please create a wallet and import the keys first!")
-
-lookup.wallet.unlock(config.get("passphrase"))
+    lookup.wallet.unlock(config.get("passphrase"))
 
 
 class Process():
@@ -46,7 +46,8 @@ class Process():
                 self.id.get("event_group_name"))
         except Exception:
             raise Exception(
-                "Event group {} not found".format(self.id.get("event_group_name"))
+                "Event group {} not found".format(
+                    self.id.get("event_group_name"))
             )
         self.teams = [
             self.id.get("home"),

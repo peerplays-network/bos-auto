@@ -1,4 +1,3 @@
-bookied-scrapers
 scrypt==0.7.1
 secp256k1
 pyyaml

@@ -7,18 +7,12 @@ Welcome to Bookied's documentation!
 ===================================
 
 .. toctree::
-   :maxdepth: 2
-   :caption: Contents:
+   :maxdepth: 3
 
-   lookup
-   sport
-   eventgroup
-   event
-   bettingmarketgroup
-   bettingmarket
-   rule
-   participant
-
+   config
+   web
+   worker
+   cli
 
 
 Indices and tables

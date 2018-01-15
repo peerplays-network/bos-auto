@@ -4,7 +4,8 @@ import click
 import sys
 from redis import Redis
 from rq import Connection, Worker
-from .config import loadConfig, log
+from .config import loadConfig
+from . import log
 
 
 @click.group()
@@ -12,7 +13,7 @@ def main():
     pass
 
 
-@click.command()
+@main.command()
 @click.option(
     "--port",
     type=int,
@@ -42,7 +43,7 @@ def main():
 def api(port, host, debug, proposer, approver):
     """ Start the API endpoint
     """
-    from bookie.web import app
+    from bookied.web import app
     app.config["BOOKIE_PROPOSER"] = proposer
     app.config["BOOKIE_APPROVER"] = approver
     app.run(
@@ -65,12 +66,14 @@ def worker(config):
         password=config.get("redis_password"),
         db=config.get("redis_db", 0) or 0
     )
+    """
     log.info("Opening Redis connection (redis://:{}@{}/{})".format(
         config.get("redis_password"),
         config.get("redis_host", 'localhost') or "localhost",
         config.get("redis_port", 6379) or 6379,
         config.get("redis_db", 0) or 0
     ))
+    """
     with Connection(redis):
         w = Worker(sys.argv[1:] or ['default'])
         w.work()
