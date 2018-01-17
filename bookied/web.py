@@ -30,6 +30,15 @@ def trigger():
     """ This endpoint is used to submit data to the queue so we can process it
         asynchronously to the web requests. The webrequests should be answered
         fast, while the processing might take more time
+
+        The endpoint opens an API according to the ``--port`` and ``--host``
+        settings on launch. Thise API provides an endpoint on
+
+            /trigger
+
+        and consumes POST messages with JSON formatted body.
+
+        The body is validated against the :doc:`schema`.
     """
     if request.method == 'POST':
         # Obtain message from request body

@@ -1,2 +1,1 @@
-bookied
-bookied-scrapers
+sphinxcontrib-programoutput

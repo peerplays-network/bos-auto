@@ -1,23 +1,19 @@
-import os
-import time
 from pprint import pprint
 from flask_rq import job
 from bookied_sync.lookup import Lookup
 from bookied_sync.sport import LookupSport
 from bookied_sync.eventgroup import LookupEventGroup
 from bookied_sync.event import LookupEvent
-from bookied_sync.bettingmarketgroup import LookupBettingMarketGroup
-from bookied_sync.bettingmarketgroupresolve import LookupBettingMarketGroupResolve
-from bookied_sync.bettingmarket import LookupBettingMarket
-from bookied_sync.rule import LookupRules
-from bookied_sync.exceptions import ObjectNotFoundError
+from bookied_sync.bettingmarketgroupresolve import (
+    LookupBettingMarketGroupResolve
+)
 from dateutil.parser import parse
 from . import log
 from .config import loadConfig
 
 if __name__ == "__main__":
     config = loadConfig()
-    lookup = Lookup("bookiesports")
+    lookup = Lookup()
 
     if "passphrase" not in config:
         raise ValueError("No 'passphrase' found in configuration!")
@@ -29,6 +25,9 @@ if __name__ == "__main__":
 
 
 class Process():
+    """ This class is used to deal with Messages that have been received by any
+        means and need processing thru bookied-sync
+    """
     def __init__(self, message):
         self.message = message
 
@@ -56,6 +55,8 @@ class Process():
             self.id.get("start_time", ""))
 
     def getEvent(self, allowNew=False):
+        """ Get an event from the lookup
+        """
         existing = LookupEvent.find_event(
             teams=self.teams,
             start_time=self.start_time,
@@ -119,14 +120,20 @@ class Process():
         log.debug(event.proposal_buffer.json())
 
     def in_progress(self, args):
+        """ Set a BMG to ``in_progress``
+        """
         # whistle_start_time = args.get("whistle_start_time")
         pass
 
     def finish(self, args):
+        """ Set a BMG to ``finish``.
+        """
         # whistle_end_time = args.get("whistle_end_time")
         pass
 
     def result(self, args):
+        """ Publish results to a BMG
+        """
         away_score = args.get("away_score")
         home_score = args.get("home_score")
 
@@ -157,6 +164,10 @@ def process(
     message,
     **kwargs
 ):
+    """ This process is called by the queue to process an actual message
+        received. It instantiates from ``Process`` and let's the object deal
+        with the message types.
+    """
     assert isinstance(message, dict)
     assert "id" in message
 

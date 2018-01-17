@@ -6,14 +6,22 @@
 Welcome to Bookied's documentation!
 ===================================
 
+`bookied` comes with a worker and an API to receive notifications of a
+feed data provider. The API receives those messages, validates them, and
+queues them for a worker to perform corresponding tasks. Since the
+queuing is performed via `redis <https://redis.io>`_, a redis backend
+must be present.
+
+Outline
+-------
 .. toctree::
    :maxdepth: 3
 
    config
+   cli
+   schema
    web
    worker
-   cli
-
 
 Indices and tables
 ==================

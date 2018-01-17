@@ -1,5 +1,7 @@
 Worker
 ======
 
-.. automodule:: bookied.work
+.. autofunction:: bookied.work.process
+
+.. autoclass:: bookied.work.Process
     :members:
