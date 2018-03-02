@@ -11,17 +11,17 @@ from dateutil.parser import parse
 from . import log
 from .config import loadConfig
 
-if __name__ == "__main__":
-    config = loadConfig()
-    lookup = Lookup()
 
-    if "passphrase" not in config:
-        raise ValueError("No 'passphrase' found in configuration!")
+config = loadConfig()
+lookup = Lookup()
 
-    if not lookup.wallet.created():
-        raise Exception("Please create a wallet and import the keys first!")
+if "passphrase" not in config:
+    raise ValueError("No 'passphrase' found in configuration!")
 
-    lookup.wallet.unlock(config.get("passphrase"))
+if not lookup.wallet.created():
+    raise Exception("Please create a wallet and import the keys first!")
+
+lookup.wallet.unlock(config.get("passphrase"))
 
 
 class Process():

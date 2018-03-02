@@ -1,21 +1,16 @@
-from redis import Redis
 from rq import use_connection, Queue
 from flask import Flask, request, jsonify
 from jsonschema import validate
 from .endpointschema import schema
 from .config import loadConfig
 from . import work
+from .redis_con import redis
+from . import log
 
 config = loadConfig()
 
 # Flask app and parameters
 app = Flask(__name__)
-redis = Redis(
-    config.get("redis_host", 'localhost') or "localhost",
-    config.get("redis_port", 6379) or 6379,
-    password=config.get("redis_password"),
-    db=config.get("redis_db", 0) or 0
-)
 use_connection(redis)
 q = Queue(connection=redis)
 
@@ -68,6 +63,8 @@ def trigger():
                 approver=app.config.get("BOOKIE_APPROVER")
             )
         )
+
+        log.info("Forwarded incident to worker via redis")
 
         # Return message with id
         return jsonify(dict(
