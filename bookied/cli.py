@@ -56,13 +56,14 @@ def api(port, host, debug, proposer, approver):
 
 @main.command()
 @click.option("--config", default="config.yaml")
-def worker(config):
+@click.argument("queue", default="default")
+def worker(config, queue):
     """ Start the (redis queue) worker to deal with the received messages
     """
-    from .redis_con import redis
     config = loadConfig(config)
+    from .redis_con import redis
     with Connection(redis):
-        w = Worker(sys.argv[1:] or ['default'])
+        w = Worker([queue])
         w.work()
 
 
