@@ -34,7 +34,7 @@ schema = {
         "call": {
             "description": "The trigger that was called",
             "type": "string",
-            "enum": ["create", "in_progress", "finish", "result", "unknown"]
+            "enum": ["create", "in_progress", "finish", "result", "unknown", "settle"]
         },
         "arguments": {
             "type": "object",

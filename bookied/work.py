@@ -3,6 +3,7 @@ from flask_rq import job
 from bookied_sync.lookup import Lookup
 from bookied_sync.sport import LookupSport
 from bookied_sync.eventgroup import LookupEventGroup
+from bookied_sync.eventstatus import LookupEventStatus
 from bookied_sync.event import LookupEvent
 from bookied_sync.bettingmarketgroupresolve import (
     LookupBettingMarketGroupResolve
@@ -122,24 +123,43 @@ class Process():
     def in_progress(self, args):
         """ Set a BMG to ``in_progress``
         """
-        # whistle_start_time = args.get("whistle_start_time")
-        pass
+        event = self.getEvent()
+        if not event:
+            return
+        event.status_update("in_progress")
 
     def finish(self, args):
         """ Set a BMG to ``finish``.
         """
-        # whistle_end_time = args.get("whistle_end_time")
-        pass
+        event = self.getEvent()
+        if not event:
+            return
+        event.status_update("frozen")
 
     def result(self, args):
         """ Publish results to a BMG
         """
-        away_score = args.get("away_score")
         home_score = args.get("home_score")
+        away_score = args.get("away_score")
 
         event = self.getEvent()
         if not event:
             return
+
+        event.status_update(
+            "finished",
+            scores=[str(home_score), str(away_score)]
+        )
+
+    def settle(self, args):
+        """ Trigger settle of BMGs
+        """
+        event = self.getEvent()
+        if not event:
+            return
+
+        home_score = event["scores"][0]
+        away_score = event["scores"][1]
 
         for bmg in event.bettingmarketgroups:
 
@@ -149,11 +169,14 @@ class Process():
                     str(bmg.identifier)))
                 continue
 
-            resolve = LookupBettingMarketGroupResolve(
+            settle = LookupBettingMarketGroupResolve(
                 bmg,
                 [home_score, away_score]
             )
-            resolve.update()
+            settle.update()
+
+        event.status_update("settled")
+
 
 
 #
@@ -171,11 +194,15 @@ def process(
     assert isinstance(message, dict)
     assert "id" in message
 
-    approver = kwargs.get("approver")
+    approver = kwargs.get("approver", None)
+    if not approver:
+        approver = message.get("approver", None)
     if approver:
         lookup.set_approving_account(approver)
 
-    proposer = kwargs.get("proposer")
+    proposer = kwargs.get("proposer", None)
+    if not proposer:
+        proposer = message.get("proposer", None)
     if proposer:
         lookup.set_proposing_account(proposer)
 
@@ -209,6 +236,9 @@ def process(
 
     elif call == "result":
         processing.result(args)
+
+    elif call == "settle":
+        processing.settle(args)
 
     else:
         pass
