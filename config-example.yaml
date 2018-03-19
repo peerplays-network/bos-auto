@@ -9,3 +9,9 @@ nobroadcast: False
 
 # Wallet passphrase of pypeerplays
 passphrase: super-secret-wallet-passphrase
+
+# Proposer account
+BOOKIE_PROPOSER: init0
+
+# Approver account
+BOOKIE_APPROVER: init0

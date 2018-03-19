@@ -9,10 +9,13 @@ files = [
     "test-data/2018-03-10t000000z-basketball-nba-regular-season-detroit-pistons-chicago-bulls-settle.json",
 ]
 
-with open(files[0]) as fid:
+with open(files[1]) as fid:
     data = json.load(fid)
 
-data.update(dict(approver="init1"))
+data.update(dict(
+    approver="init0",
+    proposer="init0",
+))
 x = requests.post(
     # "http://94.130.229.63:8011/trigger",
     "http://localhost:8010/trigger",

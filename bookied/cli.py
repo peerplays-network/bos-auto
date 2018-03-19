@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import click
-from rq import Connection, Worker
+from rq import Connection, Worker, use_connection, Queue
 
 
 @click.group()
@@ -61,6 +61,24 @@ def worker(queue):
     with Connection(redis):
         w = Worker([queue])
         w.work()
+
+
+@main.command()
+def selfapprove():
+    from .redis_con import redis
+    from . import work
+    from .config import loadConfig
+    config = loadConfig()
+    use_connection(redis)
+    q = Queue(connection=redis)
+    q.enqueue(
+        work.selfapprove,
+        args=(),
+        kwargs=dict(
+            proposer=config.get("BOOKIE_PROPOSER"),
+            approver=config.get("BOOKIE_APPROVER")
+        )
+    )
 
 
 if __name__ == "__main__":

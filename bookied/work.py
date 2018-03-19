@@ -8,13 +8,17 @@ from bookied_sync.event import LookupEvent
 from bookied_sync.bettingmarketgroupresolve import (
     LookupBettingMarketGroupResolve
 )
+from peerplays.account import Account
 from dateutil.parser import parse
 from . import log
 from .config import loadConfig
 
 
 config = loadConfig()
-lookup = Lookup()
+lookup = Lookup(
+    proposing_account=config.get("BOOKIE_PROPOSER"),
+    approving_account=config.get("BOOKIE_APPROVER")
+)
 
 if "passphrase" not in config:
     raise ValueError("No 'passphrase' found in configuration!")
@@ -178,7 +182,6 @@ class Process():
         event.status_update("settled")
 
 
-
 #
 # Processing Job
 #
@@ -250,3 +253,50 @@ def process(
         pprint(Lookup.proposal_buffer.json())
         lookup.clear_proposal_buffer()
         lookup.clear_direct_buffer()
+
+#
+# Approve my own Proposals
+#
+@job
+def selfapprove(*args, **kwargs):
+    """ This process is meant to approve proposals that I have created.
+
+        The reason for this is that proposals created by accountA are not
+        automatically also approved by accountA and need an explicit approval.
+    """
+    from peerplays.proposal import Proposals
+    from .config import loadConfig
+    from time import sleep
+
+    # We sleep 3 seconds to allow the proposal we created to end up in the
+    # blockchain
+    sleep(3)
+
+    config = loadConfig()
+
+    myapprover = kwargs.get("approver", None)
+    if not myapprover:
+        myapprover = config.get("BOOKIE_APPROVER")
+
+    myproposer = kwargs.get("proposer", None)
+    if not myproposer:
+        myproposer = config.get("BOOKIE_PROPOSER")
+
+    log.info(
+        "Testing for pending proposals created by {} that we could approve by {}".format(
+        myproposer, myapprover))
+
+    peerplays = lookup.peerplays
+    proposals = Proposals("witness-account", peerplays_instance=peerplays)
+    for proposal in proposals:
+        proposer = Account(
+            proposal.proposer,
+            peerplays_instance=peerplays)
+        if (
+            proposer["name"] == myproposer and
+            proposer["id"] not in proposal["available_active_approvals"]
+        ):
+            log.info("Proposal {} has been proposed by us. Let's approve it!".format(
+                proposal["id"]
+            ))
+            pprint(peerplays.approveproposal(proposal["id"], account=myproposer))
