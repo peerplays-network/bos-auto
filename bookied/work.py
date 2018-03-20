@@ -127,7 +127,7 @@ class Process():
     def in_progress(self, args):
         """ Set a BMG to ``in_progress``
         """
-        event = self.getEvent()
+        event = self.getEvent(allowNew=True)
         if not event:
             return
         event.status_update("in_progress")
