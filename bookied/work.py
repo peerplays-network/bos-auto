@@ -1,4 +1,3 @@
-from pprint import pprint
 from flask_rq import job
 from bookied_sync.lookup import Lookup
 from bookied_sync.sport import LookupSport
@@ -259,8 +258,8 @@ def process(
             log.error("Broadcast Error: {}".format(str(e)))
             log.error(traceback.format_exc())
     else:
-        pprint(Lookup.direct_buffer.json())
-        pprint(Lookup.proposal_buffer.json())
+        log.warn(Lookup.direct_buffer.json())
+        log.warn(Lookup.proposal_buffer.json())
         lookup.clear_proposal_buffer()
         lookup.clear_direct_buffer()
 
@@ -310,4 +309,4 @@ def selfapprove(*args, **kwargs):
             log.info("Proposal {} has been proposed by us. Let's approve it!".format(
                 proposal["id"]
             ))
-            pprint(peerplays.approveproposal(proposal["id"], account=myproposer))
+            log.warn(peerplays.approveproposal(proposal["id"], account=myproposer))
