@@ -63,8 +63,7 @@ def trigger():
                 approver=app.config.get("BOOKIE_APPROVER")
             )
         )
-
-        log.info("Forwarded incident to worker via redis")
+        log.info("Forwarded incident to worker via redis (process)")
 
         # In case we "proposed" something, we also need to approve,
         # we do that by queuing a selfapprove
@@ -76,7 +75,7 @@ def trigger():
                 approver=config.get("BOOKIE_APPROVER")
             )
         )
-
+        log.info("Forwarded incident to worker via redis (selfapprove)")
 
         # Return message with id
         return jsonify(dict(
