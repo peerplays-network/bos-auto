@@ -69,14 +69,15 @@ class Process():
             sport_identifier=self.sport.identifier
         )
         if existing:
-            return existing
+            return existing, True
         elif allowNew:
+            log.info("Event not found, but allowed to create. Creating...")
             return LookupEvent(
                 teams=self.teams,
                 start_time=self.start_time,
                 eventgroup_identifier=self.eventgroup.identifier,
                 sport_identifier=self.sport.identifier
-            )
+            ), False
         else:
             log.error("Event could not be found: {}".format(
                 str(dict(
@@ -85,7 +86,7 @@ class Process():
                     eventgroup_identifier=self.eventgroup.identifier,
                     sport_identifier=self.sport.identifier
                 ))))
-            return
+            return None, False
 
     def create(self, args):
         """ Process the 'create' message
@@ -95,7 +96,7 @@ class Process():
             season = {"en": season}
 
         # Obtain event
-        event = self.getEvent(allowNew=True)
+        event, event_exists = self.getEvent(allowNew=True)
 
         # Set parameters
         if (
@@ -127,15 +128,15 @@ class Process():
     def in_progress(self, args):
         """ Set a BMG to ``in_progress``
         """
-        event = self.getEvent(allowNew=True)
-        if not event:
-            return
+        event, event_exists = self.getEvent(allowNew=True)
+        if not event_exists and event:
+            event.update()
         event.status_update("in_progress")
 
     def finish(self, args):
         """ Set a BMG to ``finish``.
         """
-        event = self.getEvent()
+        event, event_exists = self.getEvent()
         if not event:
             return
         event.status_update("frozen")
@@ -146,7 +147,7 @@ class Process():
         home_score = args.get("home_score")
         away_score = args.get("away_score")
 
-        event = self.getEvent()
+        event, event_exists = self.getEvent()
         if not event:
             return
 
@@ -158,7 +159,7 @@ class Process():
     def settle(self, args):
         """ Trigger settle of BMGs
         """
-        event = self.getEvent()
+        event, event_exists = self.getEvent()
         if not event:
             return
 
