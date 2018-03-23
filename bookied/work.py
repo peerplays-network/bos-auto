@@ -3,17 +3,22 @@ from flask_rq import job
 from bookied_sync.lookup import Lookup
 from bookied_sync.sport import LookupSport
 from bookied_sync.eventgroup import LookupEventGroup
+from bookied_sync.eventstatus import LookupEventStatus
 from bookied_sync.event import LookupEvent
 from bookied_sync.bettingmarketgroupresolve import (
     LookupBettingMarketGroupResolve
 )
+from peerplays.account import Account
 from dateutil.parser import parse
 from . import log
 from .config import loadConfig
 
 
 config = loadConfig()
-lookup = Lookup()
+lookup = Lookup(
+    proposing_account=config.get("BOOKIE_PROPOSER"),
+    approving_account=config.get("BOOKIE_APPROVER")
+)
 
 if "passphrase" not in config:
     raise ValueError("No 'passphrase' found in configuration!")
@@ -64,14 +69,15 @@ class Process():
             sport_identifier=self.sport.identifier
         )
         if existing:
-            return existing
+            return existing, True
         elif allowNew:
+            log.info("Event not found, but allowed to create. Creating...")
             return LookupEvent(
                 teams=self.teams,
                 start_time=self.start_time,
                 eventgroup_identifier=self.eventgroup.identifier,
                 sport_identifier=self.sport.identifier
-            )
+            ), False
         else:
             log.error("Event could not be found: {}".format(
                 str(dict(
@@ -80,7 +86,7 @@ class Process():
                     eventgroup_identifier=self.eventgroup.identifier,
                     sport_identifier=self.sport.identifier
                 ))))
-            return
+            return None, False
 
     def create(self, args):
         """ Process the 'create' message
@@ -90,7 +96,7 @@ class Process():
             season = {"en": season}
 
         # Obtain event
-        event = self.getEvent(allowNew=True)
+        event, event_exists = self.getEvent(allowNew=True)
 
         # Set parameters
         if (
@@ -122,24 +128,43 @@ class Process():
     def in_progress(self, args):
         """ Set a BMG to ``in_progress``
         """
-        # whistle_start_time = args.get("whistle_start_time")
-        pass
+        event, event_exists = self.getEvent(allowNew=True)
+        if not event_exists and event:
+            event.update()
+        event.status_update("in_progress")
 
     def finish(self, args):
         """ Set a BMG to ``finish``.
         """
-        # whistle_end_time = args.get("whistle_end_time")
-        pass
+        event, event_exists = self.getEvent()
+        if not event:
+            return
+        event.status_update("frozen")
 
     def result(self, args):
         """ Publish results to a BMG
         """
-        away_score = args.get("away_score")
         home_score = args.get("home_score")
+        away_score = args.get("away_score")
 
-        event = self.getEvent()
+        event, event_exists = self.getEvent()
         if not event:
             return
+
+        event.status_update(
+            "finished",
+            scores=[str(home_score), str(away_score)]
+        )
+
+    def settle(self, args):
+        """ Trigger settle of BMGs
+        """
+        event, event_exists = self.getEvent()
+        if not event:
+            return
+
+        home_score = event["scores"][0]
+        away_score = event["scores"][1]
 
         for bmg in event.bettingmarketgroups:
 
@@ -149,11 +174,13 @@ class Process():
                     str(bmg.identifier)))
                 continue
 
-            resolve = LookupBettingMarketGroupResolve(
+            settle = LookupBettingMarketGroupResolve(
                 bmg,
                 [home_score, away_score]
             )
-            resolve.update()
+            settle.update()
+
+        event.status_update("settled")
 
 
 #
@@ -171,11 +198,15 @@ def process(
     assert isinstance(message, dict)
     assert "id" in message
 
-    approver = kwargs.get("approver")
+    approver = kwargs.get("approver", None)
+    if not approver:
+        approver = message.get("approver", None)
     if approver:
         lookup.set_approving_account(approver)
 
-    proposer = kwargs.get("proposer")
+    proposer = kwargs.get("proposer", None)
+    if not proposer:
+        proposer = message.get("proposer", None)
     if proposer:
         lookup.set_proposing_account(proposer)
 
@@ -210,6 +241,9 @@ def process(
     elif call == "result":
         processing.result(args)
 
+    elif call == "settle":
+        processing.settle(args)
+
     else:
         pass
 
@@ -220,3 +254,50 @@ def process(
         pprint(Lookup.proposal_buffer.json())
         lookup.clear_proposal_buffer()
         lookup.clear_direct_buffer()
+
+#
+# Approve my own Proposals
+#
+@job
+def selfapprove(*args, **kwargs):
+    """ This process is meant to approve proposals that I have created.
+
+        The reason for this is that proposals created by accountA are not
+        automatically also approved by accountA and need an explicit approval.
+    """
+    from peerplays.proposal import Proposals
+    from .config import loadConfig
+    from time import sleep
+
+    # We sleep 3 seconds to allow the proposal we created to end up in the
+    # blockchain
+    sleep(3)
+
+    config = loadConfig()
+
+    myapprover = kwargs.get("approver", None)
+    if not myapprover:
+        myapprover = config.get("BOOKIE_APPROVER")
+
+    myproposer = kwargs.get("proposer", None)
+    if not myproposer:
+        myproposer = config.get("BOOKIE_PROPOSER")
+
+    log.info(
+        "Testing for pending proposals created by {} that we could approve by {}".format(
+        myproposer, myapprover))
+
+    peerplays = lookup.peerplays
+    proposals = Proposals("witness-account", peerplays_instance=peerplays)
+    for proposal in proposals:
+        proposer = Account(
+            proposal.proposer,
+            peerplays_instance=peerplays)
+        if (
+            proposer["name"] == myproposer and
+            proposer["id"] not in proposal["available_active_approvals"]
+        ):
+            log.info("Proposal {} has been proposed by us. Let's approve it!".format(
+                proposal["id"]
+            ))
+            pprint(peerplays.approveproposal(proposal["id"], account=myproposer))

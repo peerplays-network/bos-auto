@@ -66,10 +66,24 @@ def trigger():
 
         log.info("Forwarded incident to worker via redis")
 
+        # In case we "proposed" something, we also need to approve,
+        # we do that by queuing a selfapprove
+        approve_job = q.enqueue(
+            work.selfapprove,
+            args=(),
+            kwargs=dict(
+                proposer=config.get("BOOKIE_PROPOSER"),
+                approver=config.get("BOOKIE_APPROVER")
+            )
+        )
+
+
         # Return message with id
         return jsonify(dict(
             result="processing",
             message=j,
-            id=job.id))
+            id=job.id,
+            id_approve=approve_job.id
+        ))
 
     return "", 503
