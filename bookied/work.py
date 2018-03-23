@@ -12,6 +12,7 @@ from peerplays.account import Account
 from dateutil.parser import parse
 from . import log
 from .config import loadConfig
+import traceback
 
 
 config = loadConfig()
@@ -229,31 +230,40 @@ def process(
         call, str(args)
     ))
 
-    if call == "create":
-        processing.create(args)
+    try:
+        if call == "create":
+            processing.create(args)
 
-    elif call == "in_progress":
-        processing.in_progress(args)
+        elif call == "in_progress":
+            processing.in_progress(args)
 
-    elif call == "finish":
-        processing.finish(args)
+        elif call == "finish":
+            processing.finish(args)
 
-    elif call == "result":
-        processing.result(args)
+        elif call == "result":
+            processing.result(args)
 
-    elif call == "settle":
-        processing.settle(args)
+        elif call == "settle":
+            processing.settle(args)
 
-    else:
-        pass
+        else:
+            pass
+    except Exception as e:
+        log.error("Uncaught exception: {}".format(str(e)))
+        log.error(traceback.format_exc())
 
     if not config.get("nobroadcast", False):
-        lookup.broadcast()
+        try:
+            lookup.broadcast()
+        except Exception as e:
+            log.error("Broadcast Error: {}".format(str(e)))
+            log.error(traceback.format_exc())
     else:
         pprint(Lookup.direct_buffer.json())
         pprint(Lookup.proposal_buffer.json())
         lookup.clear_proposal_buffer()
         lookup.clear_direct_buffer()
+
 
 #
 # Approve my own Proposals
