@@ -37,17 +37,7 @@ setup(
         ],
     },
     install_requires=[
-        "peerplays",
-        "prettytable",
-        "click",
-        "jsonschema",
-        "pyyaml",
-        "flask",
-        "redis",
-        "flask-rq",
-        "dateutils",
-        "bookiesports",
-        "bookied_sync",
+        open("requirements.txt").readlines()
     ],
     setup_requires=['pytest-runner'],
     tests_require=['pytest'],

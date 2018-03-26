@@ -1,0 +1,11 @@
+peerplays
+prettytable
+click
+jsonschema
+pyyaml
+flask
+redis
+flask-rq
+dateutils
+bookiesports
+bookied_sync
