@@ -1,16 +1,8 @@
 from flask_rq import job
 from bookied_sync.lookup import Lookup
-from bookied_sync.sport import LookupSport
-from bookied_sync.eventgroup import LookupEventGroup
-from bookied_sync.eventstatus import LookupEventStatus
-from bookied_sync.event import LookupEvent
-from bookied_sync.bettingmarketgroupresolve import (
-    LookupBettingMarketGroupResolve
-)
-from peerplays.account import Account
-from dateutil.parser import parse
-from . import log
+from .log import log
 from .config import loadConfig
+from .processing import Process
 import traceback
 
 
@@ -21,166 +13,16 @@ lookup = Lookup(
 )
 
 if "passphrase" not in config:
-    raise ValueError("No 'passphrase' found in configuration!")
+    err = "No 'passphrase' found in configuration!"
+    log.critical(err)
+    raise ValueError(err)
 
 if not lookup.wallet.created():
-    raise Exception("Please create a wallet and import the keys first!")
+    err = "Please create a wallet and import the keys first!"
+    log.critical(err)
+    raise Exception(err)
 
 lookup.wallet.unlock(config.get("passphrase"))
-
-
-class Process():
-    """ This class is used to deal with Messages that have been received by any
-        means and need processing thru bookied-sync
-    """
-    def __init__(self, message):
-        self.message = message
-
-        # Obtain data for unique key
-        self.id = message.get("id")
-        try:
-            self.sport = LookupSport(self.id.get("sport"))
-        except Exception:
-            raise Exception(
-                "Sport {} not found".format(self.id.get("sport"))
-            )
-        try:
-            self.eventgroup = LookupEventGroup(
-                self.sport,
-                self.id.get("event_group_name"))
-        except Exception:
-            raise Exception(
-                "Event group {} not found".format(
-                    self.id.get("event_group_name"))
-            )
-        self.teams = [
-            self.id.get("home"),
-            self.id.get("away")]
-        self.start_time = parse(
-            self.id.get("start_time", ""))
-
-    def getEvent(self, allowNew=False):
-        """ Get an event from the lookup
-        """
-        existing = LookupEvent.find_event(
-            teams=self.teams,
-            start_time=self.start_time,
-            eventgroup_identifier=self.eventgroup.identifier,
-            sport_identifier=self.sport.identifier
-        )
-        if existing:
-            return existing, True
-        elif allowNew:
-            log.info("Event not found, but allowed to create. Creating...")
-            return LookupEvent(
-                teams=self.teams,
-                start_time=self.start_time,
-                eventgroup_identifier=self.eventgroup.identifier,
-                sport_identifier=self.sport.identifier
-            ), False
-        else:
-            log.error("Event could not be found: {}".format(
-                str(dict(
-                    teams=self.teams,
-                    start_time=self.start_time,
-                    eventgroup_identifier=self.eventgroup.identifier,
-                    sport_identifier=self.sport.identifier
-                ))))
-            return None, False
-
-    def create(self, args):
-        """ Process the 'create' message
-        """
-        season = args.get("season")
-        if isinstance(season, str):
-            season = {"en": season}
-
-        # Obtain event
-        event, event_exists = self.getEvent(allowNew=True)
-
-        # Set parameters
-        if (
-            event["season"] and
-            event["season"].get("en") != season.get("en")
-        ):
-            raise Exception(
-                "Seasons don't match: {} != {}".format(
-                    season.get("en"),
-                    event["season"].get("en")))
-        event["season"] = season
-
-        # Update event
-        event.update()
-        # Go through all Betting Market groups
-        for bmg in event.bettingmarketgroups:
-            # Skip dynamic bmgs
-            if bmg["dynamic"]:
-                log.warning("Skipping dynamic BMG: {}".format(
-                    str(bmg.identifier)))
-                continue
-            bmg.update()
-            # Go through all betting markets
-            for bm in bmg.bettingmarkets:
-                bm.update()
-
-        log.debug(event.proposal_buffer.json())
-
-    def in_progress(self, args):
-        """ Set a BMG to ``in_progress``
-        """
-        event, event_exists = self.getEvent(allowNew=True)
-        if not event_exists and event:
-            event.update()
-        event.status_update("in_progress")
-
-    def finish(self, args):
-        """ Set a BMG to ``finish``.
-        """
-        event, event_exists = self.getEvent()
-        if not event:
-            return
-        event.status_update("frozen")
-
-    def result(self, args):
-        """ Publish results to a BMG
-        """
-        home_score = args.get("home_score")
-        away_score = args.get("away_score")
-
-        event, event_exists = self.getEvent()
-        if not event:
-            return
-
-        event.status_update(
-            "finished",
-            scores=[str(home_score), str(away_score)]
-        )
-
-    def settle(self, args):
-        """ Trigger settle of BMGs
-        """
-        event, event_exists = self.getEvent()
-        if not event:
-            return
-
-        home_score = event["scores"][0]
-        away_score = event["scores"][1]
-
-        for bmg in event.bettingmarketgroups:
-
-            # Skip those bmgs that coudn't be found
-            if not bmg.find_id():
-                log.error("BMG could not be found: {}".format(
-                    str(bmg.identifier)))
-                continue
-
-            settle = LookupBettingMarketGroupResolve(
-                bmg,
-                [home_score, away_score]
-            )
-            settle.update()
-
-        event.status_update("settled")
 
 
 #
@@ -214,7 +56,10 @@ def process(
     log.info("Approver account: {}".format(lookup.approving_account))
 
     try:
-        processing = Process(message)
+        processing = Process(
+            message,
+            lookup_instance=lookup,
+        )
     except Exception as e:
         log.error(str(e))
         return str(e), 503
@@ -229,6 +74,7 @@ def process(
         call, str(args)
     ))
 
+    log.info("Sending {} to processing!".format(call))
     try:
         if call == "create":
             processing.create(args)
@@ -248,18 +94,18 @@ def process(
         else:
             pass
     except Exception as e:
-        log.error("Uncaught exception: {}".format(str(e)))
-        log.error(traceback.format_exc())
+        log.critical("Uncaught exception: {}".format(str(e)))
+        log.critical(traceback.format_exc())
 
     if not config.get("nobroadcast", False):
         try:
             lookup.broadcast()
         except Exception as e:
-            log.error("Broadcast Error: {}".format(str(e)))
-            log.error(traceback.format_exc())
+            log.critical("Broadcast Error: {}".format(str(e)))
+            log.critical(traceback.format_exc())
     else:
-        log.warn(Lookup.direct_buffer.json())
-        log.warn(Lookup.proposal_buffer.json())
+        log.debug(Lookup.direct_buffer.json())
+        log.debug(Lookup.proposal_buffer.json())
         lookup.clear_proposal_buffer()
         lookup.clear_direct_buffer()
 
@@ -274,6 +120,7 @@ def selfapprove(*args, **kwargs):
         The reason for this is that proposals created by accountA are not
         automatically also approved by accountA and need an explicit approval.
     """
+    from peerplays.account import Account
     from peerplays.proposal import Proposals
     from .config import loadConfig
     from time import sleep
@@ -294,7 +141,7 @@ def selfapprove(*args, **kwargs):
 
     log.info(
         "Testing for pending proposals created by {} that we could approve by {}".format(
-        myproposer, myapprover))
+            myproposer, myapprover))
 
     peerplays = lookup.peerplays
     proposals = Proposals("witness-account", peerplays_instance=peerplays)

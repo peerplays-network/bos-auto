@@ -5,7 +5,7 @@ from .endpointschema import schema
 from .config import loadConfig
 from . import work
 from .redis_con import redis
-from . import log
+from .log import log
 
 config = loadConfig()
 
@@ -43,18 +43,12 @@ def trigger():
         try:
             validate(j, schema)
         except Exception:
+            log.error(
+                "Received invalid request: {}".format(str(j))
+            )
             return "Invalid data format", 503
 
-        # Make sure it has the proper format
-        if any([x not in j for x in ["id", "call", "arguments"]]):
-            return "Insufficient data provided", 503
-
-        for key in ["id", "arguments"]:
-            if not isinstance(j.get(key), dict):
-                return "{} needs to be a dictionary".format(
-                    key), 503
-
-        # Send to redis
+        # Send incident to redis
         job = q.enqueue(
             work.process,
             args=(j,),
@@ -63,7 +57,9 @@ def trigger():
                 approver=app.config.get("BOOKIE_APPROVER")
             )
         )
-        log.info("Forwarded incident to worker via redis (process)")
+        log.info(
+            "Forwarded incident {} to worker via redis".format(
+                j.get("call")))
 
         # In case we "proposed" something, we also need to approve,
         # we do that by queuing a selfapprove
@@ -75,7 +71,6 @@ def trigger():
                 approver=config.get("BOOKIE_APPROVER")
             )
         )
-        log.info("Forwarded incident to worker via redis (selfapprove)")
 
         # Return message with id
         return jsonify(dict(

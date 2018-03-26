@@ -4,8 +4,12 @@ click
 jsonschema
 pyyaml
 flask
-redis
 flask-rq
+redis
 dateutils
 bookiesports
 bookied_sync
+colorlog
+
+# Notifications
+python-telegram-handler
