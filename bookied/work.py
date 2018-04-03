@@ -156,4 +156,4 @@ def selfapprove(*args, **kwargs):
             log.info("Proposal {} has been proposed by us. Let's approve it!".format(
                 proposal["id"]
             ))
-            log.warn(peerplays.approveproposal(proposal["id"], account=myproposer))
+            log.info(peerplays.approveproposal(proposal["id"], account=myproposer))

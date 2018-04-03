@@ -32,8 +32,8 @@ class Process():
             self.sport = LookupSport(self.id.get("sport"))
         except Exception as e:
             err = "Sport {} not found".format(self.id.get("sport"))
-            log.warn(err)
-            return
+            log.warning(err)
+            raise e
 
         # Given the sport, try to obtain the league (event group)
         try:
@@ -43,8 +43,8 @@ class Process():
         except Exception as e:
             err = "Event group {} not found".format(
                 self.id.get("event_group_name"))
-            log.warn(err)
-            return
+            log.warning(err)
+            raise e
 
         # Get Teams from query
         self.teams = [
@@ -115,7 +115,7 @@ class Process():
         for bmg in event.bettingmarketgroups:
             # Skip dynamic bmgs
             if bmg["dynamic"]:
-                log.warning("Skipping dynamic BMG: {}".format(
+                log.info("Skipping dynamic BMG: {}".format(
                     str(bmg.identifier)))
                 continue
             bmg.update()
