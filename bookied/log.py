@@ -36,7 +36,7 @@ if USE_STREAM:
 
 if USE_FILE:
     log_handler_rotate = RotatingFileHandler(
-        '%s.log' % config.project_name,
+        'bookied.log',
         maxBytes=1024 * 1024 * 100,
         backupCount=20
     )
