@@ -1,5 +1,5 @@
 import logging
-from logging.handlers import SMTPHandler
+from logging.handlers import SMTPHandler, RotatingFileHandler
 from colorlog import ColoredFormatter
 from .config import loadConfig
 
@@ -22,10 +22,10 @@ log = logging.getLogger(__name__)
 log.setLevel(LOG_LEVEL)
 
 # Enable logging
-USE_TELEGRAM = HAS_TELEGRAM and "telegram_token" in config and "telegram_chatid" in config
-USE_ MAIL = "mailto" in config
+USE_TELEGRAM = (bool(HAS_TELEGRAM) and "telegram_token" in config and "telegram_chatid" in config)
+USE_MAIL = ("mailto" in config)
 USE_STREAM = True
-USE_MAIL = True
+USE_FILE = True
 
 if USE_STREAM:
     formatter = ColoredFormatter(LOGFORMAT)
