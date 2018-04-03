@@ -30,21 +30,21 @@ class Process():
         # Try obtain the sport
         try:
             self.sport = LookupSport(self.id.get("sport"))
-        except Exception:
+        except Exception as e:
             err = "Sport {} not found".format(self.id.get("sport"))
             log.warn(err)
-            raise Exception(err)
+            return
 
         # Given the sport, try to obtain the league (event group)
         try:
             self.eventgroup = LookupEventGroup(
                 self.sport,
                 self.id.get("event_group_name"))
-        except Exception:
+        except Exception as e:
             err = "Event group {} not found".format(
                 self.id.get("event_group_name"))
             log.warn(err)
-            raise Exception(err)
+            return
 
         # Get Teams from query
         self.teams = [
@@ -136,7 +136,7 @@ class Process():
             log.info("The event did not exist and needed to be created first!")
         event["status"] = "in_progress"
         event.update()
-        #event.status_update("in_progress")
+        # event.status_update("in_progress")
 
     def finish(self, args):
         """ Set a BMG to ``finish``.

@@ -3,29 +3,47 @@ from logging.handlers import SMTPHandler
 from colorlog import ColoredFormatter
 from .config import loadConfig
 
-USE_TELEGRAM = False
+HAS_TELEGRAM = False
 try:
     import telegram_handler
-    USE_TELEGRAM = True
+    HAS_TELEGRAM = True
 except:
     pass
 
-
+# Load config file
 config = loadConfig()
 
+# Default logging facilities
 LOG_LEVEL = logging.DEBUG
 LOGFORMAT = ("  %(log_color)s%(levelname)-8s%(reset)s |"
              " %(log_color)s%(message)s%(reset)s")
 logging.root.setLevel(LOG_LEVEL)
-formatter = ColoredFormatter(LOGFORMAT)
-stream = logging.StreamHandler()
-stream.setLevel(LOG_LEVEL)
-stream.setFormatter(formatter)
 log = logging.getLogger(__name__)
 log.setLevel(LOG_LEVEL)
-log.addHandler(stream)
 
-if "mailto" in config:
+# Enable logging
+USE_TELEGRAM = HAS_TELEGRAM and "telegram_token" in config and "telegram_chatid" in config
+USE_ MAIL = "mailto" in config
+USE_STREAM = True
+USE_MAIL = True
+
+if USE_STREAM:
+    formatter = ColoredFormatter(LOGFORMAT)
+    stream = logging.StreamHandler()
+    stream.setLevel(LOG_LEVEL)
+    stream.setFormatter(formatter)
+    log.addHandler(stream)
+
+if USE_FILE:
+    log_handler_rotate = RotatingFileHandler(
+        '%s.log' % config.project_name,
+        maxBytes=1024 * 1024 * 100,
+        backupCount=20
+    )
+    log_handler_rotate.setLevel(logging.INFO)
+    log.addHandler(log_handler_rotate)
+
+if USE_MAIL:
     # Mail
     log_handler_mail = SMTPHandler(
         config.get("mailhost", "localhost"),
@@ -46,7 +64,7 @@ if "mailto" in config:
     log_handler_mail.setLevel(logging.WARNING)
     log.addHandler(log_handler_mail)
 
-if USE_TELEGRAM and "telegram_token" in config and "telegram_chatid" in config:
+if USE_TELEGRAM:
     tgHandler = telegram_handler.TelegramHandler(
         token=config.get("telegram_token"),
         chat_id=config.get("telegram_chatid")
