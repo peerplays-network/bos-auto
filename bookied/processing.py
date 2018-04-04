@@ -66,13 +66,14 @@ class Process():
             sport_identifier=self.sport.identifier
         )
 
-        eventgroup = event.eventgroup
-        if not eventgroup.is_open:
-            log.info("Skipping not-yet-open BMG: {}".format(
-                str(eventgroup.identifier)))
-            raise exceptions.EventGroupClosedException
-
         if event:
+
+            eventgroup = event.eventgroup
+            if not eventgroup.is_open:
+                log.info("Skipping not-yet-open BMG: {}".format(
+                    str(eventgroup.identifier)))
+                raise exceptions.EventGroupClosedException
+
             return event
         else:
             log.error("Event could not be found: {}".format(
@@ -83,6 +84,19 @@ class Process():
                     sport_identifier=self.sport.identifier
                 ))))
             raise exceptions.EventDoesNotExistException
+
+    def createEvent(self):
+        """ Create event
+        """
+        event = LookupEvent(
+            teams=self.teams,
+            start_time=self.start_time,
+            eventgroup_identifier=self.eventgroup.identifier,
+            sport_identifier=self.sport.identifier
+        )
+        if not event.can_open:
+            raise exceptions.EventCannotOpenException()
+        return event
 
     def create(self, args):
         """ Process the 'create' message
@@ -97,13 +111,13 @@ class Process():
         try:
             event = self.getEvent()
         except exceptions.EventDoesNotExistException:
-            # Create event
-            event = LookupEvent(
-                teams=self.teams,
-                start_time=self.start_time,
-                eventgroup_identifier=self.eventgroup.identifier,
-                sport_identifier=self.sport.identifier
-            )
+            try:
+                event = self.createEvent()
+            except exceptions.EventCannotOpenException:
+                log.warning("The event with teams {} in group {} cannot open yet.".format(
+                    str(self.teams),
+                    self.eventgroup.identifier))
+                return
         except exceptions.EventGroupClosedException:
             log.warning("The event group {} is not open yet.".format(
                 self.eventgroup.identifier))
@@ -154,13 +168,13 @@ class Process():
         try:
             event, event_exists = self.getEvent()
         except exceptions.EventDoesNotExistException:
-            # Create event
-            event = LookupEvent(
-                teams=self.teams,
-                start_time=self.start_time,
-                eventgroup_identifier=self.eventgroup.identifier,
-                sport_identifier=self.sport.identifier
-            )
+            try:
+                event = self.createEvent()
+            except exceptions.EventCannotOpenException:
+                log.warning("The event with teams {} in group {} cannot open yet.".format(
+                    str(self.teams),
+                    self.eventgroup.identifier))
+                return
         except exceptions.EventGroupClosedException:
             log.warning("The event group {} is not open yet.".format(
                 self.eventgroup.identifier))

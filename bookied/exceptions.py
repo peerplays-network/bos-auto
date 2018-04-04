@@ -4,3 +4,7 @@ class EventDoesNotExistException(Exception):
 
 class EventGroupClosedException(Exception):
     pass
+
+
+class EventCannotOpenException(Exception):
+    pass
