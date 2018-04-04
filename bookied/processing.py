@@ -122,6 +122,10 @@ class Process():
             # Go through all betting markets
             log.info("Updating Betting Markets ...")
             for bm in bmg.bettingmarkets:
+                log.info(
+                    "Updating Betting Market {} ...".format(
+                        bm["description"].get("en")
+                    ))
                 bm.update()
 
         log.debug(event.proposal_buffer.json())
