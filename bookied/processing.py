@@ -75,7 +75,9 @@ class Process():
                 raise exceptions.EventGroupClosedException
 
             return event
+
         else:
+            """
             log.error("Event could not be found: {}".format(
                 str(dict(
                     teams=self.teams,
@@ -83,6 +85,7 @@ class Process():
                     eventgroup_identifier=self.eventgroup.identifier,
                     sport_identifier=self.sport.identifier
                 ))))
+            """
             raise exceptions.EventDoesNotExistException
 
     def createEvent(self):
@@ -112,6 +115,9 @@ class Process():
             event = self.getEvent()
         except exceptions.EventDoesNotExistException:
             try:
+                log.info("Creating event with teams {} in group {}.".format(
+                    str(self.teams),
+                    self.eventgroup.identifier))
                 event = self.createEvent()
             except exceptions.EventCannotOpenException:
                 log.warning("The event with teams {} in group {} cannot open yet.".format(
