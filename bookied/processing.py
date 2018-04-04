@@ -6,6 +6,7 @@ from bookied_sync.event import LookupEvent
 from bookied_sync.bettingmarketgroupresolve import (
     LookupBettingMarketGroupResolve
 )
+from . import exceptions
 
 
 class Process():
@@ -55,25 +56,24 @@ class Process():
         self.start_time = parse(
             self.id.get("start_time", ""))
 
-    def getEvent(self, allowNew=False):
+    def getEvent(self):
         """ Get an event from the lookup
         """
-        existing = LookupEvent.find_event(
+        event = LookupEvent.find_event(
             teams=self.teams,
             start_time=self.start_time,
             eventgroup_identifier=self.eventgroup.identifier,
             sport_identifier=self.sport.identifier
         )
-        if existing:
-            return existing, True
-        elif allowNew:
-            log.info("Event not found, but allowed to create. Creating...")
-            return LookupEvent(
-                teams=self.teams,
-                start_time=self.start_time,
-                eventgroup_identifier=self.eventgroup.identifier,
-                sport_identifier=self.sport.identifier
-            ), False
+
+        eventgroup = event.eventgroup
+        if not eventgroup.is_open:
+            log.info("Skipping not-yet-open BMG: {}".format(
+                str(eventgroup.identifier)))
+            raise exceptions.EventGroupClosedException
+
+        if event:
+            return event
         else:
             log.error("Event could not be found: {}".format(
                 str(dict(
@@ -82,7 +82,7 @@ class Process():
                     eventgroup_identifier=self.eventgroup.identifier,
                     sport_identifier=self.sport.identifier
                 ))))
-            return None, False
+            raise exceptions.EventDoesNotExistException
 
     def create(self, args):
         """ Process the 'create' message
@@ -94,7 +94,20 @@ class Process():
             season = {"en": season}
 
         # Obtain event
-        event, event_exists = self.getEvent(allowNew=True)
+        try:
+            event = self.getEvent()
+        except exceptions.EventDoesNotExistException:
+            # Create event
+            event = LookupEvent(
+                teams=self.teams,
+                start_time=self.start_time,
+                eventgroup_identifier=self.eventgroup.identifier,
+                sport_identifier=self.sport.identifier
+            )
+        except exceptions.EventGroupClosedException:
+            log.warning("The event group {} is not open yet.".format(
+                self.eventgroup.identifier))
+            return
 
         # Set parameters
         if (
@@ -110,7 +123,9 @@ class Process():
         event["status"] = "upcoming"
 
         # Update event
+        # TODO: Test for "within lead_time_max"
         event.update()
+
         # Go through all Betting Market groups
         for bmg in event.bettingmarketgroups:
             # Skip dynamic bmgs
@@ -118,6 +133,7 @@ class Process():
                 log.info("Skipping dynamic BMG: {}".format(
                     str(bmg.identifier)))
                 continue
+
             bmg.update()
             # Go through all betting markets
             log.info("Updating Betting Markets ...")
@@ -135,9 +151,21 @@ class Process():
         """
         log.info("Setting a event to 'in_progress'...")
 
-        event, event_exists = self.getEvent(allowNew=True)
-        if not event_exists and event:
-            log.info("The event did not exist and needed to be created first!")
+        try:
+            event, event_exists = self.getEvent()
+        except exceptions.EventDoesNotExistException:
+            # Create event
+            event = LookupEvent(
+                teams=self.teams,
+                start_time=self.start_time,
+                eventgroup_identifier=self.eventgroup.identifier,
+                sport_identifier=self.sport.identifier
+            )
+        except exceptions.EventGroupClosedException:
+            log.warning("The event group {} is not open yet.".format(
+                self.eventgroup.identifier))
+            return
+
         event["status"] = "in_progress"
         event.update()
         # event.status_update("in_progress")
@@ -145,10 +173,13 @@ class Process():
     def finish(self, args):
         """ Set a BMG to ``finish``.
         """
-        log.info("Finishing an event by setting it to 'finished' (without results)...")
+        log.info(
+            "Finishing an event by setting it to 'finished'"
+            " (without results)...")
 
-        event, event_exists = self.getEvent()
-        if not event:
+        try:
+            event = self.getEvent()
+        except Exception:
             return
         event.status_update(
             "finished",
@@ -158,13 +189,16 @@ class Process():
     def result(self, args):
         """ Publish results to a BMG
         """
-        log.info("Finishing an event by setting it to 'finished' (with results)...")
+        log.info(
+            "Finishing an event by setting it to "
+            "'finished' (with results)...")
 
         home_score = args.get("home_score")
         away_score = args.get("away_score")
 
-        event, event_exists = self.getEvent()
-        if not event:
+        try:
+            event = self.getEvent()
+        except Exception:
             return
 
         event.status_update(
