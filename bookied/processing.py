@@ -31,8 +31,8 @@ class Process():
         try:
             self.sport = LookupSport(self.id.get("sport"))
         except Exception as e:
-            err = "Sport {} not found".format(self.id.get("sport"))
-            log.warning(err)
+            # err = "Sport {} not found".format(self.id.get("sport"))
+            # log.warning(err)
             raise e
 
         # Given the sport, try to obtain the league (event group)
@@ -41,9 +41,9 @@ class Process():
                 self.sport,
                 self.id.get("event_group_name"))
         except Exception as e:
-            err = "Event group {} not found".format(
-                self.id.get("event_group_name"))
-            log.warning(err)
+            # err = "Event group {} not found".format(
+            #     self.id.get("event_group_name"))
+            # log.warning(err)
             raise e
 
         # Get Teams from query

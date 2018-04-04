@@ -29,6 +29,7 @@ def log_stream(logger):
         stream.setFormatter(formatter)
         logger.addHandler(stream)
 
+
 def log_file(logger):
     if USE_FILE:
         log_handler_rotate = RotatingFileHandler(
@@ -39,12 +40,13 @@ def log_file(logger):
         log_handler_rotate.setLevel(logging.INFO)
         logger.addHandler(log_handler_rotate)
 
+
 def log_mail(logger):
     if USE_MAIL:
         # Mail
         log_handler_mail = SMTPHandler(
             config.get("mailhost", "localhost"),
-            config.get("mailfrom", "bookied@localhost"),
+            config.get("mailfrom", "bookied@example.com"),
             config.get("mailto"),
             config.get("mailsubject", "BookieD notification mail"))
         log_handler_mail.setFormatter(logging.Formatter(
@@ -60,6 +62,7 @@ def log_mail(logger):
         ))
         log_handler_mail.setLevel(logging.WARNING)
         logger.addHandler(log_handler_mail)
+
 
 def log_telegram(logger):
     if USE_TELEGRAM:

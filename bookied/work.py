@@ -127,7 +127,7 @@ def selfapprove(*args, **kwargs):
 
     # We sleep 3 seconds to allow the proposal we created to end up in the
     # blockchain
-    sleep(3)
+    sleep(5)
 
     config = loadConfig()
 
