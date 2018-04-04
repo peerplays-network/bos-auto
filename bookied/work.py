@@ -114,7 +114,7 @@ def process(
 # Approve my own Proposals
 #
 @job
-def selfapprove(*args, **kwargs):
+def approve(*args, **kwargs):
     """ This process is meant to approve proposals that I have created.
 
         The reason for this is that proposals created by accountA are not
@@ -124,10 +124,6 @@ def selfapprove(*args, **kwargs):
     from peerplays.proposal import Proposals
     from .config import loadConfig
     from time import sleep
-
-    # We sleep 3 seconds to allow the proposal we created to end up in the
-    # blockchain
-    sleep(5)
 
     config = loadConfig()
 
@@ -143,17 +139,26 @@ def selfapprove(*args, **kwargs):
         "Testing for pending proposals created by {} that we could approve by {}".format(
             myproposer, myapprover))
 
+    # We sleep 3 seconds to allow the proposal we created to end up in the
+    # blockchain
+    sleep(5)
+
     peerplays = lookup.peerplays
     proposals = Proposals("witness-account", peerplays_instance=peerplays)
+    approver = Account(myapprover, peerplays_instance=peerplays)
     for proposal in proposals:
         proposer = Account(
             proposal.proposer,
             peerplays_instance=peerplays)
         if (
             proposer["name"] == myproposer and
-            proposer["id"] not in proposal["available_active_approvals"]
+            approver["id"] not in proposal["available_active_approvals"]
         ):
-            log.info("Proposal {} has been proposed by us. Let's approve it!".format(
-                proposal["id"]
+            log.info(
+                "Proposal {} has been proposed by {}. Approving it!".format(
+                    proposal["id"],
+                    myproposer))
+            log.info(peerplays.approveproposal(
+                proposal["id"],
+                account=myapprover
             ))
-            log.info(peerplays.approveproposal(proposal["id"], account=myproposer))

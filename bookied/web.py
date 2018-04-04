@@ -62,9 +62,9 @@ def trigger():
                 j.get("call")))
 
         # In case we "proposed" something, we also need to approve,
-        # we do that by queuing a selfapprove
+        # we do that by queuing a approve
         approve_job = q.enqueue(
-            work.selfapprove,
+            work.approve,
             args=(),
             kwargs=dict(
                 proposer=config.get("BOOKIE_PROPOSER"),

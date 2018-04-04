@@ -13,7 +13,7 @@ files = [
     "lsports/2018-03-30t000000z-basketball-nba-finals-san-antonio-spurs-oklahoma-city-thunder-result-103-99.json",
 ]
 
-with open(files[3]) as fid:
+with open(files[0]) as fid:
     data = json.load(fid)
 
 data.update(dict(
@@ -21,8 +21,8 @@ data.update(dict(
     proposer="init0",
 ))
 x = requests.post(
-    #"http://94.130.229.63:8011/trigger",
-    "http://localhost:8010/trigger",
+    "http://94.130.229.63:8011/trigger",
+    # "http://localhost:8010/trigger",
     json=data,
     headers={'Content-Type': 'application/json'}
 )

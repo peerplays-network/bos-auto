@@ -2,6 +2,9 @@
 
 import click
 from rq import Connection, Worker, use_connection, Queue
+from .config import loadConfig
+
+config = loadConfig()
 
 
 @click.group()
@@ -64,19 +67,25 @@ def worker(queue):
 
 
 @main.command()
-def selfapprove():
+@click.option(
+    "--proposer",
+    default=config.get("BOOKIE_PROPOSER")
+)
+@click.option(
+    "--approver",
+    default=config.get("BOOKIE_APPROVER")
+)
+def approve(proposer, approver):
     from .redis_con import redis
     from . import work
-    from .config import loadConfig
-    config = loadConfig()
     use_connection(redis)
     q = Queue(connection=redis)
     q.enqueue(
-        work.selfapprove,
+        work.approve,
         args=(),
         kwargs=dict(
-            proposer=config.get("BOOKIE_PROPOSER"),
-            approver=config.get("BOOKIE_APPROVER")
+            proposer=proposer,
+            approver=approver
         )
     )
 
