@@ -1,9 +1,20 @@
+import traceback
 from flask_rq import job
 from bookied_sync.lookup import Lookup
 from .log import log
 from .config import loadConfig
 from .processing import Process
-import traceback
+import logging
+from logging.handlers import SMTPHandler, RotatingFileHandler
+
+storelogger = logging.getLogger("incidentstore")
+log_handler_rotate = RotatingFileHandler(
+    'incident-store.log',
+    maxBytes=1024 * 1024 * 100,
+    backupCount=20
+)
+log_handler_rotate.setLevel(logging.INFO)
+storelogger.addHandler(log_handler_rotate)
 
 
 config = loadConfig()
@@ -23,6 +34,10 @@ if not lookup.wallet.created():
     raise Exception(err)
 
 lookup.wallet.unlock(config.get("passphrase"))
+
+
+def store(message):
+    storelogger.info(message)
 
 
 #
@@ -54,6 +69,9 @@ def process(
 
     log.info("Proposer account: {}".format(lookup.proposing_account))
     log.info("Approver account: {}".format(lookup.approving_account))
+
+    # Store incident message
+    store(message)
 
     try:
         processing = Process(
