@@ -67,8 +67,8 @@ def trigger():
             work.approve,
             args=(),
             kwargs=dict(
-                proposer=config.get("BOOKIE_PROPOSER"),
-                approver=config.get("BOOKIE_APPROVER")
+                proposer=app.config.get("BOOKIE_PROPOSER"),
+                approver=app.config.get("BOOKIE_APPROVER")
             )
         )
 
