@@ -10,6 +10,7 @@ dateutils
 bookiesports
 bookied_sync
 colorlog
+tqdm
 
 # Notifications
 python-telegram-handler

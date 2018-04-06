@@ -90,5 +90,35 @@ def approve(proposer, approver):
     )
 
 
+@main.command()
+@click.argument(
+    "filename",
+    type=click.File('rb'))
+@click.option(
+    "--proposer",
+    default=config.get("BOOKIE_PROPOSER")
+)
+@click.option(
+    "--approver",
+    default=config.get("BOOKIE_APPROVER")
+)
+@click.option(
+    "--url",
+    default="http://localhost:8010/trigger"
+)
+def replay(filename, proposer, approver, url):
+    from tqdm import tqdm
+    import json
+    import requests
+    for line in tqdm(filename.readlines()):
+        data = eval(line)
+        data.update(dict(approver=approver, proposer=proposer))
+        x = requests.post(
+            url,
+            json=data,
+            headers={'Content-Type': 'application/json'}
+        )
+
+
 if __name__ == "__main__":
     main()

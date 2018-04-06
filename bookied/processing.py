@@ -175,6 +175,7 @@ class Process():
             event, event_exists = self.getEvent()
         except exceptions.EventDoesNotExistException:
             try:
+                log.info("Event could not be found, proposing to create it...")
                 event = self.createEvent()
             except exceptions.EventCannotOpenException:
                 log.warning("The event with teams {} in group {} cannot open yet.".format(
@@ -186,9 +187,9 @@ class Process():
                 self.eventgroup.identifier))
             return
 
-        event["status"] = "in_progress"
+        # event["status"] = "in_progress"
         event.update()
-        # event.status_update("in_progress")
+        event.status_update("in_progress")
 
     def finish(self, args):
         """ Set a BMG to ``finish``.

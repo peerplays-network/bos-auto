@@ -159,7 +159,7 @@ def approve(*args, **kwargs):
 
     # We sleep 3 seconds to allow the proposal we created to end up in the
     # blockchain
-    sleep(5)
+    # sleep(5)
 
     peerplays = lookup.peerplays
     proposals = Proposals("witness-account", peerplays_instance=peerplays)
