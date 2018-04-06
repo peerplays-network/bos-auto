@@ -106,8 +106,8 @@ def process(
         elif call == "result":
             processing.result(args)
 
-        elif call == "settle":
-            processing.settle(args)
+        # elif call == "settle":
+        #     processing.settle(args)
 
         else:
             pass

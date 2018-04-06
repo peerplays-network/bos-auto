@@ -9,6 +9,9 @@ from bookied_sync.bettingmarketgroupresolve import (
 from . import exceptions
 
 
+SKIP_DYNAMIC_BMS = True
+
+
 class Process():
     """ This class is used to deal with Messages that have been received by any
         means and need processing thru bookied-sync
@@ -148,8 +151,9 @@ class Process():
 
         # Go through all Betting Market groups
         for bmg in event.bettingmarketgroups:
+
             # Skip dynamic bmgs
-            if bmg["dynamic"]:
+            if SKIP_DYNAMIC_BMS and bmg["dynamic"]:
                 log.info("Skipping dynamic BMG: {}".format(
                     str(bmg.identifier)))
                 continue
@@ -209,7 +213,7 @@ class Process():
         )
 
     def result(self, args):
-        """ Publish results to a BMG
+        """ Publish results to a BMG and set to ``finish``.
         """
         log.info(
             "Finishing an event by setting it to "
@@ -231,6 +235,12 @@ class Process():
         log.info("Settling betting market groups...")
 
         for bmg in event.bettingmarketgroups:
+
+            # Skip dynamic bmgs
+            if SKIP_DYNAMIC_BMS and bmg["dynamic"]:
+                log.info("Skipping dynamic BMG: {}".format(
+                    str(bmg.identifier)))
+                continue
 
             # Skip those bmgs that coudn't be found
             if not bmg.find_id():

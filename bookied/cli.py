@@ -3,6 +3,8 @@
 import click
 from rq import Connection, Worker, use_connection, Queue
 from .config import loadConfig
+import logging
+log = logging.getLogger()
 
 config = loadConfig()
 
@@ -103,21 +105,51 @@ def approve(proposer, approver):
     default=config.get("BOOKIE_APPROVER")
 )
 @click.option(
+    "--call",
+    default=None,
+    type=click.Choice([
+            "in_progress",
+            "create",
+            "finish",
+            "result"])
+)
+@click.option(
+    "--dry-run/--no-dry-run",
+    default=False)
+@click.option(
     "--url",
     default="http://localhost:8010/trigger"
 )
-def replay(filename, proposer, approver, url):
+def replay(filename, proposer, approver, url, call, dry_run):
     from tqdm import tqdm
+    from pprint import pprint
     import json
     import requests
     for line in tqdm(filename.readlines()):
         data = eval(line)
         data.update(dict(approver=approver, proposer=proposer))
-        x = requests.post(
-            url,
-            json=data,
-            headers={'Content-Type': 'application/json'}
-        )
+        if data["call"] != call:
+            continue
+
+        # Filter by "call"
+        if call and call.lower() != data["call"]:
+            continue
+
+        # Print
+        pprint(data)
+
+        # Request
+        if dry_run:
+            continue
+
+        try:
+            requests.post(
+                url,
+                json=data,
+                headers={'Content-Type': 'application/json'}
+            )
+        except:
+            log.error("[Error] Failed pushing")
 
 
 if __name__ == "__main__":
