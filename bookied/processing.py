@@ -172,15 +172,16 @@ class Process():
         log.info("Setting a event to 'in_progress'...")
 
         try:
-            event, event_exists = self.getEvent()
+            event = self.getEvent()
         except exceptions.EventDoesNotExistException:
             try:
                 log.info("Event could not be found, proposing to create it...")
                 event = self.createEvent()
             except exceptions.EventCannotOpenException:
-                log.warning("The event with teams {} in group {} cannot open yet.".format(
-                    str(self.teams),
-                    self.eventgroup.identifier))
+                log.warning(
+                    "The event with teams {} in group {} cannot open yet.".format(
+                        str(self.teams),
+                        self.eventgroup.identifier))
                 return
         except exceptions.EventGroupClosedException:
             log.warning("The event group {} is not open yet.".format(
