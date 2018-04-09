@@ -108,10 +108,10 @@ def approve(proposer, approver):
     "--call",
     default=None,
     type=click.Choice([
-            "in_progress",
-            "create",
-            "finish",
-            "result"])
+        "in_progress",
+        "create",
+        "finish",
+        "result"])
 )
 @click.option(
     "--dry-run/--no-dry-run",
@@ -123,13 +123,10 @@ def approve(proposer, approver):
 def replay(filename, proposer, approver, url, call, dry_run):
     from tqdm import tqdm
     from pprint import pprint
-    import json
     import requests
     for line in tqdm(filename.readlines()):
         data = eval(line)
         data.update(dict(approver=approver, proposer=proposer))
-        if data["call"] != call:
-            continue
 
         # Filter by "call"
         if call and call.lower() != data["call"]:
@@ -140,6 +137,7 @@ def replay(filename, proposer, approver, url, call, dry_run):
 
         # Request
         if dry_run:
+            log.warning("Skipping push fue to 'dry-run'")
             continue
 
         try:

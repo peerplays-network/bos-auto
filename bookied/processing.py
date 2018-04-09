@@ -168,7 +168,7 @@ class Process():
                     ))
                 bm.update()
 
-        log.debug(event.proposal_buffer.json())
+        log.info(event.proposal_buffer.json())
 
     def in_progress(self, args):
         """ Set a BMG to ``in_progress``
@@ -178,6 +178,8 @@ class Process():
         try:
             event = self.getEvent()
         except exceptions.EventDoesNotExistException:
+            return
+            """
             try:
                 log.info("Event could not be found, proposing to create it...")
                 event = self.createEvent()
@@ -187,10 +189,14 @@ class Process():
                         str(self.teams),
                         self.eventgroup.identifier))
                 return
+            """
         except exceptions.EventGroupClosedException:
+            return
+            """
             log.warning("The event group {} is not open yet.".format(
                 self.eventgroup.identifier))
             return
+            """
 
         # event["status"] = "in_progress"
         event.update()
