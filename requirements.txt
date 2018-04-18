@@ -1,6 +1,6 @@
 peerplays
 bookiesports
-bookied_sync
+bos-sync
 bos-incidents
 
 prettytable
