@@ -21,3 +21,8 @@
 ## Test
 
     $ python3 web_t.py
+
+
+## Notifications
+### Telegram
+https://github.com/sashgorokhov/python-telegram-handler

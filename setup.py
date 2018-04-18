@@ -3,29 +3,29 @@
 from setuptools import setup
 import sys
 
-__VERSION__ = '0.0.3'
+__VERSION__ = '0.0.4'
 
 assert sys.version_info[0] == 3, "We require Python > 3"
 
 setup(
-    name='bookied',
+    name='bos-auto',
     version=__VERSION__,
     description=(
         'A daemon to manage synchronization with the blockchain'
     ),
     long_description=open('README.md').read(),
-    download_url='https://github.com/pbsa/bookied/tarball/' + __VERSION__,
-    author='Fabian Schuh',
-    author_email='Fabian.Schuh@BlockchainProjectsBV.com',
+    download_url='https://github.com/pbsa/bos-auto/tarball/' + __VERSION__,
+    author='Blockchain BV',
+    author_email='info@blockchainbv.com',
     maintainer='Fabian Schuh',
     maintainer_email='Fabian.Schuh@BlockchainProjectsBV.com',
     url='http://pbsa.info',
-    keywords=['peerplays', 'bookied'],
+    keywords=['peerplays', 'bos'],
     packages=[
         "bookied",
     ],
     classifiers=[
-        'License :: OSI Approved :: MIT License',
+        'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
         'Operating System :: OS Independent',
         'Programming Language :: Python :: 3',
         'Development Status :: 3 - Alpha',
@@ -33,21 +33,11 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'bookied = bookied.cli:main'
+            'bos-auto = bookied.cli:main'
         ],
     },
     install_requires=[
-        "peerplays",
-        "prettytable",
-        "click",
-        "jsonschema",
-        "pyyaml",
-        "flask",
-        "redis",
-        "flask-rq",
-        "dateutils",
-        "bookiesports",
-        "bookied_sync",
+        open("requirements.txt").readlines()
     ],
     setup_requires=['pytest-runner'],
     tests_require=['pytest'],

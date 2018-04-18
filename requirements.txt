@@ -1,0 +1,18 @@
+peerplays
+bookiesports
+bos-sync
+bos-incidents
+
+prettytable
+click
+jsonschema
+pyyaml
+flask
+flask-rq
+redis
+dateutils
+colorlog
+tqdm
+
+# Notifications
+python-telegram-handler

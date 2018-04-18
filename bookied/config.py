@@ -14,6 +14,20 @@ nobroadcast: False
 
 # Wallet passphrase of pypeerplays
 passphrase: super-secret-wallet-passphrase
+
+# Default proposer account (should be witness account)
+BOOKIE_PROPOSER: init0
+
+# Default approving account
+BOOKIE_APPROVER: init0
+
+# Default mail destination on errors
+mailto: info@example.com
+
+# Notifications via telgram
+telegram_token: API Token
+# python3 -m telegram_handler "${telegram_token}"
+telegram_chatid: Chat ID
 """
 
 

@@ -1,18 +1,24 @@
 from rq import use_connection, Queue
 from flask import Flask, request, jsonify
 from jsonschema import validate
+from . import work
 from .endpointschema import schema
 from .config import loadConfig
-from . import work
 from .redis_con import redis
-from . import log
+from .log import log
+from bos_incidents import factory, exceptions
 
 config = loadConfig()
 
 # Flask app and parameters
 app = Flask(__name__)
 use_connection(redis)
+
+# Flask queue
 q = Queue(connection=redis)
+
+# Invident Storage
+storage = factory.get_incident_storage()
 
 
 @app.route('/')
@@ -34,56 +40,61 @@ def trigger():
         and consumes POST messages with JSON formatted body.
 
         The body is validated against the :doc:`schema`.
+
+        .. note:: The trigger endpoint stores the incidents through
+                  (bos-incidents) already to allow later replaying.
     """
     if request.method == 'POST':
         # Obtain message from request body
-        j = request.get_json()
+        incident = request.get_json()
 
         # Ensure it is json
         try:
-            validate(j, schema)
+            validate(incident, schema)
         except Exception:
+            log.error(
+                "Received invalid request: {}".format(str(incident))
+            )
             return "Invalid data format", 503
 
-        # Make sure it has the proper format
-        if any([x not in j for x in ["id", "call", "arguments"]]):
-            return "Insufficient data provided", 503
+        # Try insert the incident into the database
+        try:
+            storage.insert_incident(incident.copy())  # FIXME, remove copy()
+        except exceptions.DuplicateIncidentException:
+            log.warn("Incident already received!")
+            """ FIXME
+            return "Incident already received", 503
+            """
 
-        for key in ["id", "arguments"]:
-            if not isinstance(j.get(key), dict):
-                return "{} needs to be a dictionary".format(
-                    key), 503
-
-        # Send to redis
+        # Send incident to redis
         job = q.enqueue(
             work.process,
-            args=(j,),
+            args=(incident,),
             kwargs=dict(
                 proposer=app.config.get("BOOKIE_PROPOSER"),
                 approver=app.config.get("BOOKIE_APPROVER")
             )
         )
-
-        log.info("Forwarded incident to worker via redis")
+        log.info(
+            "Forwarded incident {} to worker via redis".format(
+                incident.get("call")))
 
         # In case we "proposed" something, we also need to approve,
-        # we do that by queuing a selfapprove
+        # we do that by queuing a approve
         approve_job = q.enqueue(
-            work.selfapprove,
+            work.approve,
             args=(),
             kwargs=dict(
-                proposer=config.get("BOOKIE_PROPOSER"),
-                approver=config.get("BOOKIE_APPROVER")
+                proposer=app.config.get("BOOKIE_PROPOSER"),
+                approver=app.config.get("BOOKIE_APPROVER")
             )
         )
-
-
         # Return message with id
         return jsonify(dict(
             result="processing",
-            message=j,
-            id=job.id,
-            id_approve=approve_job.id
+            message=incident,
+            id=str(job.id),
+            id_approve=str(approve_job.id)
         ))
 
     return "", 503
