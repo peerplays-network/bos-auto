@@ -3,8 +3,7 @@
 import click
 from rq import Connection, Worker, use_connection, Queue
 from .config import loadConfig
-import logging
-log = logging.getLogger()
+from .log import log
 
 config = loadConfig()
 
@@ -141,14 +140,26 @@ def replay(filename, proposer, approver, url, call, dry_run):
             continue
 
         try:
-            requests.post(
+            ret = requests.post(
                 url,
                 json=data,
                 headers={'Content-Type': 'application/json'}
             )
-        except:
+            if ret.status_code != 200:
+                raise Exception("Status code: {}: {}".format(
+                    ret.status_code,
+                    ret.text))
+        except Exception as e:
             log.error("[Error] Failed pushing")
+            log.error(str(e))
 
+
+@main.command()
+def scheduler():
+    """ Test for postponed incidents and process them
+    """
+    from .schedule import scheduler
+    scheduler()
 
 if __name__ == "__main__":
     main()

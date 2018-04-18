@@ -8,3 +8,7 @@ class EventGroupClosedException(Exception):
 
 class EventCannotOpenException(Exception):
     pass
+
+
+class InsufficientIncidents(Exception):
+    pass

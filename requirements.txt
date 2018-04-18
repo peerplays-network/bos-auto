@@ -1,4 +1,8 @@
 peerplays
+bookiesports
+bookied_sync
+bos-incidents
+
 prettytable
 click
 jsonschema
@@ -7,8 +11,6 @@ flask
 flask-rq
 redis
 dateutils
-bookiesports
-bookied_sync
 colorlog
 tqdm
 

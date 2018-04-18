@@ -3,18 +3,12 @@ from flask_rq import job
 from bookied_sync.lookup import Lookup
 from .log import log
 from .config import loadConfig
-from .processing import Process
-import logging
-from logging.handlers import SMTPHandler, RotatingFileHandler
-
-storelogger = logging.getLogger("incidentstore")
-log_handler_rotate = RotatingFileHandler(
-    'incident-store.log',
-    maxBytes=1024 * 1024 * 100,
-    backupCount=20
+from .triggers import (
+    CreateTrigger,
+    ResultTrigger,
+    InProgressTrigger,
+    FinishTrigger
 )
-log_handler_rotate.setLevel(logging.INFO)
-storelogger.addHandler(log_handler_rotate)
 
 
 config = loadConfig()
@@ -23,6 +17,7 @@ lookup = Lookup(
     approving_account=config.get("BOOKIE_APPROVER")
 )
 
+# We need to know the passphrase to unlock the wallet
 if "passphrase" not in config:
     err = "No 'passphrase' found in configuration!"
     log.critical(err)
@@ -36,10 +31,6 @@ if not lookup.wallet.created():
 lookup.wallet.unlock(config.get("passphrase"))
 
 
-def store(message):
-    storelogger.info(message)
-
-
 #
 # Processing Job
 #
@@ -51,6 +42,8 @@ def process(
     """ This process is called by the queue to process an actual message
         received. It instantiates from ``Process`` and let's the object deal
         with the message types.
+
+        Hence, this method has the look and feel of a dispatcher!
     """
     assert isinstance(message, dict)
     assert "id" in message
@@ -70,18 +63,6 @@ def process(
     log.info("Proposer account: {}".format(lookup.proposing_account))
     log.info("Approver account: {}".format(lookup.approving_account))
 
-    # Store incident message
-    store(message)
-
-    try:
-        processing = Process(
-            message,
-            lookup_instance=lookup,
-        )
-    except Exception as e:
-        log.error(str(e))
-        return str(e), 503
-
     # Call
     call = message.get("call").lower()
 
@@ -91,23 +72,30 @@ def process(
     log.info("processing {} call with args {}".format(
         call, str(args)
     ))
-
-    log.info("Sending {} to processing!".format(call))
     try:
         if call == "create":
-            processing.create(args)
+            CreateTrigger(
+                message,
+                lookup_instance=lookup,
+            ).trigger(args)
 
         elif call == "in_progress":
-            processing.in_progress(args)
+            InProgressTrigger(
+                message,
+                lookup_instance=lookup,
+            ).trigger(args)
 
         elif call == "finish":
-            processing.finish(args)
+            FinishTrigger(
+                message,
+                lookup_instance=lookup,
+            ).trigger(args)
 
         elif call == "result":
-            processing.result(args)
-
-        # elif call == "settle":
-        #     processing.settle(args)
+            ResultTrigger(
+                message,
+                lookup_instance=lookup,
+            ).trigger(args)
 
         else:
             pass
