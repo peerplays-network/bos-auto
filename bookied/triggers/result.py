@@ -74,6 +74,8 @@ class ResultTrigger(Trigger):
 
     def testConditions(self, *args, **kwargs):
         incidents = self.get_all_incidents()
+        if not incidents:
+            return
         result_incidents = incidents.get("result", {}).get("incidents")
         if len(result_incidents) < self.testThreshold():
             log.warning(

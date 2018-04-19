@@ -2,6 +2,7 @@ from .trigger import Trigger
 from ..log import log
 from .. import exceptions
 from bookied_sync.event import LookupEvent
+from . import SKIP_DYNAMIC_BMS
 
 
 class CreateTrigger(Trigger):
@@ -67,13 +68,13 @@ class CreateTrigger(Trigger):
         """
         # Obtain event
         try:
-            event = self.getEvent()
+            return self.getEvent()
         except exceptions.EventDoesNotExistException:
             try:
                 log.info("Creating event with teams {} in group {}.".format(
                     str(self.teams),
                     self.eventgroup.identifier))
-                event = self.createEvent()
+                return self.createEvent()
             except exceptions.EventCannotOpenException:
                 log.warning("The event with teams {} in group {} cannot open yet.".format(
                     str(self.teams),
@@ -83,7 +84,6 @@ class CreateTrigger(Trigger):
             log.warning("The event group {} is not open yet.".format(
                 self.eventgroup.identifier))
             return
-
 
     def createEvent(self):
         """ Create event
@@ -104,6 +104,8 @@ class CreateTrigger(Trigger):
     def testConditions(self, *args, **kwargs):
         # TODO: Test for "within lead_time_max"
         incidents = self.get_all_incidents()
+        if not incidents:
+            return
         create_incidents = incidents.get("create", {}).get("incidents")
         if len(create_incidents) >= self.testThreshold():
             return True
@@ -111,7 +113,6 @@ class CreateTrigger(Trigger):
             log.warning(
                 "Insufficient incidents for {}({})".format(
                     self.__class__.__name__,
-                    str(self.teams)
-            ))
+                    str(self.teams)))
             return False
         return False

@@ -25,6 +25,8 @@ class FinishTrigger(Trigger):
 
     def testConditions(self, *args, **kwargs):
         incidents = self.get_all_incidents()
+        if not incidents:
+            return
         finish_incidents = incidents.get("finish", {}).get("incidents")
         if len(finish_incidents) >= self.testThreshold():
             return True
@@ -32,7 +34,6 @@ class FinishTrigger(Trigger):
             log.warning(
                 "Insufficient incidents for {}({})".format(
                     self.__class__.__name__,
-                    str(self.teams)
-            ))
+                    str(self.teams)))
             return False
         return False
