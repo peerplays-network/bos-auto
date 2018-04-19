@@ -99,7 +99,7 @@ class Trigger():
         try:
             return self.storage.get_event_by_id(self.message)
         except Exception:
-            log.critical("Trying to read data that should exist, but doesn't!")
+            #log.critical("Trying to read data that should exist, but doesn't!")
             return
 
     def testConditions(self, *args, **kwargs):
