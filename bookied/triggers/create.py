@@ -2,6 +2,7 @@ from .trigger import Trigger
 from ..log import log
 from .. import exceptions
 from bookied_sync.event import LookupEvent
+from .. import SKIP_DYNAMIC_BMS
 
 
 class CreateTrigger(Trigger):
@@ -67,13 +68,13 @@ class CreateTrigger(Trigger):
         """
         # Obtain event
         try:
-            event = self.getEvent()
+            return self.getEvent()
         except exceptions.EventDoesNotExistException:
             try:
                 log.info("Creating event with teams {} in group {}.".format(
                     str(self.teams),
                     self.eventgroup.identifier))
-                event = self.createEvent()
+                return self.createEvent()
             except exceptions.EventCannotOpenException:
                 log.warning("The event with teams {} in group {} cannot open yet.".format(
                     str(self.teams),
@@ -84,7 +85,6 @@ class CreateTrigger(Trigger):
                 self.eventgroup.identifier))
             return
 
-
     def createEvent(self):
         """ Create event
         """
@@ -94,15 +94,17 @@ class CreateTrigger(Trigger):
             eventgroup_identifier=self.eventgroup.identifier,
             sport_identifier=self.sport.identifier
         )
+
+        # This tests for leadtime_max
         if not event.can_open:
             raise exceptions.EventCannotOpenException()
+
         return event
 
     def testThreshold(self):
         return 2
 
     def testConditions(self, *args, **kwargs):
-        # TODO: Test for "within lead_time_max"
         incidents = self.get_all_incidents()
         create_incidents = incidents.get("create", {}).get("incidents")
         if len(create_incidents) >= self.testThreshold():
@@ -111,7 +113,6 @@ class CreateTrigger(Trigger):
             log.warning(
                 "Insufficient incidents for {}({})".format(
                     self.__class__.__name__,
-                    str(self.teams)
-            ))
+                    str(self.teams)))
             return False
         return False

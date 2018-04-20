@@ -32,7 +32,6 @@ class FinishTrigger(Trigger):
             log.warning(
                 "Insufficient incidents for {}({})".format(
                     self.__class__.__name__,
-                    str(self.teams)
-            ))
+                    str(self.teams)))
             return False
         return False
