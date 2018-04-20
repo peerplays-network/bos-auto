@@ -58,6 +58,14 @@ class Trigger():
         # Invident Storage
         self.storage = factory.get_incident_storage()
 
+    @property
+    def incident(self):
+        return self.message
+
+    @property
+    def call(self):
+        return self.message.get("call").lower()
+
     def getEvent(self):
         """ Get an event from the lookup
         """
@@ -88,7 +96,11 @@ class Trigger():
         # Test if I am supposed to proceed with this
         if not self.testConditions():
             return
-        return self._trigger(*args, **kwargs)
+
+        self._trigger(*args, **kwargs)
+
+        # unless _trigger raises an exception
+        self.set_incident_status(status_name="done")
 
     def _trigger(self, *args, **kwargs):
         """ To be implemented by the sub class
@@ -101,6 +113,12 @@ class Trigger():
         except Exception:
             #log.critical("Trying to read data that should exist, but doesn't!")
             return
+
+    def set_incident_status(self, **kwargs):
+        self.storage.update_event_status_by_id(
+            self.id,
+            self.call,
+            **kwargs)
 
     def testConditions(self, *args, **kwargs):
         """ Test If we can actually call the trigger. This method is called

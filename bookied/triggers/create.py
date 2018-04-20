@@ -94,15 +94,17 @@ class CreateTrigger(Trigger):
             eventgroup_identifier=self.eventgroup.identifier,
             sport_identifier=self.sport.identifier
         )
+
+        # This tests for leadtime_max
         if not event.can_open:
             raise exceptions.EventCannotOpenException()
+
         return event
 
     def testThreshold(self):
         return 2
 
     def testConditions(self, *args, **kwargs):
-        # TODO: Test for "within lead_time_max"
         incidents = self.get_all_incidents()
         if not incidents:
             return
