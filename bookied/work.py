@@ -110,8 +110,8 @@ def process(
             log.critical("Broadcast Error: {}".format(str(e)))
             log.critical(traceback.format_exc())
     else:
-        log.debug(Lookup.direct_buffer.json())
-        log.debug(Lookup.proposal_buffer.json())
+        log.warning(Lookup.direct_buffer.json())
+        log.warning(Lookup.proposal_buffer.json())
         lookup.clear_proposal_buffer()
         lookup.clear_direct_buffer()
 
