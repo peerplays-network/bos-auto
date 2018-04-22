@@ -31,7 +31,7 @@ class FinishTrigger(Trigger):
         if len(finish_incidents) >= self.testThreshold():
             return True
         else:
-            log.warning(
+            log.info(
                 "Insufficient incidents for {}({})".format(
                     self.__class__.__name__,
                     str(self.teams)))

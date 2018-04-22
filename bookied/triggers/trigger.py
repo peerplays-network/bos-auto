@@ -111,13 +111,13 @@ class Trigger():
         try:
             return self.storage.get_event_by_id(self.message)
         except Exception:
-            #log.critical("Trying to read data that should exist, but doesn't!")
+            # log.critical("Trying to read data that should exist, but doesn't!")
             return
 
     def set_incident_status(self, **kwargs):
         self.storage.update_event_status_by_id(
             self.id,
-            self.call,
+            call=self.call,
             **kwargs)
 
     def testConditions(self, *args, **kwargs):

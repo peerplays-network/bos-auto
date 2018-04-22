@@ -76,12 +76,12 @@ class CreateTrigger(Trigger):
                     self.eventgroup.identifier))
                 return self.createEvent()
             except exceptions.EventCannotOpenException:
-                log.warning("The event with teams {} in group {} cannot open yet.".format(
+                log.info("The event with teams {} in group {} cannot open yet.".format(
                     str(self.teams),
                     self.eventgroup.identifier))
                 return
         except exceptions.EventGroupClosedException:
-            log.warning("The event group {} is not open yet.".format(
+            log.info("The event group {} is not open yet.".format(
                 self.eventgroup.identifier))
             return
 
@@ -112,7 +112,7 @@ class CreateTrigger(Trigger):
         if len(create_incidents) >= self.testThreshold():
             return True
         else:
-            log.warning(
+            log.info(
                 "Insufficient incidents for {}({})".format(
                     self.__class__.__name__,
                     str(self.teams)))

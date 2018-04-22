@@ -13,7 +13,7 @@ class InProgressTrigger(Trigger):
         try:
             event = self.getEvent()
         except exceptions.EventDoesNotExistException:
-            log.warning(
+            log.info(
                 "Trying to set an event in_progress that cound't be found"
             )
             return

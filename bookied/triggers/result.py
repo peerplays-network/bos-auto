@@ -78,7 +78,7 @@ class ResultTrigger(Trigger):
             return
         result_incidents = incidents.get("result", {}).get("incidents")
         if len(result_incidents) < self.testThreshold():
-            log.warning(
+            log.info(
                 "Insufficient incidents for {}({})".format(
                     self.__class__.__name__,
                     str(self.teams)))
