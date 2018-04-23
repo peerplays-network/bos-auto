@@ -25,7 +25,8 @@ class Trigger():
         self,
         message,
         lookup_instance,
-        config
+        config,
+        **kwargs
     ):
         self.message = message
         self.lookup = lookup_instance
@@ -67,7 +68,8 @@ class Trigger():
             self.id.get("start_time", ""))
 
         # Invident Storage
-        self.storage = factory.get_incident_storage()
+        self.storage = factory.get_incident_storage(
+            purge=kwargs.get("purge", False))
 
     @property
     def incident(self):
@@ -110,17 +112,18 @@ class Trigger():
         """
 
         # Test if I am supposed to proceed with this
-        if not self.testConditions():
-            return
+        self.testConditions()
 
         # Execute the actual Trigger
         self._trigger(*args, **kwargs)
 
         # Broadcast that stuff
-        self.broadcast()
+        transaction = self.broadcast()
 
         # unless _trigger raises an exception
         self.set_incident_status(status_name="done")
+
+        return transaction
 
     def _trigger(self, *args, **kwargs):
         """ To be implemented by the sub class
@@ -130,12 +133,7 @@ class Trigger():
     def get_all_incidents(self):
         """ Let's get all the incidents for an event
         """
-        try:
-            return self.storage.get_event_by_id(self.message)
-        except Exception:
-            # log.critical(
-            #     "Trying to read data that should exist, but doesn't!")
-            return
+        return self.storage.get_event_by_id(self.message)
 
     def set_incident_status(self, **kwargs):
         """ We here set the status of an **event** in the incidents storage
@@ -155,14 +153,7 @@ class Trigger():
     def broadcast(self):
         """ This method broadcasts the updates to the chain
         """
-        if not self.config.get("nobroadcast", False):
-            try:
-                self.lookup.broadcast()
-            except Exception as e:
-                log.critical("Broadcast Error: {}".format(str(e)))
-                log.critical(traceback.format_exc())
-        else:
-            log.warning(self.lookup.direct_buffer.json())
-            log.warning(self.lookup.proposal_buffer.json())
-            self.lookup.clear_proposal_buffer()
-            self.lookup.clear_direct_buffer()
+        return self.lookup.broadcast()
+
+    def store_incident(self):
+        self.storage.insert_incident(self.message)

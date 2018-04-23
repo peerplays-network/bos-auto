@@ -58,6 +58,8 @@ def trigger():
             return "Invalid data format", 503
 
         # Try insert the incident into the database
+        # We insert incidents right here so we still have them even if the
+        # worker daemon crashes
         try:
             storage.insert_incident(incident.copy())  # FIXME, remove copy()
         except exceptions.DuplicateIncidentException:

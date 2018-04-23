@@ -39,6 +39,8 @@ class CreateTrigger(Trigger):
         # Create Betting market Groups
         self.createBmgs(event)
 
+        return True
+
     def createBmgs(self, event):
         # Go through all Betting Market groups
         for bmg in event.bettingmarketgroups:
@@ -50,8 +52,6 @@ class CreateTrigger(Trigger):
                 continue
             bmg.update()
             self.createBms(bmg)
-
-        log.info(event.proposal_buffer.json())
 
     def createBms(self, bmg):
         # Go through all betting markets
@@ -76,15 +76,12 @@ class CreateTrigger(Trigger):
                     self.eventgroup.identifier))
                 return self.createEvent()
             except exceptions.EventCannotOpenException as e:
-                log.info("The event with teams {} in group {} cannot open yet: {}".format(
+                msg = "The event with teams {} in group {} cannot open yet: {}".format(
                     str(self.teams),
                     self.eventgroup.identifier,
-                    str(e)))
-                return
-        except exceptions.EventGroupClosedException:
-            log.info("The event group {} is not open yet.".format(
-                self.eventgroup.identifier))
-            return
+                    str(e))
+                log.info(msg)
+                raise exceptions.EventCannotOpenException(msg)
 
     def createEvent(self):
         """ Create event
@@ -114,14 +111,11 @@ class CreateTrigger(Trigger):
     def testConditions(self, *args, **kwargs):
         incidents = self.get_all_incidents()
         if not incidents:
-            return
+            raise exceptions.InsufficientIncidents("No incident found")
         create_incidents = incidents.get("create", {}).get("incidents")
         if len(create_incidents) >= self.testThreshold():
             return True
         else:
-            log.info(
-                "Insufficient incidents for {}({})".format(
-                    self.__class__.__name__,
-                    str(self.teams)))
-            return False
-        return False
+            msg = "Insufficient incidents for {}({})".format(self.__class__.__name__, str(self.teams))
+            log.info(msg)
+            raise exceptions.InsufficientIncidents(msg)

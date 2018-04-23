@@ -6,6 +6,7 @@ from bookied_sync.bettingmarketgroupresolve import (
     LookupBettingMarketGroupResolve
 )
 from ..log import log
+from .. import exceptions
 
 
 class TooManyDifferentResultsOverThreshold(Exception):
@@ -24,10 +25,7 @@ class ResultTrigger(Trigger):
             "Finishing an event by setting it to "
             "'finished' (with results)...")
 
-        try:
-            event = self.getEvent()
-        except Exception:
-            return
+        event = self.getEvent()
 
         event.status_update(
             "finished",
@@ -75,14 +73,14 @@ class ResultTrigger(Trigger):
     def testConditions(self, *args, **kwargs):
         incidents = self.get_all_incidents()
         if not incidents:
-            return
+            raise exceptions.InsufficientIncidents
         result_incidents = incidents.get("result", {}).get("incidents")
-        if len(result_incidents) < self.testThreshold():
+        if result_incidents and len(result_incidents) < self.testThreshold():
             log.info(
                 "Insufficient incidents for {}({})".format(
                     self.__class__.__name__,
                     str(self.teams)))
-            return False
+            raise exceptions.InsufficientIncidents
 
         # Figure out the most "probable" result
         scores = ["{}{}{}".format(
@@ -98,12 +96,15 @@ class ResultTrigger(Trigger):
         # Valid results filtered by threshold
         valid_results = dict({k: v for k, v in scores.items() if v >= threshold})
 
+        if not valid_results:
+            raise exceptions.InsufficientEqualResults
+
         # Raise if multiple results are valid
         if len(valid_results) > 1:
             raise TooManyDifferentResultsOverThreshold(valid_results)
         elif len(valid_results) < 1:
-            return False
+            raise exceptions.InsufficientEqualResults
         else:
-            result = valid_results.keys()[0]
+            result = list(valid_results.keys())[0]
             self.away_score, self.home_score = result.split(_SCORE_SEPARATOR)
             return True
