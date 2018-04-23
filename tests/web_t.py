@@ -8,13 +8,15 @@ files = [
 #    "test-data/2018-03-10t000000z-basketball-nba-regular-season-detroit-pistons-chicago-bulls-finish-2018-03-10t021409751z.json",
 #    "test-data/2018-03-10t000000z-basketball-nba-regular-season-detroit-pistons-chicago-bulls-result-99-83.json",
 #    "test-data/2018-03-10t000000z-basketball-nba-regular-season-detroit-pistons-chicago-bulls-settle.json",
-    "lsports/2018-03-30t000000z-basketball-nba-san-antonio-spurs-oklahoma-city-thunder-create-2018-true.json",
-    "lsports/2018-03-30t000000z-basketball-nba-san-antonio-spurs-oklahoma-city-thunder-in_progress-2018-03-30t001546z-true.json",
-    "lsports/2018-03-30t000000z-basketball-nba-san-antonio-spurs-oklahoma-city-thunder-finish-2018-03-30t0245021991483z.json",
-    "lsports/2018-03-30t000000z-basketball-nba-finals-san-antonio-spurs-oklahoma-city-thunder-result-103-99.json",
+#    "lsports/2018-03-30t000000z-basketball-nba-san-antonio-spurs-oklahoma-city-thunder-create-2018-true.json",
+#    "lsports/2018-03-30t000000z-basketball-nba-san-antonio-spurs-oklahoma-city-thunder-in_progress-2018-03-30t001546z-true.json",
+#    "lsports/2018-03-30t000000z-basketball-nba-san-antonio-spurs-oklahoma-city-thunder-finish-2018-03-30t0245021991483z.json",
+#    "lsports/2018-03-30t000000z-basketball-nba-finals-san-antonio-spurs-oklahoma-city-thunder-result-103-99.json",
+    "lsports/create.1.json",
+    "lsports/create.2.json",
 ]
 
-with open(files[3]) as fid:
+with open(files[1]) as fid:
     data = json.load(fid)
 
 # data = {'timestamp': '2018-04-05T08:06:50.263129Z', 'arguments': {'season': '2017/2018'}, 'id': {'home': 'Everton', 'event_group_name': 'EPL', 'away': 'Southampton', 'sport': 'Soccer', 'start_time': '2018-05-05T18:30:00Z'}, 'provider_info': {'source': 'event_id=2523107', 'source_file': '20180405-100650_2fb170be-4b76-4d3e-9f2a-ad04e7da1f1c.json', 'pushed': '2018-04-05T10:06:49Z', 'name': 'enetpulse'}, 'unique_string': '2018-05-05t183000z-soccer-epl-everton-southampton-create-20172018', 'call': 'create'}

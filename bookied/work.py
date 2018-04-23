@@ -60,8 +60,8 @@ def process(
     if proposer:
         lookup.set_proposing_account(proposer)
 
-    log.info("Proposer account: {}".format(lookup.proposing_account))
-    log.info("Approver account: {}".format(lookup.approving_account))
+    log.debug("Proposer account: {}".format(lookup.proposing_account))
+    log.debug("Approver account: {}".format(lookup.approving_account))
 
     # Call
     call = message.get("call").lower()
@@ -77,43 +77,39 @@ def process(
             CreateTrigger(
                 message,
                 lookup_instance=lookup,
+                config=config,
             ).trigger(args)
 
         elif call == "in_progress":
             InProgressTrigger(
                 message,
                 lookup_instance=lookup,
+                config=config,
             ).trigger(args)
 
         elif call == "finish":
             FinishTrigger(
                 message,
                 lookup_instance=lookup,
+                config=config,
             ).trigger(args)
 
         elif call == "result":
             ResultTrigger(
                 message,
                 lookup_instance=lookup,
+                config=config,
             ).trigger(args)
 
         else:
-            pass
+            log.error(
+                "Received an unknown trigger {} with content: {}"
+                .format(call, message)
+            )
+
     except Exception as e:
         log.critical("Uncaught exception: {}".format(str(e)))
         log.critical(traceback.format_exc())
-
-    if not config.get("nobroadcast", False):
-        try:
-            lookup.broadcast()
-        except Exception as e:
-            log.critical("Broadcast Error: {}".format(str(e)))
-            log.critical(traceback.format_exc())
-    else:
-        log.warning(Lookup.direct_buffer.json())
-        log.warning(Lookup.proposal_buffer.json())
-        lookup.clear_proposal_buffer()
-        lookup.clear_direct_buffer()
 
 
 #
@@ -129,7 +125,6 @@ def approve(*args, **kwargs):
     from peerplays.account import Account
     from peerplays.proposal import Proposals
     from .config import loadConfig
-    from time import sleep
 
     config = loadConfig()
 
@@ -142,12 +137,9 @@ def approve(*args, **kwargs):
         myproposer = config.get("BOOKIE_PROPOSER")
 
     log.info(
-        "Testing for pending proposals created by {} that we could approve by {}".format(
-            myproposer, myapprover))
-
-    # We sleep 3 seconds to allow the proposal we created to end up in the
-    # blockchain
-    # sleep(5)
+        "Testing for pending proposals "
+        "created by {} that we could approve by {}"
+        .format(myproposer, myapprover))
 
     peerplays = lookup.peerplays
     proposals = Proposals("witness-account", peerplays_instance=peerplays)

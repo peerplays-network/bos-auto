@@ -1,3 +1,4 @@
+import traceback
 from ..log import log
 from .. import exceptions
 from dateutil.parser import parse
@@ -5,7 +6,15 @@ from bookied_sync.sport import LookupSport
 from bookied_sync.eventgroup import LookupEventGroup
 from bookied_sync.event import LookupEvent
 from bos_incidents import factory
-from bos_incidents.exceptions import *   # FIXME
+from bos_incidents.exceptions import (
+    IncidentStorageException,
+    IncidentStorageLostException,
+    DuplicateIncidentException,
+    InvalidIncidentFormatException,
+    IncidentNotFoundException,
+    InvalidQueryException,
+    EventNotFoundException
+)
 
 
 class Trigger():
@@ -15,10 +24,12 @@ class Trigger():
     def __init__(
         self,
         message,
-        lookup_instance=None,
+        lookup_instance,
+        config
     ):
         self.message = message
         self.lookup = lookup_instance
+        self.config = config
 
         # Obtain data for unique key
         # The "id" contains everything we need to identify an individual event
@@ -60,10 +71,14 @@ class Trigger():
 
     @property
     def incident(self):
+        """ Return the incident message
+        """
         return self.message
 
     @property
     def call(self):
+        """ Return the trigger/call name
+        """
         return self.message.get("call").lower()
 
     def getEvent(self):
@@ -93,11 +108,16 @@ class Trigger():
         """ Forward a trigger to the actual trigger implementation
             in the subclass
         """
+
         # Test if I am supposed to proceed with this
         if not self.testConditions():
             return
 
+        # Execute the actual Trigger
         self._trigger(*args, **kwargs)
+
+        # Broadcast that stuff
+        self.broadcast()
 
         # unless _trigger raises an exception
         self.set_incident_status(status_name="done")
@@ -108,13 +128,18 @@ class Trigger():
         pass
 
     def get_all_incidents(self):
+        """ Let's get all the incidents for an event
+        """
         try:
             return self.storage.get_event_by_id(self.message)
         except Exception:
-            # log.critical("Trying to read data that should exist, but doesn't!")
+            # log.critical(
+            #     "Trying to read data that should exist, but doesn't!")
             return
 
     def set_incident_status(self, **kwargs):
+        """ We here set the status of an **event** in the incidents storage
+        """
         self.storage.update_event_status_by_id(
             self.id,
             call=self.call,
@@ -126,3 +151,18 @@ class Trigger():
             trigger.
         """
         pass
+
+    def broadcast(self):
+        """ This method broadcasts the updates to the chain
+        """
+        if not self.config.get("nobroadcast", False):
+            try:
+                self.lookup.broadcast()
+            except Exception as e:
+                log.critical("Broadcast Error: {}".format(str(e)))
+                log.critical(traceback.format_exc())
+        else:
+            log.warning(self.lookup.direct_buffer.json())
+            log.warning(self.lookup.proposal_buffer.json())
+            self.lookup.clear_proposal_buffer()
+            self.lookup.clear_direct_buffer()

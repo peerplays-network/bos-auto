@@ -25,9 +25,9 @@ BOOKIE_APPROVER: init0
 mailto: info@example.com
 
 # Notifications via telgram
-telegram_token: API Token
+telegram_token:
 # python3 -m telegram_handler "${telegram_token}"
-telegram_chatid: Chat ID
+telegram_chatid:
 """
 
 

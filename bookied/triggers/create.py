@@ -49,7 +49,7 @@ class CreateTrigger(Trigger):
                     str(bmg.identifier)))
                 continue
             bmg.update()
-            self.createBMs(bmg)
+            self.createBms(bmg)
 
         log.info(event.proposal_buffer.json())
 
@@ -75,10 +75,11 @@ class CreateTrigger(Trigger):
                     str(self.teams),
                     self.eventgroup.identifier))
                 return self.createEvent()
-            except exceptions.EventCannotOpenException:
-                log.info("The event with teams {} in group {} cannot open yet.".format(
+            except exceptions.EventCannotOpenException as e:
+                log.info("The event with teams {} in group {} cannot open yet: {}".format(
                     str(self.teams),
-                    self.eventgroup.identifier))
+                    self.eventgroup.identifier,
+                    str(e)))
                 return
         except exceptions.EventGroupClosedException:
             log.info("The event group {} is not open yet.".format(
@@ -97,7 +98,13 @@ class CreateTrigger(Trigger):
 
         # This tests for leadtime_max
         if not event.can_open:
-            raise exceptions.EventCannotOpenException()
+            can_open_by = event.can_open_by
+            self.set_incident_status(
+                status_name="postponed",
+                status_expiration=can_open_by)
+            raise exceptions.EventCannotOpenException(
+                "Can only open after {}".format(
+                    str(can_open_by)))
 
         return event
 
