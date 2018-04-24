@@ -181,24 +181,17 @@ def list():
         id = event["id"]
         if not id:
             continue
-        incidents = PrettyTable(["call", "status", "content"])
+        incidents = PrettyTable(["call", "status", "# incidents"])
         incidents.align = 'l'
         for call, content in event.items():
             if "incidents" not in content:
                 continue
 
-            if call == "create":
-                incidents.add_row([
-                    call,
-                    json.dumps(content["status"], indent=1),
-                    len(content["incidents"])
-                ])
-            else:
-                incidents.add_row([
-                    call,
-                    json.dumps(content["status"], indent=1),
-                    content["incidents"]
-                ])
+            incidents.add_row([
+                call,
+                json.dumps(content["status"], indent=1),
+                len(content["incidents"])
+            ])
         t.add_row([
             id["sport"],
             id["event_group_name"],
