@@ -10,15 +10,7 @@ class InProgressTrigger(Trigger):
         """
         log.info("Setting a event to 'in_progress'...")
 
-        try:
-            event = self.getEvent()
-        except exceptions.EventDoesNotExistException:
-            log.warning(
-                "Trying to set an event in_progress that cound't be found"
-            )
-            return
-        except exceptions.EventGroupClosedException:
-            return
+        event = self.getEvent()
 
         # event["status"] = "in_progress"
         event.update()

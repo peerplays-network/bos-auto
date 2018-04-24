@@ -2,7 +2,7 @@ from .trigger import Trigger
 from ..log import log
 from .. import exceptions
 from bookied_sync.event import LookupEvent
-from .. import SKIP_DYNAMIC_BMS
+from . import SKIP_DYNAMIC_BMS
 
 
 class CreateTrigger(Trigger):
@@ -39,6 +39,8 @@ class CreateTrigger(Trigger):
         # Create Betting market Groups
         self.createBmgs(event)
 
+        return True
+
     def createBmgs(self, event):
         # Go through all Betting Market groups
         for bmg in event.bettingmarketgroups:
@@ -49,9 +51,7 @@ class CreateTrigger(Trigger):
                     str(bmg.identifier)))
                 continue
             bmg.update()
-            self.createBMs(bmg)
-
-        log.info(event.proposal_buffer.json())
+            self.createBms(bmg)
 
     def createBms(self, bmg):
         # Go through all betting markets
@@ -75,15 +75,13 @@ class CreateTrigger(Trigger):
                     str(self.teams),
                     self.eventgroup.identifier))
                 return self.createEvent()
-            except exceptions.EventCannotOpenException:
-                log.warning("The event with teams {} in group {} cannot open yet.".format(
+            except exceptions.EventCannotOpenException as e:
+                msg = "The event with teams {} in group {} cannot open yet: {}".format(
                     str(self.teams),
-                    self.eventgroup.identifier))
-                return
-        except exceptions.EventGroupClosedException:
-            log.warning("The event group {} is not open yet.".format(
-                self.eventgroup.identifier))
-            return
+                    self.eventgroup.identifier,
+                    str(e))
+                log.info(msg)
+                raise exceptions.EventCannotOpenException(msg)
 
     def createEvent(self):
         """ Create event
@@ -97,7 +95,13 @@ class CreateTrigger(Trigger):
 
         # This tests for leadtime_max
         if not event.can_open:
-            raise exceptions.EventCannotOpenException()
+            can_open_by = event.can_open_by
+            self.set_incident_status(
+                status_name="postponed",
+                status_expiration=can_open_by)
+            raise exceptions.EventCannotOpenException(
+                "Can only open after {}".format(
+                    str(can_open_by)))
 
         return event
 
@@ -106,13 +110,12 @@ class CreateTrigger(Trigger):
 
     def testConditions(self, *args, **kwargs):
         incidents = self.get_all_incidents()
+        if not incidents:
+            raise exceptions.InsufficientIncidents("No incident found")
         create_incidents = incidents.get("create", {}).get("incidents")
         if len(create_incidents) >= self.testThreshold():
             return True
         else:
-            log.warning(
-                "Insufficient incidents for {}({})".format(
-                    self.__class__.__name__,
-                    str(self.teams)))
-            return False
-        return False
+            msg = "Insufficient incidents for {}({})".format(self.__class__.__name__, str(self.teams))
+            log.info(msg)
+            raise exceptions.InsufficientIncidents(msg)

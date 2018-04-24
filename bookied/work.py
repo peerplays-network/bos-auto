@@ -1,4 +1,5 @@
 import traceback
+import grapheneapi
 from flask_rq import job
 from bookied_sync.lookup import Lookup
 from .log import log
@@ -9,12 +10,14 @@ from .triggers import (
     InProgressTrigger,
     FinishTrigger
 )
+from . import exceptions
 
 
 config = loadConfig()
 lookup = Lookup(
     proposing_account=config.get("BOOKIE_PROPOSER"),
-    approving_account=config.get("BOOKIE_APPROVER")
+    approving_account=config.get("BOOKIE_APPROVER"),
+    num_retries=1
 )
 
 # We need to know the passphrase to unlock the wallet
@@ -60,8 +63,8 @@ def process(
     if proposer:
         lookup.set_proposing_account(proposer)
 
-    log.info("Proposer account: {}".format(lookup.proposing_account))
-    log.info("Approver account: {}".format(lookup.approving_account))
+    log.debug("Proposer account: {}".format(lookup.proposing_account))
+    log.debug("Approver account: {}".format(lookup.approving_account))
 
     # Call
     call = message.get("call").lower()
@@ -73,47 +76,79 @@ def process(
         call, str(args)
     ))
     try:
+        # Instanciate trigger
         if call == "create":
-            CreateTrigger(
+            trigger = CreateTrigger(
                 message,
                 lookup_instance=lookup,
-            ).trigger(args)
+                config=config,
+            )
 
         elif call == "in_progress":
-            InProgressTrigger(
+            trigger = InProgressTrigger(
                 message,
                 lookup_instance=lookup,
-            ).trigger(args)
+                config=config,
+            )
 
         elif call == "finish":
-            FinishTrigger(
+            trigger = FinishTrigger(
                 message,
                 lookup_instance=lookup,
-            ).trigger(args)
+                config=config,
+            )
 
         elif call == "result":
-            ResultTrigger(
+            trigger = ResultTrigger(
                 message,
                 lookup_instance=lookup,
-            ).trigger(args)
+                config=config,
+            )
+
+        elif call == "unknown":
+            return
 
         else:
-            pass
-    except Exception as e:
-        log.critical("Uncaught exception: {}".format(str(e)))
-        log.critical(traceback.format_exc())
+            log.error(
+                "Received an unknown trigger {} with content: {}"
+                .format(call, message)
+            )
 
-    if not config.get("nobroadcast", False):
-        try:
-            lookup.broadcast()
-        except Exception as e:
-            log.critical("Broadcast Error: {}".format(str(e)))
-            log.critical(traceback.format_exc())
-    else:
-        log.debug(Lookup.direct_buffer.json())
-        log.debug(Lookup.proposal_buffer.json())
-        lookup.clear_proposal_buffer()
-        lookup.clear_direct_buffer()
+    except Exception as e:
+        log.critical("Uncaught exception: {}\n\n{}".format(
+            str(e),
+            traceback.format_exc()))
+        # No trigger can be executed!
+        return
+
+    try:
+        # Execute the trigger
+        trigger.trigger(args)
+
+    except exceptions.EventDoesNotExistException:
+        trigger.set_incident_status(status_name="event missing")
+
+    except exceptions.EventGroupClosedException:
+        trigger.set_incident_status(status_name="event group closed")
+
+    except exceptions.EventCannotOpenException:
+        # is set in the trigger itself
+        # self.set_incident_status(status_name="postponed")
+        pass
+
+    except exceptions.InsufficientIncidents:
+        trigger.set_incident_status(status_name="insufficient incidents")
+
+    except exceptions.InsufficientEqualResults:
+        trigger.set_incident_status(status_name="undecided")
+
+    except grapheneapi.exceptions.NumRetriesReached:
+        trigger.set_incident_status(status_name="connection lost")
+
+    except Exception as e:
+        log.critical("Uncaught exception: {}\n\n{}".format(
+            str(e),
+            traceback.format_exc()))
 
 
 #
@@ -129,7 +164,6 @@ def approve(*args, **kwargs):
     from peerplays.account import Account
     from peerplays.proposal import Proposals
     from .config import loadConfig
-    from time import sleep
 
     config = loadConfig()
 
@@ -142,12 +176,9 @@ def approve(*args, **kwargs):
         myproposer = config.get("BOOKIE_PROPOSER")
 
     log.info(
-        "Testing for pending proposals created by {} that we could approve by {}".format(
-            myproposer, myapprover))
-
-    # We sleep 3 seconds to allow the proposal we created to end up in the
-    # blockchain
-    # sleep(5)
+        "Testing for pending proposals "
+        "created by {} that we could approve by {}"
+        .format(myproposer, myapprover))
 
     peerplays = lookup.peerplays
     proposals = Proposals("witness-account", peerplays_instance=peerplays)

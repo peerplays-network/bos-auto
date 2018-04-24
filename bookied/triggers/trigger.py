@@ -1,3 +1,4 @@
+import traceback
 from ..log import log
 from .. import exceptions
 from dateutil.parser import parse
@@ -5,7 +6,15 @@ from bookied_sync.sport import LookupSport
 from bookied_sync.eventgroup import LookupEventGroup
 from bookied_sync.event import LookupEvent
 from bos_incidents import factory
-from bos_incidents.exceptions import *   # FIXME
+from bos_incidents.exceptions import (
+    IncidentStorageException,
+    IncidentStorageLostException,
+    DuplicateIncidentException,
+    InvalidIncidentFormatException,
+    IncidentNotFoundException,
+    InvalidQueryException,
+    EventNotFoundException
+)
 
 
 class Trigger():
@@ -15,10 +24,13 @@ class Trigger():
     def __init__(
         self,
         message,
-        lookup_instance=None,
+        lookup_instance,
+        config,
+        **kwargs
     ):
         self.message = message
         self.lookup = lookup_instance
+        self.config = config
 
         # Obtain data for unique key
         # The "id" contains everything we need to identify an individual event
@@ -28,23 +40,12 @@ class Trigger():
         self.id = message.get("id")
 
         # Try obtain the sport
-        try:
-            self.sport = LookupSport(self.id.get("sport"))
-        except Exception as e:
-            # err = "Sport {} not found".format(self.id.get("sport"))
-            # log.warning(err)
-            raise e
+        self.sport = LookupSport(self.id.get("sport"))
 
         # Given the sport, try to obtain the league (event group)
-        try:
-            self.eventgroup = LookupEventGroup(
-                self.sport,
-                self.id.get("event_group_name"))
-        except Exception as e:
-            # err = "Event group {} not found".format(
-            #     self.id.get("event_group_name"))
-            # log.warning(err)
-            raise e
+        self.eventgroup = LookupEventGroup(
+            self.sport,
+            self.id.get("event_group_name"))
 
         # Get Teams from query
         self.teams = [
@@ -56,7 +57,21 @@ class Trigger():
             self.id.get("start_time", ""))
 
         # Invident Storage
-        self.storage = factory.get_incident_storage()
+        self.storage = factory.get_incident_storage(
+            kwargs.get("mongodb", None),
+            purge=kwargs.get("purge", False))
+
+    @property
+    def incident(self):
+        """ Return the incident message
+        """
+        return self.message
+
+    @property
+    def call(self):
+        """ Return the trigger/call name
+        """
+        return self.message.get("call").lower()
 
     @property
     def incident(self):
@@ -93,14 +108,20 @@ class Trigger():
         """ Forward a trigger to the actual trigger implementation
             in the subclass
         """
-        # Test if I am supposed to proceed with this
-        if not self.testConditions():
-            return
 
+        # Test if I am supposed to proceed with this
+        self.testConditions()
+
+        # Execute the actual Trigger
         self._trigger(*args, **kwargs)
+
+        # Broadcast that stuff
+        transaction = self.broadcast()
 
         # unless _trigger raises an exception
         self.set_incident_status(status_name="done")
+
+        return transaction
 
     def _trigger(self, *args, **kwargs):
         """ To be implemented by the sub class
@@ -108,11 +129,17 @@ class Trigger():
         pass
 
     def get_all_incidents(self):
-        try:
-            return self.storage.get_event_by_id(self.message)
-        except Exception:
-            log.critical("Trying to read data that should exist, but doesn't!")
-            return
+        """ Let's get all the incidents for an event
+        """
+        return self.storage.get_event_by_id(self.message)
+
+    def set_incident_status(self, **kwargs):
+        """ We here set the status of an **event** in the incidents storage
+        """
+        self.storage.update_event_status_by_id(
+            self.id,
+            call=self.call,
+            **kwargs)
 
     def set_incident_status(self, **kwargs):
         self.storage.update_event_status_by_id(
@@ -126,3 +153,11 @@ class Trigger():
             trigger.
         """
         pass
+
+    def broadcast(self):
+        """ This method broadcasts the updates to the chain
+        """
+        return self.lookup.broadcast()
+
+    def store_incident(self):
+        self.storage.insert_incident(self.message)

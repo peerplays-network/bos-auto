@@ -15,7 +15,13 @@ except:
 config = loadConfig()
 
 # Enable logging
-USE_TELEGRAM = (bool(HAS_TELEGRAM) and "telegram_token" in config and "telegram_chatid" in config)
+USE_TELEGRAM = (
+    bool(HAS_TELEGRAM) and
+    "telegram_token" in config and
+    config["telegram_token"] and
+    "telegram_chatid" in config and
+    config["telegram_chatid"]
+)
 USE_MAIL = ("mailto" in config)
 USE_STREAM = True
 USE_FILE = True

@@ -12,3 +12,7 @@ class EventCannotOpenException(Exception):
 
 class InsufficientIncidents(Exception):
     pass
+
+
+class InsufficientEqualResults(Exception):
+    pass
