@@ -11,6 +11,7 @@ from .triggers import (
     FinishTrigger
 )
 from . import exceptions
+import bos_incidents
 
 
 config = loadConfig()
@@ -144,6 +145,10 @@ def process(
 
     except grapheneapi.exceptions.NumRetriesReached:
         trigger.set_incident_status(status_name="connection lost")
+
+    except bos_incidents.exceptions.EventNotFoundException:
+        trigger.set_incident_status(
+            status_name="event missing in bos_incidents")
 
     except Exception as e:
         log.critical("Uncaught exception: {}\n\n{}".format(
