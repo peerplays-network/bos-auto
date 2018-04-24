@@ -63,10 +63,7 @@ def trigger():
         try:
             storage.insert_incident(incident.copy())  # FIXME, remove copy()
         except exceptions.DuplicateIncidentException:
-            log.warn("Incident already received!")
-            """ FIXME
-            return "Incident already received", 503
-            """
+            pass
 
         # Send incident to redis
         job = q.enqueue(
