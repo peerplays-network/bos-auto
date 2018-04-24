@@ -104,7 +104,7 @@ def process(
             )
 
         elif call == "unknown":
-            pass
+            return
 
         else:
             log.error(
