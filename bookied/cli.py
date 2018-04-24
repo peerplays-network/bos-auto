@@ -180,6 +180,8 @@ def list():
     for event in storage.get_events():
 
         # pprint(event)
+        if "id" not in event:
+            continue
 
         id = event["id"]
         if not id:
