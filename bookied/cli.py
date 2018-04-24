@@ -269,5 +269,43 @@ def resend(url, unique_string, provider):
         log.error(str(e))
 
 
+@incidents.command()
+@click.argument("call", required=False)
+@click.argument("status_name", required=False)
+@click.option(
+    "--url",
+    default="http://localhost:8010/trigger"
+)
+def resendall(url, call, status_name):
+    from bos_incidents import factory
+    import requests
+    storage = factory.get_incident_storage()
+    for event in storage.get_events():
+        for incident_call, content in event.items():
+            if not content or "incidents" not in content:
+                continue
+            if call and incident_call != call:
+                continue
+
+            if status_name and content["status"]["name"] != status_name:
+                continue
+
+            for incident in content["incidents"]:
+                pprint(incident)
+                try:
+                    ret = requests.post(
+                        url,
+                        json=incident,
+                        headers={'Content-Type': 'application/json'}
+                    )
+                    if ret.status_code != 200:
+                        raise Exception("Status code: {}: {}".format(
+                            ret.status_code,
+                            ret.text))
+                except Exception as e:
+                    log.error("[Error] Failed pushing")
+                    log.error(str(e))
+
+
 if __name__ == "__main__":
     main()
