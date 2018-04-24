@@ -5,7 +5,7 @@ import click
 from rq import Connection, Worker, use_connection, Queue
 from .config import loadConfig
 from .log import log
-from prettytable import PrettyTable
+from prettytable import PrettyTable, ALL as ALLBORDERS
 from pprint import pprint
 
 config = loadConfig()
@@ -172,7 +172,7 @@ def incidents():
 @incidents.command()
 def list():
     from bos_incidents import factory
-    t = PrettyTable(["identifier", "Incidents"])
+    t = PrettyTable(["identifier", "Incidents"], hrules=ALLBORDERS)
     t.align = 'l'
 
     storage = factory.get_incident_storage()
@@ -184,7 +184,9 @@ def list():
         id = event["id"]
         if not id:
             continue
-        incidents = PrettyTable(["call", "status", "incident uid", "incident provider"])
+        incidents = PrettyTable(
+            ["call", "status", "incident uid", "incident provider"],
+        )
         incidents.align = 'l'
         for call, content in event.items():
             if "incidents" not in content:
