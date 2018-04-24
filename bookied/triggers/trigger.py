@@ -73,6 +73,14 @@ class Trigger():
         """
         return self.message.get("call").lower()
 
+    @property
+    def incident(self):
+        return self.message
+
+    @property
+    def call(self):
+        return self.message.get("call").lower()
+
     def getEvent(self):
         """ Get an event from the lookup
         """
@@ -131,6 +139,12 @@ class Trigger():
         self.storage.update_event_status_by_id(
             self.id,
             call=self.call,
+            **kwargs)
+
+    def set_incident_status(self, **kwargs):
+        self.storage.update_event_status_by_id(
+            self.id,
+            self.call,
             **kwargs)
 
     def testConditions(self, *args, **kwargs):
