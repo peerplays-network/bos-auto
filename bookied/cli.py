@@ -172,16 +172,19 @@ def incidents():
 @incidents.command()
 def list():
     from bos_incidents import factory
-    t = PrettyTable(["Sport", "League", "Home", "Away", "Incidents"])
+    t = PrettyTable(["identifier", "Incidents"])
     t.align = 'l'
 
     storage = factory.get_incident_storage()
 
     for event in storage.get_events():
+
+        # pprint(event)
+
         id = event["id"]
         if not id:
             continue
-        incidents = PrettyTable(["call", "status", "# incidents"])
+        incidents = PrettyTable(["call", "status", "incident uid", "incident provider"])
         incidents.align = 'l'
         for call, content in event.items():
             if "incidents" not in content:
@@ -189,18 +192,62 @@ def list():
 
             incidents.add_row([
                 call,
-                json.dumps(content["status"], indent=1),
-                len(content["incidents"])
+                "\n".join(["{}: {}".format(k, v) for (k, v) in content["status"].items()]),
+                "\n".join([x["unique_string"] for x in content["incidents"]]),
+                "\n".join([x["provider_info"]["name"] for x in content["incidents"]])
             ])
         t.add_row([
-            id["sport"],
-            id["event_group_name"],
-            id["home"],
-            id["away"],
+            "\n".join([
+                id["sport"],
+                id["event_group_name"],
+                id["start_time"],
+                "home: {}".format(id["home"]),
+                "away: {}".format(id["away"]),
+            ]),
             str(incidents)
         ])
 
     click.echo(t)
+
+
+@incidents.command()
+@click.argument("unique_string")
+@click.argument("provider")
+def show(unique_string, provider):
+    from bos_incidents import factory
+    storage = factory.get_incident_storage()
+    incident = storage.get_incident_by_unique_string_and_provider(
+        unique_string, provider)
+    pprint(incident)
+
+
+@incidents.command()
+@click.argument("unique_string")
+@click.argument("provider")
+@click.option(
+    "--url",
+    default="http://localhost:8010/trigger"
+)
+def resend(url, unique_string, provider):
+    from bos_incidents import factory
+    import requests
+    storage = factory.get_incident_storage()
+    incident = storage.get_incident_by_unique_string_and_provider(
+        unique_string, provider)
+    pprint(incident)
+    try:
+        ret = requests.post(
+            url,
+            json=incident,
+            headers={'Content-Type': 'application/json'}
+        )
+        if ret.status_code != 200:
+            raise Exception("Status code: {}: {}".format(
+                ret.status_code,
+                ret.text))
+    except Exception as e:
+        log.error("[Error] Failed pushing")
+        log.error(str(e))
 
 
 if __name__ == "__main__":
