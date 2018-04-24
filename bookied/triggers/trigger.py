@@ -40,23 +40,12 @@ class Trigger():
         self.id = message.get("id")
 
         # Try obtain the sport
-        try:
-            self.sport = LookupSport(self.id.get("sport"))
-        except Exception as e:
-            # err = "Sport {} not found".format(self.id.get("sport"))
-            # log.warning(err)
-            raise e
+        self.sport = LookupSport(self.id.get("sport"))
 
         # Given the sport, try to obtain the league (event group)
-        try:
-            self.eventgroup = LookupEventGroup(
-                self.sport,
-                self.id.get("event_group_name"))
-        except Exception as e:
-            # err = "Event group {} not found".format(
-            #     self.id.get("event_group_name"))
-            # log.warning(err)
-            raise e
+        self.eventgroup = LookupEventGroup(
+            self.sport,
+            self.id.get("event_group_name"))
 
         # Get Teams from query
         self.teams = [

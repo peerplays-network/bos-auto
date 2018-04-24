@@ -74,33 +74,34 @@ def process(
         call, str(args)
     ))
     try:
+        # Instanciate trigger
         if call == "create":
-            CreateTrigger(
+            trigger = CreateTrigger(
                 message,
                 lookup_instance=lookup,
                 config=config,
-            ).trigger(args)
+            )
 
         elif call == "in_progress":
-            InProgressTrigger(
+            trigger = InProgressTrigger(
                 message,
                 lookup_instance=lookup,
                 config=config,
-            ).trigger(args)
+            )
 
         elif call == "finish":
-            FinishTrigger(
+            trigger = FinishTrigger(
                 message,
                 lookup_instance=lookup,
                 config=config,
-            ).trigger(args)
+            )
 
         elif call == "result":
-            ResultTrigger(
+            trigger = ResultTrigger(
                 message,
                 lookup_instance=lookup,
                 config=config,
-            ).trigger(args)
+            )
 
         elif call == "unknown":
             pass
@@ -111,20 +112,31 @@ def process(
                 .format(call, message)
             )
 
+    except Exception as e:
+        log.critical("Uncaught exception: {}\n\n{}".format(
+            str(e),
+            traceback.format_exc()))
+
+    try:
+        # Execute the trigger
+        trigger.trigger(args)
+
     except exceptions.EventDoesNotExistException:
-        pass
+        trigger.set_incident_status(status_name="event missing")
 
     except exceptions.EventGroupClosedException:
-        pass
+        trigger.set_incident_status(status_name="event group closed")
 
     except exceptions.EventCannotOpenException:
+        # is set in the trigger itself
+        # self.set_incident_status(status_name="postponed")
         pass
 
     except exceptions.InsufficientIncidents:
-        pass
+        trigger.set_incident_status(status_name="insufficient incidents")
 
     except exceptions.InsufficientEqualResults:
-        pass
+        trigger.set_incident_status(status_name="undecided")
 
     except Exception as e:
         log.critical("Uncaught exception: {}\n\n{}".format(
