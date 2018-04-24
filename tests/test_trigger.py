@@ -183,7 +183,7 @@ class Testcases(unittest.TestCase):
             _message_create_1,
             lookup_instance=lookup,
             config=config,
-            purge=True
+            purge=True, mongodb="mongodbtest",
         )
         create.store_incident()
         with self.assertRaises(bos_incidents.exceptions.DuplicateIncidentException):
@@ -194,7 +194,7 @@ class Testcases(unittest.TestCase):
             _message_create_1,
             lookup_instance=lookup,
             config=config,
-            purge=True
+            purge=True, mongodb="mongodbtest",
         )
 
         with self.assertRaises(bos_incidents.exceptions.EventNotFoundException):
@@ -222,7 +222,7 @@ class Testcases(unittest.TestCase):
             _message_in_play,
             lookup_instance=lookup,
             config=config,
-            purge=True
+            purge=True, mongodb="mongodbtest",
         )
 
         with self.assertRaises(exceptions.EventDoesNotExistException):
@@ -248,7 +248,7 @@ class Testcases(unittest.TestCase):
             _message_finish_1,
             lookup_instance=lookup,
             config=config,
-            purge=True
+            purge=True, mongodb="mongodbtest",
         )
 
         with self.assertRaises(bos_incidents.exceptions.EventNotFoundException):
@@ -282,7 +282,7 @@ class Testcases(unittest.TestCase):
             _message_result_1,
             lookup_instance=lookup,
             config=config,
-            purge=True
+            purge=True, mongodb="mongodbtest",
         )
 
         with self.assertRaises(bos_incidents.exceptions.EventNotFoundException):

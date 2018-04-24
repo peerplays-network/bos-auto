@@ -69,6 +69,7 @@ class Trigger():
 
         # Invident Storage
         self.storage = factory.get_incident_storage(
+            kwargs.get("mongodb", None),
             purge=kwargs.get("purge", False))
 
     @property
