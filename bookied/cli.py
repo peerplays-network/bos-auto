@@ -124,7 +124,6 @@ def approve(proposer, approver):
 )
 def replay(filename, proposer, approver, url, call, dry_run):
     from tqdm import tqdm
-    from pprint import pprint
     import requests
     for line in tqdm(filename.readlines()):
         data = eval(line)
@@ -173,7 +172,6 @@ def incidents():
 @incidents.command()
 def list():
     from bos_incidents import factory
-    from peerplays.cli.ui import pretty_print
     t = PrettyTable(["Sport", "League", "Home", "Away", "Incidents"])
     t.align = 'l'
 
@@ -186,7 +184,7 @@ def list():
         incidents = PrettyTable(["call", "status", "content"])
         incidents.align = 'l'
         for call, content in event.items():
-            if not "incidents" in content:
+            if "incidents" not in content:
                 continue
 
             if call == "create":
@@ -209,9 +207,7 @@ def list():
             str(incidents)
         ])
 
-    print(t)
-
-
+    click.echo(t)
 
 
 if __name__ == "__main__":
