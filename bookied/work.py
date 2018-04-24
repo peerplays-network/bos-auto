@@ -15,7 +15,8 @@ from . import exceptions
 config = loadConfig()
 lookup = Lookup(
     proposing_account=config.get("BOOKIE_PROPOSER"),
-    approving_account=config.get("BOOKIE_APPROVER")
+    approving_account=config.get("BOOKIE_APPROVER"),
+    num_retries=1
 )
 
 # We need to know the passphrase to unlock the wallet

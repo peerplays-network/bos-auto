@@ -116,15 +116,13 @@ wif = "5KQwrPbwdL6PhXujxW37FSSQZ1JiwsST4cqQzDeyXtP79zkvFD3"
 config = dict(
     nobroadcast=True
 )
-ppy = PeerPlays(
-    keys=[wif],
-    nobroadcast=config["nobroadcast"]
-)
-set_shared_peerplays_instance(ppy)
 lookup = Lookup(
-    peerplays_instance=ppy,
     proposer="init0",
+    keys=[wif],
+    nobroadcast=config["nobroadcast"],
+    num_retries=1,
 )
+set_shared_peerplays_instance(lookup.blockchain)
 
 
 class Testcases(unittest.TestCase):
@@ -139,7 +137,7 @@ class Testcases(unittest.TestCase):
             "name": [],
             "season": [],
             "start_time": "2018-04-18T12:00:29"
-        },{
+        }, {
             "id": bm_id,
             'asset_id': '1.3.0',
             'delay_before_settling': 300,
@@ -177,6 +175,16 @@ class Testcases(unittest.TestCase):
 
     def setUp(self):
         lookup.clear()
+
+    """
+    def test_num_retries(self):
+        previous_url = lookup.blockchain.rpc.url
+        print(lookup.blockchain.rpc.num_retries)
+        print("=" * 80)
+        lookup.blockchain.rpc.url = "wss://rpc.example.com"
+        lookup.blockchain.rpc.get_objects(["2.0.0"])
+        lookup.blockchain.rpc.url = previous_url
+    """
 
     def test_dublicate_incident(self):
         create = CreateTrigger(
