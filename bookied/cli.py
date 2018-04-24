@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 
+import json
 import click
 from rq import Connection, Worker, use_connection, Queue
 from .config import loadConfig
 from .log import log
+from prettytable import PrettyTable
+from pprint import pprint
 
 config = loadConfig()
 
@@ -160,6 +163,56 @@ def scheduler():
     """
     from .schedule import scheduler
     scheduler()
+
+
+@main.group()
+def incidents():
+    pass
+
+
+@incidents.command()
+def list():
+    from bos_incidents import factory
+    from peerplays.cli.ui import pretty_print
+    t = PrettyTable(["Sport", "League", "Home", "Away", "Incidents"])
+    t.align = 'l'
+
+    storage = factory.get_incident_storage()
+
+    for event in storage.get_events():
+        id = event["id"]
+        if not id:
+            continue
+        incidents = PrettyTable(["call", "status", "content"])
+        incidents.align = 'l'
+        for call, content in event.items():
+            if not "incidents" in content:
+                continue
+
+            if call == "create":
+                incidents.add_row([
+                    call,
+                    json.dumps(content["status"], indent=1),
+                    len(content["incidents"])
+                ])
+            else:
+                incidents.add_row([
+                    call,
+                    json.dumps(content["status"], indent=1),
+                    content["incidents"]
+                ])
+        t.add_row([
+            id["sport"],
+            id["event_group_name"],
+            id["home"],
+            id["away"],
+            str(incidents)
+        ])
+
+    print(t)
+
+
+
 
 if __name__ == "__main__":
     main()
