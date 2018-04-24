@@ -1,4 +1,5 @@
 import traceback
+import grapheneapi
 from flask_rq import job
 from bookied_sync.lookup import Lookup
 from .log import log
@@ -140,6 +141,9 @@ def process(
 
     except exceptions.InsufficientEqualResults:
         trigger.set_incident_status(status_name="undecided")
+
+    except grapheneapi.exceptions.NumRetriesReached:
+        trigger.set_incident_status(status_name="connection lost")
 
     except Exception as e:
         log.critical("Uncaught exception: {}\n\n{}".format(
