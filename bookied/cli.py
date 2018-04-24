@@ -192,12 +192,15 @@ def list():
             if "incidents" not in content:
                 continue
 
-            incidents.add_row([
-                call,
-                "\n".join(["{}: {}".format(k, v) for (k, v) in content["status"].items()]),
-                "\n".join([x["unique_string"] for x in content["incidents"]]),
-                "\n".join([x["provider_info"]["name"] for x in content["incidents"]])
-            ])
+            try:  # FIXME why can some incidents not be resolved?
+                incidents.add_row([
+                    call,
+                    "\n".join(["{}: {}".format(k, v) for (k, v) in content["status"].items()]),
+                    "\n".join([x["unique_string"] for x in content["incidents"]]),
+                    "\n".join([x["provider_info"]["name"] for x in content["incidents"]])
+                ])
+            except:
+                pass
         t.add_row([
             "\n".join([
                 id["sport"],
