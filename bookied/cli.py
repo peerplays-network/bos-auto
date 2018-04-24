@@ -270,7 +270,7 @@ def resend(url, unique_string, provider):
 
 
 @incidents.command()
-@click.argument("call", required=False)
+@click.argument("call", required=False, default="*")
 @click.argument("status_name", required=False)
 @click.option(
     "--url",
@@ -284,7 +284,7 @@ def resendall(url, call, status_name):
         for incident_call, content in event.items():
             if not content or "incidents" not in content:
                 continue
-            if call and incident_call != call:
+            if call and call != "*" and incident_call != call:
                 continue
 
             if status_name and content["status"]["name"] != status_name:
