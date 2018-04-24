@@ -9,6 +9,7 @@ from .triggers import (
     InProgressTrigger,
     FinishTrigger
 )
+from . import exceptions
 
 
 config = loadConfig()
@@ -101,15 +102,34 @@ def process(
                 config=config,
             ).trigger(args)
 
+        elif call == "unknown":
+            pass
+
         else:
             log.error(
                 "Received an unknown trigger {} with content: {}"
                 .format(call, message)
             )
 
+    except exceptions.EventDoesNotExistException:
+        pass
+
+    except exceptions.EventGroupClosedException:
+        pass
+
+    except exceptions.EventCannotOpenException:
+        pass
+
+    except exceptions.InsufficientIncidents:
+        pass
+
+    except exceptions.InsufficientEqualResults:
+        pass
+
     except Exception as e:
-        log.critical("Uncaught exception: {}".format(str(e)))
-        log.critical(traceback.format_exc())
+        log.critical("Uncaught exception: {}\n\n{}".format(
+            str(e),
+            traceback.format_exc()))
 
 
 #
