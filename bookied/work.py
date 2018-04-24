@@ -116,6 +116,8 @@ def process(
         log.critical("Uncaught exception: {}\n\n{}".format(
             str(e),
             traceback.format_exc()))
+        # No trigger can be executed!
+        return
 
     try:
         # Execute the trigger
