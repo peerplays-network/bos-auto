@@ -224,6 +224,23 @@ def show(unique_string, provider):
 @incidents.command()
 @click.argument("unique_string")
 @click.argument("provider")
+def rm(unique_string, provider):
+    from bos_incidents import factory
+    storage = factory.get_incident_storage()
+    incident = storage.get_incident_by_unique_string_and_provider(
+        unique_string, provider)
+    storage.delete_incident(incident)
+
+
+@incidents.command()
+def purge():
+    from bos_incidents import factory
+    factory.get_incident_storage(purge=True)
+
+
+@incidents.command()
+@click.argument("unique_string")
+@click.argument("provider")
 @click.option(
     "--url",
     default="http://localhost:8010/trigger"
