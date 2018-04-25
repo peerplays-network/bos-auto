@@ -13,8 +13,11 @@ clean-pyc:
 	find . -name '*.pyo' -exec rm -f {} +
 	find . -name '*~' -exec rm -f {} +
 
+lint:
+	flake8 --ignore=E501,F401 bookied
+
 test:
-	tox
+	python3 setup.py test
 
 build:
 	python3 setup.py build
@@ -35,5 +38,9 @@ check:
 dist:
 	python3 setup.py sdist upload -r pypi
 	python3 setup.py bdist_wheel upload
+
+docs:
+	sphinx-apidoc -d 6 -e -f -o docs . *.py tests
+	make -C docs clean html
 
 release: clean check dist git

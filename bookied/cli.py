@@ -65,6 +65,8 @@ def worker(queue):
     """ Start the (redis queue) worker to deal with the received messages
     """
     from .redis_con import redis
+    from . import work
+    work.unlock()
     with Connection(redis):
         w = Worker([queue])
         w.work()
@@ -82,6 +84,7 @@ def worker(queue):
 def approve(proposer, approver):
     from .redis_con import redis
     from . import work
+    work.unlock()
     use_connection(redis)
     q = Queue(connection=redis)
     q.enqueue(
