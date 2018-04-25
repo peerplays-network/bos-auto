@@ -12,8 +12,7 @@ config = loadConfig()
 
 def check_scheduled():
 
-    print("foobar")
-    return
+    raise NotImplementedError
 
     # Flask queue
     q = Queue(connection=redis)
@@ -43,6 +42,9 @@ def check_scheduled():
 class PeriodicExecutor(threading.Thread):
 
     def __init__(self, sleep, func, *args, **kwargs):
+
+        raise NotImplementedError
+
         """ execute func(params) every 'sleep' seconds """
         self.func = func
         self.sleep = sleep

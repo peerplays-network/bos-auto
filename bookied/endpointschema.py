@@ -1,3 +1,4 @@
+#: Default incident schema as sent from the data proxy
 schema = {
     "$schema": "http://json-schema.org/draft-06/schema#",
     "title": "Bookie dataproxy Json",

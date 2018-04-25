@@ -4,6 +4,8 @@ from .. import exceptions
 
 
 class FinishTrigger(Trigger):
+    """ The finish trigger merely sets an event to finished on whistle time
+    """
 
     def _trigger(self, args):
         """ Set a BMG to ``finish``.
@@ -22,9 +24,23 @@ class FinishTrigger(Trigger):
         return True
 
     def testThreshold(self):
+        """ The threshold that needs to be crossed in order to finish an event
+            on chain.
+
+            .. alert:: This is temporary set to be ``2`` until we have an
+                easier way to identify how many data proxies send data to us
+        """
         return 2
 
     def testConditions(self, *args, **kwargs):
+        """ The test conditions for finishing the event are as this:
+
+            * Do more incidents propose the creation of the event than
+                ``testThreshold``
+
+               -> Finish the event
+
+        """
         incidents = self.get_all_incidents()
         if not incidents:
             raise exceptions.InsufficientIncidents

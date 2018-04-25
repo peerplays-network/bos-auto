@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-import json
 import click
 from rq import Connection, Worker, use_connection, Queue
 from .config import loadConfig
@@ -82,6 +81,8 @@ def worker(queue):
     default=config.get("BOOKIE_APPROVER")
 )
 def approve(proposer, approver):
+    """ Send an approve ticket to the queue
+    """
     from .redis_con import redis
     from . import work
     work.unlock()
@@ -126,6 +127,8 @@ def approve(proposer, approver):
     default="http://localhost:8010/trigger"
 )
 def replay(filename, proposer, approver, url, call, dry_run):
+    """ Replay incidents from a file
+    """
     from tqdm import tqdm
     import requests
     for line in tqdm(filename.readlines()):
@@ -174,6 +177,8 @@ def incidents():
 
 @incidents.command()
 def list():
+    """ List incidents from the bos-incidents store
+    """
     from bos_incidents import factory
     t = PrettyTable(["identifier", "Incidents"], hrules=ALLBORDERS)
     t.align = 'l'
@@ -224,6 +229,8 @@ def list():
 @click.argument("unique_string")
 @click.argument("provider")
 def show(unique_string, provider):
+    """ Show the content of a specific incidents
+    """
     from bos_incidents import factory
     storage = factory.get_incident_storage()
     incident = storage.get_incident_by_unique_string_and_provider(
@@ -235,6 +242,8 @@ def show(unique_string, provider):
 @click.argument("unique_string")
 @click.argument("provider")
 def rm(unique_string, provider):
+    """ Remove an incident from the store
+    """
     from bos_incidents import factory
     storage = factory.get_incident_storage()
     incident = storage.get_incident_by_unique_string_and_provider(
@@ -244,6 +253,8 @@ def rm(unique_string, provider):
 
 @incidents.command()
 def purge():
+    """ Purge the entire store
+    """
     from bos_incidents import factory
     factory.get_incident_storage(purge=True)
 
@@ -256,6 +267,8 @@ def purge():
     default="http://localhost:8010/trigger"
 )
 def resend(url, unique_string, provider):
+    """ Resend one or more incidents from the store
+    """
     from bos_incidents import factory
     import requests
     storage = factory.get_incident_storage()
@@ -285,6 +298,8 @@ def resend(url, unique_string, provider):
     default="http://localhost:8010/trigger"
 )
 def resendall(url, call, status_name):
+    """ Resend everything in the store that matches a call and status_name
+    """
     from bos_incidents import factory
     import requests
     storage = factory.get_incident_storage()

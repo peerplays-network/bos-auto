@@ -1,9 +1,10 @@
 from .trigger import Trigger
 from ..log import log
-from .. import exceptions
 
 
 class InProgressTrigger(Trigger):
+    """ The in progress trigger sets an event to in_play as soon as it starts
+    """
 
     def _trigger(self, args):
         """ Set a BMG to ``in_progress``
@@ -12,9 +13,11 @@ class InProgressTrigger(Trigger):
 
         event = self.getEvent()
 
-        # event["status"] = "in_progress"
         event.update()
         event.status_update("in_progress")
 
     def testConditions(self, *args, **kwargs):
+        """ The conditions are always true as we want the
+            event to be opened as soon as possible
+        """
         return True
