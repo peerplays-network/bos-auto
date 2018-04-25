@@ -1,5 +1,6 @@
 import traceback
 import grapheneapi
+import bookied_sync
 from flask_rq import job
 from bookied_sync.lookup import Lookup
 from .log import log
@@ -154,6 +155,9 @@ def process(
     except bos_incidents.exceptions.EventNotFoundException:
         trigger.set_incident_status(
             status_name="event missing in bos_incidents")
+
+    except bookied_sync.exceptions.ObjectNotFoundInLookup as e:
+        log.warning(str(e))
 
     except Exception as e:
         log.critical("Uncaught exception: {}\n\n{}".format(
