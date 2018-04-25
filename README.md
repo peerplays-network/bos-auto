@@ -17,6 +17,9 @@ show them in the manual intervention module `bos-mint`.
 
 ## Documentation
 
+[![docs master](https://readthedocs.org/projects/bos-auto/badge/?version=latest)](http://bos-auto.rtfd.io/en/latest/)
+[![docs develop](https://readthedocs.org/projects/bos-auto/badge/?version=develop)](http://bos-auto.rtfd.io/en/develop/)
+
 ## Requirements
 
 * A Redis database

@@ -116,13 +116,16 @@ wif = "5KQwrPbwdL6PhXujxW37FSSQZ1JiwsST4cqQzDeyXtP79zkvFD3"
 config = dict(
     nobroadcast=True
 )
-lookup = Lookup(
-    proposer="init0",
+ppy = PeerPlays(
     keys=[wif],
     nobroadcast=config["nobroadcast"],
     num_retries=1,
 )
-set_shared_peerplays_instance(lookup.blockchain)
+set_shared_peerplays_instance(ppy)
+lookup = Lookup(
+    proposer="init0",
+    blockchain_instance=ppy
+)
 
 
 class Testcases(unittest.TestCase):
