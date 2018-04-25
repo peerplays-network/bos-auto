@@ -1,7 +1,7 @@
 import os
 import yaml
 
-
+#: Default configuration
 DEFAULT = """
 # (optional) Redis configuration
 redis_host:

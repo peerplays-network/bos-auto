@@ -1,4 +1,3 @@
-import traceback
 from ..log import log
 from .. import exceptions
 from dateutil.parser import parse
@@ -6,15 +5,6 @@ from bookied_sync.sport import LookupSport
 from bookied_sync.eventgroup import LookupEventGroup
 from bookied_sync.event import LookupEvent
 from bos_incidents import factory
-from bos_incidents.exceptions import (
-    IncidentStorageException,
-    IncidentStorageLostException,
-    DuplicateIncidentException,
-    InvalidIncidentFormatException,
-    IncidentNotFoundException,
-    InvalidQueryException,
-    EventNotFoundException
-)
 
 
 class Trigger():
@@ -71,14 +61,6 @@ class Trigger():
     def call(self):
         """ Return the trigger/call name
         """
-        return self.message.get("call").lower()
-
-    @property
-    def incident(self):
-        return self.message
-
-    @property
-    def call(self):
         return self.message.get("call").lower()
 
     def getEvent(self):
@@ -141,12 +123,6 @@ class Trigger():
             call=self.call,
             **kwargs)
 
-    def set_incident_status(self, **kwargs):
-        self.storage.update_event_status_by_id(
-            self.id,
-            self.call,
-            **kwargs)
-
     def testConditions(self, *args, **kwargs):
         """ Test If we can actually call the trigger. This method is called
             from trigger() and is supposed to be overwritten by the actual
@@ -160,4 +136,6 @@ class Trigger():
         return self.lookup.broadcast()
 
     def store_incident(self):
+        """ This call stores the incident in the incident-store (bos-incident)
+        """
         self.storage.insert_incident(self.message)

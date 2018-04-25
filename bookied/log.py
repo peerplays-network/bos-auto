@@ -24,10 +24,12 @@ USE_TELEGRAM = (
 )
 USE_MAIL = ("mailto" in config)
 USE_STREAM = True
-USE_FILE = True
+USE_FILE = False
 
 
 def log_stream(logger):
+    """ Log content in the output/syslog
+    """
     if USE_STREAM:
         formatter = ColoredFormatter(LOGFORMAT)
         stream = logging.StreamHandler()
@@ -37,6 +39,8 @@ def log_stream(logger):
 
 
 def log_file(logger):
+    """ Log content to a file
+    """
     if USE_FILE:
         log_handler_rotate = RotatingFileHandler(
             'bookied.log',
@@ -48,6 +52,8 @@ def log_file(logger):
 
 
 def log_mail(logger):
+    """ Send an email for logging
+    """
     if USE_MAIL:
         # Mail
         log_handler_mail = SMTPHandler(
@@ -71,6 +77,8 @@ def log_mail(logger):
 
 
 def log_telegram(logger):
+    """ Enable logging via Telegram
+    """
     if USE_TELEGRAM:
         tgHandler = telegram_handler.TelegramHandler(
             token=config.get("telegram_token"),

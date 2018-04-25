@@ -23,6 +23,9 @@ lookup = Lookup(
 
 
 def unlock():
+    """ Unlock the python-peerplays wallet so we can sign the things we are
+        proposing/approving.
+    """
     # We need to know the passphrase to unlock the wallet
     if "passphrase" not in config:
         err = "No 'passphrase' found in configuration!"

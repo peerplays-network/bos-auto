@@ -27,6 +27,14 @@ Outline
    worker
    notifications
 
+API
+---
+
+.. toctree::
+   :maxdepth: 3
+
+   bookied
+
 Indices and tables
 ==================
 

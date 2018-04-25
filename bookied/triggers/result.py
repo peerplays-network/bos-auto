@@ -9,14 +9,14 @@ from ..log import log
 from .. import exceptions
 
 
-class TooManyDifferentResultsOverThreshold(Exception):
-    pass
-
-
+#: Internal score separator
 _SCORE_SEPARATOR = "::"
 
 
 class ResultTrigger(Trigger):
+    """ This trigger deals with the results of an event and needs to combine
+        information from different incident reports.
+    """
 
     def _trigger(self, args):
         """ Publish results to a BMG and set to ``finish``.
@@ -37,6 +37,8 @@ class ResultTrigger(Trigger):
         self.resolve_bgms(event)
 
     def resolve_bgms(self, event):
+        """ Resolve the BMGs
+        """
         for bmg in event.bettingmarketgroups:
 
             # Skip dynamic bmgs
@@ -58,12 +60,23 @@ class ResultTrigger(Trigger):
             settle.update()
 
     def testThreshold(self):
+        """ The threshold that needs to be crossed in order to "grade" an event
+            on chain (send out the results).
+
+            .. alert:: This is temporary set to be ``2`` until we have an
+                easier way to identify how many data proxies send data to us
+        """
         return 2
 
     def testThresholdPercentage(self):
+        """ This is the percentage of incidents that needs to agree on the
+            results before we push them on-chain
+        """
         return 51
 
-    def count_score(self, scores):
+    def _count_score(self, scores):
+        """ Internal counter of scores
+        """
         from collections import Counter
         ret = Counter()
         for i in range(len(scores)):
@@ -71,6 +84,14 @@ class ResultTrigger(Trigger):
         return ret
 
     def testConditions(self, *args, **kwargs):
+        """ The test conditions for "grading" the event are as this:
+
+            * Raise if less than ``testThreshold`` result incidents received
+            * Raise if less than ``testThresholdPercentage`` result incidents agree on the result
+            * Raise if multiple results reach above thresholds
+            * Else, publish the result that is left
+
+        """
         incidents = self.get_all_incidents()
         if not incidents:
             raise exceptions.InsufficientIncidents
@@ -88,7 +109,7 @@ class ResultTrigger(Trigger):
             _SCORE_SEPARATOR,
             x["arguments"]["home_score"]
         ) for x in result_incidents]
-        scores = self.count_score(scores)
+        scores = self._count_score(scores)
 
         # Threshold scaled by number of scores
         threshold = len(scores) * self.testThresholdPercentage() / 100
@@ -96,13 +117,10 @@ class ResultTrigger(Trigger):
         # Valid results filtered by threshold
         valid_results = dict({k: v for k, v in scores.items() if v >= threshold})
 
-        if not valid_results:
-            raise exceptions.InsufficientEqualResults
-
         # Raise if multiple results are valid
         if len(valid_results) > 1:
-            raise TooManyDifferentResultsOverThreshold(valid_results)
-        elif len(valid_results) < 1:
+            raise exceptions.TooManyDifferentResultsOverThreshold(valid_results)
+        elif not valid_results:
             raise exceptions.InsufficientEqualResults
         else:
             result = list(valid_results.keys())[0]

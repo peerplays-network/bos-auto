@@ -23,6 +23,8 @@ storage = factory.get_incident_storage()
 
 @app.route('/')
 def home():
+    """ Let's not expose that this is a bos-auto endpoint
+    """
     return "", 404
 
 
@@ -63,6 +65,8 @@ def trigger():
         try:
             storage.insert_incident(incident.copy())  # FIXME, remove copy()
         except exceptions.DuplicateIncidentException:
+            # We merely pass here since we have the incident already
+            # alerting anyone won't do anything
             pass
 
         # Send incident to redis
