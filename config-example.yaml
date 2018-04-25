@@ -15,3 +15,12 @@ BOOKIE_PROPOSER: init0
 
 # Approver account
 BOOKIE_APPROVER: init0
+
+# Default mail destination on errors
+mailto: info@example.com
+
+# Notifications via telgram
+telegram_token:
+
+# python3 -m telegram_handler "${telegram_token}"
+telegram_chatid:

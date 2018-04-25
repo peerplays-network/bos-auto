@@ -11,6 +11,7 @@ from .triggers import (
     FinishTrigger
 )
 from . import exceptions
+import bos_incidents
 
 
 config = loadConfig()
@@ -20,18 +21,21 @@ lookup = Lookup(
     num_retries=1
 )
 
-# We need to know the passphrase to unlock the wallet
-if "passphrase" not in config:
-    err = "No 'passphrase' found in configuration!"
-    log.critical(err)
-    raise ValueError(err)
 
-if not lookup.wallet.created():
-    err = "Please create a wallet and import the keys first!"
-    log.critical(err)
-    raise Exception(err)
+def unlock():
+    # We need to know the passphrase to unlock the wallet
+    if "passphrase" not in config:
+        err = "No 'passphrase' found in configuration!"
+        log.critical(err)
+        raise ValueError(err)
 
-lookup.wallet.unlock(config.get("passphrase"))
+    if not lookup.wallet.created():
+        err = "Please create a wallet and import the keys first!"
+        log.critical(err)
+        raise Exception(err)
+
+    print("unlocking wallet ...")
+    lookup.wallet.unlock(config.get("passphrase"))
 
 
 #
@@ -43,8 +47,7 @@ def process(
     **kwargs
 ):
     """ This process is called by the queue to process an actual message
-        received. It instantiates from ``Process`` and let's the object deal
-        with the message types.
+        received.
 
         Hence, this method has the look and feel of a dispatcher!
     """
@@ -144,6 +147,10 @@ def process(
 
     except grapheneapi.exceptions.NumRetriesReached:
         trigger.set_incident_status(status_name="connection lost")
+
+    except bos_incidents.exceptions.EventNotFoundException:
+        trigger.set_incident_status(
+            status_name="event missing in bos_incidents")
 
     except Exception as e:
         log.critical("Uncaught exception: {}\n\n{}".format(
