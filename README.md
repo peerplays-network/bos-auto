@@ -8,7 +8,7 @@
 [![docs develop](https://readthedocs.org/projects/bos-auto/badge/?version=develop)](http://bos-auto.rtfd.io/en/develop/)
 
 
-`bos-auto` is the heart of the Bookie Oracle System. `bos-auto` comes with a worker and an API to receive data from a Data Proxy. The API receives this data, validates it, and
+`bos-auto` is one of two services that are required for proper operation of Bookie Oracle Software(BOS). `bos-auto` comes with a worker and an API to receive data from a Data Proxy. The API receives this data, validates it, and
 queues it for a worker to perform corresponding tasks. It
 further stores these incidents via [`bos-incidents`](https://github.com/PBSA/bos-incidents) to later be able to
 display them in the manual intervention(MINT) module [`bos-mint`](https://github.com/PBSA/bos-mint).
