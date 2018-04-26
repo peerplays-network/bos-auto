@@ -108,8 +108,8 @@ work for the worker via redis. The worker then takes those incidents and
 processes those. Postponed incidents are handled separately with a
 scheduler.
 
-Start the end point
--------------------
+Start the Endpoint
+------------------
 ::
 
     cd bos-auto
@@ -136,6 +136,21 @@ In that case, the `api` daemon should print the following line::
 
 At this point, we are done with setting up the endpoint and can go
 further setting up the actual worker.
+
+Delivery to Data Proxies
+________________________
+
+Data proxies are interested in this particular endpoint as they will
+push incidents to it. This means that you need to provide them with your
+ip address as well as the port that you have opened above.
+
+Advanced Setup
+______________
+
+The above setup is basic. Going forward, a witness may want to deploy
+UWSGI with parallel workers for the endpoint, create a local socket and
+hide it behind an SSL supported nginx that deals with a simple domain
+isntead of ``ip:port`` pair, like ``https://dataproxy.mywitness.com/trigger``.
 
 Start worker
 ------------
