@@ -1,4 +1,5 @@
 peerplays
+secp256k1    # needed for fast signing of transactions!
 bookiesports
 bos-sync
 bos-incidents

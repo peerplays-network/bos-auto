@@ -1,49 +1,54 @@
+import threading
 import time
+from datetime import datetime
+
 from rq import use_connection, Queue
+from bos_incidents import factory, exceptions
+
 from . import work
+from .log import log
 from .config import loadConfig
 from .redis_con import redis
-from .log import log
-from bos_incidents import factory, exceptions
-import threading
 
 config = loadConfig()
 
 
-def check_scheduled():
-
-    raise NotImplementedError
+def check_scheduled(storage=None):
 
     # Flask queue
     q = Queue(connection=redis)
 
     # Invident Storage
-    storage = factory.get_incident_storage()
+    if not storage:
+        storage = factory.get_incident_storage()
 
-    incident = {}
-    try:
-        storage.insert_incident(incident)
-    except exceptions.DuplicateIncidentException:
-        log.info("Incident already received!")
-        return "Incident already received", 503
-    """
+    events = storage.get_events_by_call_status(
+        call="create",
+        status_name="postponed",
+        status_expired_before=datetime.utcnow())
+    events = list(events)
 
-    job = q.enqueue(
-        work.process,
-        args=(incident,),
-        kwargs=dict(
-            proposer=app.config.get("BOOKIE_PROPOSER"),
-            approver=app.config.get("BOOKIE_APPROVER")
-        )
-    )
-    """
+    ids = list()
+    for event in events:
+        for incidentid in event.get("create",{}).get("incidents", []):
+            incident = storage.resolve_to_incident(incidentid)
+
+            job = q.enqueue(
+                work.process,
+                args=(incident,),
+                kwargs=dict(
+                    proposer=config.get("BOOKIE_PROPOSER"),
+                    approver=config.get("BOOKIE_APPROVER")
+                )
+            )
+            ids.append(job.id)
+
+    return ids
 
 
 class PeriodicExecutor(threading.Thread):
 
     def __init__(self, sleep, func, *args, **kwargs):
-
-        raise NotImplementedError
 
         """ execute func(params) every 'sleep' seconds """
         self.func = func

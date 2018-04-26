@@ -8,14 +8,16 @@
 [![docs develop](https://readthedocs.org/projects/bos-auto/badge/?version=develop)](http://bos-auto.rtfd.io/en/develop/)
 
 
-`bos-auto` comes with a worker and an API to receive notifications of a
-feed data provider. The API receives those messages, validates them, and
-queues them for a worker to perform corresponding tasks. Since the
-queuing is performed via redis, a redis backend must be present. It
-further stores these incidents via `bos-incidents` to later be able to
-show them in the manual intervention module `bos-mint`.
+`bos-auto` is one of two services that are required for proper operation of Bookie Oracle Software(BOS). `bos-auto` comes with a worker and an API to receive data from a Data Proxy. The API receives this data, validates it, and
+queues it for a worker to perform corresponding tasks. It
+further stores these incidents via [`bos-incidents`](https://github.com/PBSA/bos-incidents) to later be able to
+display them in the manual intervention(MINT) module [`bos-mint`](https://github.com/PBSA/bos-mint).
 
 ## Documentation
+For directions on how to install and run `bos-auto` please visit our [documentation page](http://bos-auto.readthedocs.io/en/develop/installation.html).
+
+[![docs master](https://readthedocs.org/projects/bos-auto/badge/?version=latest)](http://bos-auto.rtfd.io/en/latest/)
+[![docs develop](https://readthedocs.org/projects/bos-auto/badge/?version=develop)](http://bos-auto.rtfd.io/en/develop/)
 
 ## Requirements
 
@@ -23,7 +25,9 @@ show them in the manual intervention module `bos-mint`.
 * A MongoDB database
 * python3 deployment
 
-## Executation
+## Execution
+```bash
+$ python3 cli.py worker &    # Execute worker
+$ python3 cli.py api         # Start web endpoint
+```
 
-    $ python3 cli.py worker &    # Execute worker
-    $ python3 cli.py api         # Start web endpoint
