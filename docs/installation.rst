@@ -155,6 +155,11 @@ isntead of ``ip:port`` pair, like ``https://dataproxy.mywitness.com/trigger``.
 Start worker
 ------------
 
+.. warning:: At this point is is cruciual to set the default witness node to
+        your own server (ideally running in ``localhost``) using ``peerplays set node
+        ws://ip:port``. If this step is skip, the setup will not work or work
+        with very high latency at best.
+
 We start the worker with::
 
     cd bos-auto
