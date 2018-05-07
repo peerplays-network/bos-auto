@@ -121,6 +121,10 @@ def process(
                 .format(call, message)
             )
 
+    except bookied_sync.exceptions.ObjectNotFoundInLookup as e:
+        log.warning(str(e))
+        return
+
     except Exception as e:
         log.critical("Uncaught exception: {}\n\n{}".format(
             str(e),
