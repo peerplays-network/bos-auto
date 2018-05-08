@@ -315,7 +315,6 @@ def resendall(url, call, status_name, begin, end):
     storage = factory.get_incident_storage()
     for event in storage.get_events():
 
-        # pprint(event)
         if not ("id" in event and event["id"]):
             continue
         id = event["id"]
@@ -336,6 +335,8 @@ def resendall(url, call, status_name, begin, end):
                 continue
 
             for incident in content["incidents"]:
+                incident.update(dict(id=id))
+                incident["id"]["start_time"] = str(incident["id"]["start_time"])
                 pprint(incident)
                 try:
                     ret = requests.post(
