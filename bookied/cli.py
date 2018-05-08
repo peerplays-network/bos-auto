@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 
 import click
+from click_datetime import Datetime
 from rq import Connection, Worker, use_connection, Queue
 from .config import loadConfig
 from .log import log
 from prettytable import PrettyTable, ALL as ALLBORDERS
+from dateutil import parser
 from pprint import pprint
 
 config = loadConfig()
@@ -176,7 +178,9 @@ def incidents():
 
 
 @incidents.command()
-def list():
+@click.argument("start", required=False, type=Datetime(format='%Y/%m/%d'))
+@click.argument("end", required=False, type=Datetime(format='%Y/%m/%d'))
+def list(start, end):
     """ List incidents from the bos-incidents store
     """
     from bos_incidents import factory
@@ -188,12 +192,16 @@ def list():
     for event in storage.get_events():
 
         # pprint(event)
-        if "id" not in event:
+        if not ("id" in event and event["id"]):
+            continue
+        id = event["id"]
+        id["start_time"] = parser.parse(id["start_time"]).replace(
+            tzinfo=None)
+
+        # Limit time
+        if start and end and (id["start_time"] < start or id["start_time"] > end):
             continue
 
-        id = event["id"]
-        if not id:
-            continue
         incidents = PrettyTable(
             ["call", "status", "incident uid", "incident provider"],
         )
@@ -215,7 +223,7 @@ def list():
             "\n".join([
                 id["sport"],
                 id["event_group_name"],
-                id["start_time"],
+                id["start_time"].strftime("%Y/%m/%d"),
                 "home: {}".format(id["home"]),
                 "away: {}".format(id["away"]),
             ]),

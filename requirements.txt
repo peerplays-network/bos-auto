@@ -6,6 +6,7 @@ bos-incidents
 
 prettytable
 click
+click-datetime
 jsonschema
 pyyaml
 flask
