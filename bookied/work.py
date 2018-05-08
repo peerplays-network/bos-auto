@@ -122,7 +122,7 @@ def process(
             )
 
     except bookied_sync.exceptions.ObjectNotFoundInLookup as e:
-        log.warning(str(e))
+        log.info(str(e))
         return
 
     except Exception as e:
@@ -161,7 +161,7 @@ def process(
             status_name="event missing in bos_incidents")
 
     except bookied_sync.exceptions.ObjectNotFoundInLookup as e:
-        log.warning(str(e))
+        log.info(str(e))
 
     except Exception as e:
         log.critical("Uncaught exception: {}\n\n{}".format(
