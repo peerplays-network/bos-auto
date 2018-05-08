@@ -178,9 +178,9 @@ def incidents():
 
 
 @incidents.command()
-@click.argument("start", required=False, type=Datetime(format='%Y/%m/%d'))
+@click.argument("begin", required=False, type=Datetime(format='%Y/%m/%d'))
 @click.argument("end", required=False, type=Datetime(format='%Y/%m/%d'))
-def list(start, end):
+def list(begin, end):
     """ List incidents from the bos-incidents store
     """
     from bos_incidents import factory
@@ -199,7 +199,7 @@ def list(start, end):
             tzinfo=None)
 
         # Limit time
-        if start and end and (id["start_time"] < start or id["start_time"] > end):
+        if begin and end and (id["start_time"] < begin or id["start_time"] > end):
             continue
 
         incidents = PrettyTable(
@@ -301,17 +301,31 @@ def resend(url, unique_string, provider):
 @incidents.command()
 @click.argument("call", required=False, default="*")
 @click.argument("status_name", required=False)
+@click.argument("begin", required=False, type=Datetime(format='%Y/%m/%d'))
+@click.argument("end", required=False, type=Datetime(format='%Y/%m/%d'))
 @click.option(
     "--url",
     default="http://localhost:8010/trigger"
 )
-def resendall(url, call, status_name):
+def resendall(url, call, status_name, begin, end):
     """ Resend everything in the store that matches a call and status_name
     """
     from bos_incidents import factory
     import requests
     storage = factory.get_incident_storage()
     for event in storage.get_events():
+
+        # pprint(event)
+        if not ("id" in event and event["id"]):
+            continue
+        id = event["id"]
+        id["start_time"] = parser.parse(id["start_time"]).replace(
+            tzinfo=None)
+
+        # Limit time
+        if begin and end and (id["start_time"] < begin or id["start_time"] > end):
+            continue
+
         for incident_call, content in event.items():
             if not content or "incidents" not in content:
                 continue
