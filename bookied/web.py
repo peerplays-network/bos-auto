@@ -1,3 +1,4 @@
+import pkg_resources
 from rq import use_connection, Queue
 from flask import Flask, request, jsonify
 from jsonschema import validate
@@ -26,6 +27,16 @@ def home():
     """ Let's not expose that this is a bos-auto endpoint
     """
     return "", 404
+
+
+@app.route("/isalive")
+def isalive():
+    return jsonify({
+        'versions': {
+            name: pkg_resources.require(name)[0].version
+            for name in ["bos-mint", "peerplays", "bookiesports"]
+        }
+    })
 
 
 @app.route('/trigger', methods=["GET", "POST"])
