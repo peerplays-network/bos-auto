@@ -313,31 +313,32 @@ def resendall(url, call, status_name, begin, end):
     from bos_incidents import factory
     import requests
     storage = factory.get_incident_storage()
-    for event in storage.get_events():
-
-        if not ("id" in event and event["id"]):
-            continue
-        id = event["id"]
-        id["start_time"] = parser.parse(id["start_time"]).replace(
-            tzinfo=None)
-
-        # Limit time
-        if begin and end and (id["start_time"] < begin or id["start_time"] > end):
-            continue
+    for event in storage.get_events(resolve=False):
 
         for incident_call, content in event.items():
+
             if not content or "incidents" not in content:
                 continue
+
             if call and call != "*" and incident_call != call:
                 continue
 
             if status_name and content["status"]["name"] != status_name:
                 continue
 
-            for incident in content["incidents"]:
-                incident.update(dict(id=id))
-                incident["id"]["start_time"] = str(incident["id"]["start_time"])
+            for _incident in content["incidents"]:
+                incident = storage.resolve_to_incident(_incident)
+
+                id = incident["id"]
+                start_time = parser.parse(id["start_time"]).replace(
+                    tzinfo=None)
+
+                # Limit time
+                if begin and end and (start_time < begin or start_time > end):
+                    continue
+
                 pprint(incident)
+
                 try:
                     ret = requests.post(
                         url,
