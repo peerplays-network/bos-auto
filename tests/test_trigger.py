@@ -1,10 +1,12 @@
-from mock import MagicMock
 import unittest
-from datetime import datetime
+from copy import deepcopy
+from mock import MagicMock, PropertyMock
+from datetime import datetime, timedelta
 from peerplays import PeerPlays
 from peerplays.instance import set_shared_peerplays_instance
 from bookied_sync.lookup import Lookup
 from bookied_sync.event import LookupEvent
+from bookied_sync.eventgroup import LookupEventGroup
 from bookied_sync.eventstatus import LookupEventStatus
 from bookied_sync.bettingmarketgroup import LookupBettingMarketGroup
 from bookied_sync.bettingmarket import LookupBettingMarket
@@ -26,7 +28,7 @@ _message_create_1 = {
     "timestamp": "2018-03-12T14:48:11.418371Z",
     "id": {
         "sport": "Basketball",
-        "start_time": "2018-03-10T00:00:00Z",
+        "start_time": "2118-03-10T00:00:00Z",
         "away": "Chicago Bulls",
         "home": "Detroit Pistons",
         "event_group_name": "NBA Regular Season"
@@ -45,15 +47,18 @@ _message_create_1 = {
     },
     "call": "create"
 }
-_message_create_2 = _message_create_1.copy()
+_message_create_2 = deepcopy(_message_create_1)
 _message_create_2["provider_info"]["name"] = "foobar"
 _message_create_2["unique_string"] += "foobar"
+
+_message_create_3 = deepcopy(_message_create_1)
+_message_create_3["id"]["start_time"] = "1910-03-10T00:00:00Z"
 
 # In play incident
 _message_in_play = {
     "timestamp": "2018-03-12T14:48:11.418371Z",
     "id": {"sport": "Basketball",
-           "start_time": "2018-03-10T00:00:00Z",
+           "start_time": "2118-03-10T00:00:00Z",
            "away": "Chicago Bulls",
            "home": "Detroit Pistons",
            "event_group_name": "NBA Regular Season"},
@@ -124,7 +129,8 @@ ppy = PeerPlays(
 set_shared_peerplays_instance(ppy)
 lookup = Lookup(
     proposer="init0",
-    blockchain_instance=ppy
+    blockchain_instance=ppy,
+    network="charlie"
 )
 
 
@@ -179,16 +185,6 @@ class Testcases(unittest.TestCase):
     def setUp(self):
         lookup.clear()
 
-    """
-    def test_num_retries(self):
-        previous_url = lookup.blockchain.rpc.url
-        print(lookup.blockchain.rpc.num_retries)
-        print("=" * 80)
-        lookup.blockchain.rpc.url = "wss://rpc.example.com"
-        lookup.blockchain.rpc.get_objects(["2.0.0"])
-        lookup.blockchain.rpc.url = previous_url
-    """
-
     def test_dublicate_incident(self):
         create = CreateTrigger(
             _message_create_1,
@@ -201,12 +197,19 @@ class Testcases(unittest.TestCase):
             create.store_incident()
 
     def test_create(self):
+        start_time = (datetime.utcnow() + timedelta(days=1)).isoformat() + "Z"
+        _message_create_1["id"]["start_time"] = start_time
+        _message_create_2["id"]["start_time"] = start_time
         create = CreateTrigger(
             _message_create_1,
             lookup_instance=lookup,
             config=config,
             purge=True, mongodb="mongodbtest",
         )
+
+        LookupEvent.start_time = PropertyMock(return_value=datetime.utcnow() + timedelta(days=1))
+        LookupEvent.event_group_finish_datetime = PropertyMock(return_value=datetime.utcnow() + timedelta(days=2))
+        LookupEvent.event_group_start_datetime = PropertyMock(return_value=datetime.utcnow() + timedelta(days=-1))
 
         with self.assertRaises(bos_incidents.exceptions.EventNotFoundException):
             create.testConditions(_message_create_1.get("arguments"))
@@ -227,6 +230,17 @@ class Testcases(unittest.TestCase):
         self.assertEqual(ops[0][0], 22)
         self.assertTrue(len(ops[0][1]["proposed_ops"]) > 1)
         self.assertTrue(ops[0][1]["proposed_ops"][0]['op'][0], 56)
+
+    def test_create_old_event(self):
+        create = CreateTrigger(
+            _message_create_3,
+            lookup_instance=lookup,
+            config=config,
+            purge=True, mongodb="mongodbtest",
+        )
+
+        with self.assertRaises(exceptions.CreateIncidentTooOldException):
+            create.testConditions(_message_create_3.get("arguments"))
 
     def test_in_play(self):
         play = InProgressTrigger(
