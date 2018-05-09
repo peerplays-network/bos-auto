@@ -1,4 +1,18 @@
 ######################
+# Witness endpoint
+######################
+# Ideally, the witness endpoint runs on localhost somewhere
+node: ws://localhost:8090
+
+######################
+# PeerPlays network
+######################
+# This allows you to specify which version of bookiesport to take
+# If you connect to Alice (PeerPlays) and try to use network Baxter
+# (PeerPlays testnetwork), an exception will be raised!
+network: baxter
+
+######################
 ## Redis configuration
 ######################
 # This allows you to optionally use a redis database that is not on

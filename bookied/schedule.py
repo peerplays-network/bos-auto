@@ -2,11 +2,11 @@ import threading
 import time
 from datetime import datetime
 
-from rq import use_connection, Queue
-from bos_incidents import factory, exceptions
+from rq import Queue
+from bos_incidents import factory
 
 from . import work
-from .log import log
+# from .log import log
 from .config import loadConfig
 from .redis_con import redis
 
@@ -30,7 +30,7 @@ def check_scheduled(storage=None):
 
     ids = list()
     for event in events:
-        for incidentid in event.get("create",{}).get("incidents", []):
+        for incidentid in event.get("create", {}).get("incidents", []):
             incident = storage.resolve_to_incident(incidentid)
 
             job = q.enqueue(
