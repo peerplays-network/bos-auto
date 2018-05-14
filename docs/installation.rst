@@ -65,6 +65,11 @@ Configuration of bos-auto
 
 We now proceed with the steps required to setup bos-auto properly.
 
+.. warning:: At this point is is cruciual to set the default witness node to
+        your own server (ideally running in ``localhost``) using ``peerplays set node
+        ws://ip:port``. If this step is skip, the setup will not work or work
+        with very high latency at best.
+
 Setup your python-peerplays wallet
 ----------------------------------
 

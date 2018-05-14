@@ -10,6 +10,12 @@ node: ws://localhost:8090
 # This allows you to specify which version of bookiesport to take
 # If you connect to Alice (PeerPlays) and try to use network Baxter
 # (PeerPlays testnetwork), an exception will be raised!
+# To clarify
+#
+#   * alice: PeerPlays main blockchain
+#   * baxter: PeerPlays public testnet blockchain
+#   * charlie: PBSA internal development blockchain
+#
 network: baxter
 
 ######################
