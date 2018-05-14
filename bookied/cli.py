@@ -283,6 +283,7 @@ def resend(url, unique_string, provider):
     incident = storage.get_incident_by_unique_string_and_provider(
         unique_string, provider)
     pprint(incident)
+    incident.update(dict(skip_storage=True))
     try:
         ret = requests.post(
             url,
@@ -338,6 +339,7 @@ def resendall(url, call, status_name, begin, end):
                     continue
 
                 pprint(incident)
+                incident.update(dict(skip_storage=True))
 
                 try:
                     ret = requests.post(

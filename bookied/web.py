@@ -73,12 +73,13 @@ def trigger():
         # Try insert the incident into the database
         # We insert incidents right here so we still have them even if the
         # worker daemon crashes
-        try:
-            storage.insert_incident(incident.copy())  # FIXME, remove copy()
-        except exceptions.DuplicateIncidentException:
-            # We merely pass here since we have the incident already
-            # alerting anyone won't do anything
-            pass
+        if not incident.get("skip_storage", False):
+            try:
+                storage.insert_incident(incident.copy())  # FIXME, remove copy()
+            except exceptions.DuplicateIncidentException:
+                # We merely pass here since we have the incident already
+                # alerting anyone won't do anything
+                pass
 
         # Send incident to redis
         job = q.enqueue(
