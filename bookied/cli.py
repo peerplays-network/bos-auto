@@ -11,6 +11,33 @@ from pprint import pprint
 
 config = loadConfig()
 
+INCIDENT_CALLS = [
+    "in_progress",
+    "create",
+    "finish",
+    "result"]
+
+
+def format_incidents(event):
+    incidents = PrettyTable(
+        ["call", "status", "incident uid", "incident provider"],
+    )
+    incidents.align = 'l'
+    for call, content in event.items():
+        if "incidents" not in content:
+            continue
+
+        try:  # FIXME why can some incidents not be resolved?
+            incidents.add_row([
+                call,
+                "\n".join(["{}: {}".format(k, v) for (k, v) in content["status"].items()]),
+                "\n".join([x["unique_string"] for x in content["incidents"]]),
+                "\n".join([x["provider_info"]["name"] for x in content["incidents"]])
+            ])
+        except:
+            pass
+    return incidents
+
 
 @click.group()
 def main():
@@ -115,11 +142,7 @@ def approve(proposer, approver):
 @click.option(
     "--call",
     default=None,
-    type=click.Choice([
-        "in_progress",
-        "create",
-        "finish",
-        "result"])
+    type=click.Choice(INCIDENT_CALLS)
 )
 @click.option(
     "--dry-run/--no-dry-run",
@@ -177,6 +200,57 @@ def incidents():
     pass
 
 
+@main.group()
+def events():
+    pass
+
+
+@events.command()
+def list():
+    """ List events
+    """
+    from bos_incidents import factory
+    t = PrettyTable(["identifier", "Incidents"], hrules=ALLBORDERS)
+    t.align = 'l'
+
+    storage = factory.get_incident_storage()
+
+    for event in storage.get_events(resolve=False):
+        t.add_row([
+            event["id_string"],
+            {x: len(event.get(x, [])) for x in INCIDENT_CALLS}
+        ])
+    click.echo(str(t))
+
+
+@events.command()
+@click.argument("identifier")
+def show(identifier):
+    """ List events
+    """
+    from bos_incidents import factory
+    t = PrettyTable(["identifier", "Incidents"], hrules=ALLBORDERS)
+    t.align = 'l'
+
+    storage = factory.get_incident_storage()
+    event = storage.get_event_by_id(identifier)
+    incidents = format_incidents(event)
+    id = event["id"]
+    id["start_time"] = parser.parse(id["start_time"]).replace(
+        tzinfo=None)
+    t.add_row([
+        "\n".join([
+            id["sport"],
+            id["event_group_name"],
+            id["start_time"].strftime("%Y/%m/%d"),
+            "home: {}".format(id["home"]),
+            "away: {}".format(id["away"]),
+        ]),
+        str(incidents)
+    ])
+    click.echo(t)
+
+
 @incidents.command()
 @click.argument("begin", required=False, type=Datetime(format='%Y/%m/%d'))
 @click.argument("end", required=False, type=Datetime(format='%Y/%m/%d'))
@@ -202,23 +276,8 @@ def list(begin, end):
         if begin and end and (id["start_time"] < begin or id["start_time"] > end):
             continue
 
-        incidents = PrettyTable(
-            ["call", "status", "incident uid", "incident provider"],
-        )
-        incidents.align = 'l'
-        for call, content in event.items():
-            if "incidents" not in content:
-                continue
+        incidents = format_incidents(event)
 
-            try:  # FIXME why can some incidents not be resolved?
-                incidents.add_row([
-                    call,
-                    "\n".join(["{}: {}".format(k, v) for (k, v) in content["status"].items()]),
-                    "\n".join([x["unique_string"] for x in content["incidents"]]),
-                    "\n".join([x["provider_info"]["name"] for x in content["incidents"]])
-                ])
-            except:
-                pass
         t.add_row([
             "\n".join([
                 id["sport"],
