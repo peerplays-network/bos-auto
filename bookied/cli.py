@@ -197,11 +197,22 @@ def scheduler():
 
 @main.group()
 def incidents():
+    """ Incidents calls
+    """
     pass
 
 
 @main.group()
 def events():
+    """ Commands affecting multiple events
+    """
+    pass
+
+
+@main.group()
+def event():
+    """ Event-specific calls commands
+    """
     pass
 
 
@@ -223,7 +234,7 @@ def list():
     click.echo(str(t))
 
 
-@events.command()
+@event.command()
 @click.argument("identifier")
 def show(identifier):
     """ List events
@@ -249,6 +260,53 @@ def show(identifier):
         str(incidents)
     ])
     click.echo(t)
+
+
+@event.command()
+@click.argument("identifier")
+@click.argument("call", required=False, default="*")
+@click.argument("status_name", required=False)
+@click.option(
+    "--url",
+    default="http://localhost:8010/trigger"
+)
+def replay(identifier, call, status_name, url):
+    """ replay from event
+    """
+    import requests
+    from bos_incidents import factory
+    storage = factory.get_incident_storage()
+    event = storage.get_event_by_id(identifier, resolve=False)
+
+    for incident_call, content in event.items():
+
+        if not content or "incidents" not in content:
+            continue
+
+        if call and call != "*" and incident_call != call:
+            continue
+
+        if status_name and content["status"]["name"] != status_name:
+            continue
+
+        for _incident in content["incidents"]:
+            incident = storage.resolve_to_incident(_incident)
+
+            incident.update(dict(skip_storage=True))
+
+            try:
+                ret = requests.post(
+                    url,
+                    json=incident,
+                    headers={'Content-Type': 'application/json'}
+                )
+                if ret.status_code != 200:
+                    raise Exception("Status code: {}: {}".format(
+                        ret.status_code,
+                        ret.text))
+            except Exception as e:
+                log.error("[Error] Failed pushing")
+                log.error(str(e))
 
 
 @incidents.command()
