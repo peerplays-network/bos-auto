@@ -26,7 +26,10 @@ class CreateTrigger(Trigger):
             season = {"en": season}
         if (
             event["season"] and
-            event["season"].get("en") != season.get("en")
+            not (
+                event["season"].get("en") in season.get("en") or
+                season.get("en") in event["season"].get("en")
+            )
         ):
             err = "Seasons don't match: {} != {}".format(
                 season.get("en"),

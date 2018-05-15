@@ -225,11 +225,15 @@ class Testcases(unittest.TestCase):
 
         tx = create.trigger(_message_create_1.get("arguments"))
 
-        ops = tx.get("operations")
+        ops = tx[0].get("operations")
         self.assertEqual(len(ops), 1)
         self.assertEqual(ops[0][0], 22)
         self.assertTrue(len(ops[0][1]["proposed_ops"]) > 1)
         self.assertTrue(ops[0][1]["proposed_ops"][0]['op'][0], 56)
+
+        d = create.storage.get_event_by_id(_message_create_1)
+        self.assertEqual(d["create"]["status"]["actions"][0], "proposal")
+        self.assertEqual(d["create"]["status"]["name"], "done")
 
     def test_create_old_event(self):
         create = CreateTrigger(
@@ -253,6 +257,8 @@ class Testcases(unittest.TestCase):
         with self.assertRaises(exceptions.EventDoesNotExistException):
             play.trigger(_message_in_play.get("arguments"))
 
+        play.storage.insert_incident(_message_in_play)
+
         self.assertTrue(play.testConditions())
 
         self.mockEvent(play, _message_in_play)
@@ -260,13 +266,17 @@ class Testcases(unittest.TestCase):
         tx = play.trigger(_message_in_play.get("arguments"))
         play.getEvent.assert_called_with()
 
-        ops = tx.get("operations")
+        ops = tx[0].get("operations")
         self.assertEqual(len(ops), 1)
         self.assertEqual(ops[0][0], 22)
         self.assertTrue(len(ops[0][1]["proposed_ops"]) == 1)
         self.assertEqual(
             ops[0][1]["proposed_ops"][0]['op'][1]["status"],
             "in_progress")
+
+        d = play.storage.get_event_by_id(_message_in_play)
+        self.assertEqual(d["in_progress"]["status"]["actions"][0], "proposal")
+        self.assertEqual(d["in_progress"]["status"]["name"], "done")
 
     def test_finish(self):
         finish = FinishTrigger(
@@ -294,13 +304,17 @@ class Testcases(unittest.TestCase):
         tx = finish.trigger(_message_finish_1.get("arguments"))
         finish.getEvent.assert_called_with()
 
-        ops = tx.get("operations")
+        ops = tx[0].get("operations")
         self.assertEqual(len(ops), 1)
         self.assertEqual(ops[0][0], 22)
         self.assertTrue(len(ops[0][1]["proposed_ops"]) == 1)
         self.assertEqual(
             ops[0][1]["proposed_ops"][0]['op'][1]["status"],
             "finished")
+
+        d = finish.storage.get_event_by_id(_message_finish_1)
+        self.assertEqual(d["finish"]["status"]["actions"][0], "proposal")
+        self.assertEqual(d["finish"]["status"]["name"], "done")
 
     def test_result(self):
         result = ResultTrigger(
@@ -328,7 +342,7 @@ class Testcases(unittest.TestCase):
         tx = result.trigger(_message_result_1.get("arguments"))
         result.getEvent.assert_called_with()
 
-        ops = tx.get("operations")
+        ops = tx[0].get("operations")
         self.assertEqual(len(ops), 1)
         self.assertEqual(ops[0][0], 22)
         self.assertTrue(len(ops[0][1]["proposed_ops"]) == 2)
@@ -351,3 +365,7 @@ class Testcases(unittest.TestCase):
             ops[0][1]["proposed_ops"][1]['op'][1]["resolutions"][1][1],
             "win",
         )
+
+        d = result.storage.get_event_by_id(_message_result_2)
+        self.assertEqual(d["result"]["status"]["actions"][0], "proposal")
+        self.assertEqual(d["result"]["status"]["name"], "done")

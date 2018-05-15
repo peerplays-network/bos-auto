@@ -12,8 +12,8 @@ from pprint import pprint
 config = loadConfig()
 
 INCIDENT_CALLS = [
-    "in_progress",
     "create",
+    "in_progress",
     "finish",
     "result"]
 
@@ -292,6 +292,7 @@ def replay(identifier, call, status_name, url):
         for _incident in content["incidents"]:
             incident = storage.resolve_to_incident(_incident)
 
+            pprint(incident)
             incident.update(dict(skip_storage=True))
 
             try:
