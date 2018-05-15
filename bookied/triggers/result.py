@@ -96,7 +96,10 @@ class ResultTrigger(Trigger):
         if not incidents:
             raise exceptions.InsufficientIncidents
         result_incidents = incidents.get("result", {}).get("incidents")
-        if result_incidents and len(result_incidents) < self.testThreshold():
+        if (
+            (not result_incidents) or
+            (result_incidents and len(result_incidents) < self.testThreshold())
+        ):
             log.info(
                 "Insufficient incidents for {}({})".format(
                     self.__class__.__name__,
