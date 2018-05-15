@@ -97,6 +97,16 @@ class Trigger():
         # Execute the actual Trigger
         self._trigger(*args, **kwargs)
 
+        # if a proposal is going to be published, let's enable
+        # blocking so we can obtain the proposal id
+        # FIXME: This can be optimized for speed by putting this into
+        # an independent thread or throwing it into the redis queue
+        # so the worker can continue with other incidents
+        if self.lookup.proposal_operations():
+            self.lookup.set_blocking(True)
+        else:
+            self.lookup.set_blocking(False)
+
         # Broadcast that stuff
         transactions = self.broadcast()
 

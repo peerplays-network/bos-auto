@@ -224,6 +224,7 @@ class Testcases(unittest.TestCase):
             create.testConditions(_message_create_1.get("arguments")))
 
         tx = create.trigger(_message_create_1.get("arguments"))
+        self.assertTrue(create.lookup.peerplays.blocking)
 
         ops = tx[0].get("operations")
         self.assertEqual(len(ops), 1)
@@ -266,6 +267,8 @@ class Testcases(unittest.TestCase):
         tx = play.trigger(_message_in_play.get("arguments"))
         play.getEvent.assert_called_with()
 
+        self.assertTrue(play.lookup.peerplays.blocking)
+
         ops = tx[0].get("operations")
         self.assertEqual(len(ops), 1)
         self.assertEqual(ops[0][0], 22)
@@ -304,6 +307,8 @@ class Testcases(unittest.TestCase):
         tx = finish.trigger(_message_finish_1.get("arguments"))
         finish.getEvent.assert_called_with()
 
+        self.assertTrue(finish.lookup.peerplays.blocking)
+
         ops = tx[0].get("operations")
         self.assertEqual(len(ops), 1)
         self.assertEqual(ops[0][0], 22)
@@ -341,6 +346,8 @@ class Testcases(unittest.TestCase):
 
         tx = result.trigger(_message_result_1.get("arguments"))
         result.getEvent.assert_called_with()
+
+        self.assertTrue(result.lookup.peerplays.blocking)
 
         ops = tx[0].get("operations")
         self.assertEqual(len(ops), 1)
