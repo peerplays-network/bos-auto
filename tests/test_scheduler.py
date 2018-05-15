@@ -55,6 +55,7 @@ set_shared_peerplays_instance(ppy)
 lookup = Lookup(
     proposer="init0",
     blockchain_instance=ppy,
+    network="charlie"
 )
 
 
