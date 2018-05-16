@@ -1,13 +1,42 @@
 #!/usr/bin/env python3
 
 import click
+from click_datetime import Datetime
 from rq import Connection, Worker, use_connection, Queue
 from .config import loadConfig
 from .log import log
 from prettytable import PrettyTable, ALL as ALLBORDERS
+from dateutil import parser
 from pprint import pprint
 
 config = loadConfig()
+
+INCIDENT_CALLS = [
+    "create",
+    "in_progress",
+    "finish",
+    "result"]
+
+
+def format_incidents(event):
+    incidents = PrettyTable(
+        ["call", "status", "incident uid", "incident provider"],
+    )
+    incidents.align = 'l'
+    for call, content in event.items():
+        if "incidents" not in content:
+            continue
+
+        try:  # FIXME why can some incidents not be resolved?
+            incidents.add_row([
+                call,
+                "\n".join(["{}: {}".format(k, v) for (k, v) in content["status"].items()]),
+                "\n".join([x["unique_string"] for x in content["incidents"]]),
+                "\n".join([x["provider_info"]["name"] for x in content["incidents"]])
+            ])
+        except:
+            pass
+    return incidents
 
 
 @click.group()
@@ -113,11 +142,7 @@ def approve(proposer, approver):
 @click.option(
     "--call",
     default=None,
-    type=click.Choice([
-        "in_progress",
-        "create",
-        "finish",
-        "result"])
+    type=click.Choice(INCIDENT_CALLS)
 )
 @click.option(
     "--dry-run/--no-dry-run",
@@ -172,11 +197,123 @@ def scheduler():
 
 @main.group()
 def incidents():
+    """ Incidents calls
+    """
     pass
 
 
-@incidents.command()
+@main.group()
+def events():
+    """ Commands affecting multiple events
+    """
+    pass
+
+
+@main.group()
+def event():
+    """ Event-specific calls commands
+    """
+    pass
+
+
+@events.command()
 def list():
+    """ List events
+    """
+    from bos_incidents import factory
+    t = PrettyTable(["identifier", "Incidents"], hrules=ALLBORDERS)
+    t.align = 'l'
+
+    storage = factory.get_incident_storage()
+
+    for event in storage.get_events(resolve=False):
+        t.add_row([
+            event["id_string"],
+            {x: len(event.get(x, [])) for x in INCIDENT_CALLS}
+        ])
+    click.echo(str(t))
+
+
+@event.command()
+@click.argument("identifier")
+def show(identifier):
+    """ List events
+    """
+    from bos_incidents import factory
+    t = PrettyTable(["identifier", "Incidents"], hrules=ALLBORDERS)
+    t.align = 'l'
+
+    storage = factory.get_incident_storage()
+    event = storage.get_event_by_id(identifier)
+    incidents = format_incidents(event)
+    id = event["id"]
+    id["start_time"] = parser.parse(id["start_time"]).replace(
+        tzinfo=None)
+    t.add_row([
+        "\n".join([
+            id["sport"],
+            id["event_group_name"],
+            id["start_time"].strftime("%Y/%m/%d"),
+            "home: {}".format(id["home"]),
+            "away: {}".format(id["away"]),
+        ]),
+        str(incidents)
+    ])
+    click.echo(t)
+
+
+@event.command()
+@click.argument("identifier")
+@click.argument("call", required=False, default="*")
+@click.argument("status_name", required=False)
+@click.option(
+    "--url",
+    default="http://localhost:8010/trigger"
+)
+def replay(identifier, call, status_name, url):
+    """ replay from event
+    """
+    import requests
+    from bos_incidents import factory
+    storage = factory.get_incident_storage()
+    event = storage.get_event_by_id(identifier, resolve=False)
+
+    for incident_call, content in event.items():
+
+        if not content or "incidents" not in content:
+            continue
+
+        if call and call != "*" and incident_call != call:
+            continue
+
+        if status_name and content["status"]["name"] != status_name:
+            continue
+
+        for _incident in content["incidents"]:
+            incident = storage.resolve_to_incident(_incident)
+
+            pprint(incident)
+            incident.update(dict(skip_storage=True))
+
+            try:
+                ret = requests.post(
+                    url,
+                    json=incident,
+                    headers={'Content-Type': 'application/json'}
+                )
+                if ret.status_code != 200:
+                    raise Exception("Status code: {}: {}".format(
+                        ret.status_code,
+                        ret.text))
+            except Exception as e:
+                log.error("[Error] Failed pushing")
+                log.error(str(e))
+
+
+@incidents.command()
+@click.argument("begin", required=False, type=Datetime(format='%Y/%m/%d'))
+@click.argument("end", required=False, type=Datetime(format='%Y/%m/%d'))
+def list(begin, end):
     """ List incidents from the bos-incidents store
     """
     from bos_incidents import factory
@@ -188,34 +325,23 @@ def list():
     for event in storage.get_events():
 
         # pprint(event)
-        if "id" not in event:
+        if not ("id" in event and event["id"]):
             continue
-
         id = event["id"]
-        if not id:
-            continue
-        incidents = PrettyTable(
-            ["call", "status", "incident uid", "incident provider"],
-        )
-        incidents.align = 'l'
-        for call, content in event.items():
-            if "incidents" not in content:
-                continue
+        id["start_time"] = parser.parse(id["start_time"]).replace(
+            tzinfo=None)
 
-            try:  # FIXME why can some incidents not be resolved?
-                incidents.add_row([
-                    call,
-                    "\n".join(["{}: {}".format(k, v) for (k, v) in content["status"].items()]),
-                    "\n".join([x["unique_string"] for x in content["incidents"]]),
-                    "\n".join([x["provider_info"]["name"] for x in content["incidents"]])
-                ])
-            except:
-                pass
+        # Limit time
+        if begin and end and (id["start_time"] < begin or id["start_time"] > end):
+            continue
+
+        incidents = format_incidents(event)
+
         t.add_row([
             "\n".join([
                 id["sport"],
                 id["event_group_name"],
-                id["start_time"],
+                id["start_time"].strftime("%Y/%m/%d"),
                 "home: {}".format(id["home"]),
                 "away: {}".format(id["away"]),
             ]),
@@ -275,6 +401,7 @@ def resend(url, unique_string, provider):
     incident = storage.get_incident_by_unique_string_and_provider(
         unique_string, provider)
     pprint(incident)
+    incident.update(dict(skip_storage=True))
     try:
         ret = requests.post(
             url,
@@ -293,28 +420,45 @@ def resend(url, unique_string, provider):
 @incidents.command()
 @click.argument("call", required=False, default="*")
 @click.argument("status_name", required=False)
+@click.argument("begin", required=False, type=Datetime(format='%Y/%m/%d'))
+@click.argument("end", required=False, type=Datetime(format='%Y/%m/%d'))
 @click.option(
     "--url",
     default="http://localhost:8010/trigger"
 )
-def resendall(url, call, status_name):
+def resendall(url, call, status_name, begin, end):
     """ Resend everything in the store that matches a call and status_name
     """
     from bos_incidents import factory
     import requests
     storage = factory.get_incident_storage()
-    for event in storage.get_events():
+    for event in storage.get_events(resolve=False):
+
         for incident_call, content in event.items():
+
             if not content or "incidents" not in content:
                 continue
+
             if call and call != "*" and incident_call != call:
                 continue
 
             if status_name and content["status"]["name"] != status_name:
                 continue
 
-            for incident in content["incidents"]:
+            for _incident in content["incidents"]:
+                incident = storage.resolve_to_incident(_incident)
+
+                id = incident["id"]
+                start_time = parser.parse(id["start_time"]).replace(
+                    tzinfo=None)
+
+                # Limit time
+                if begin and end and (start_time < begin or start_time > end):
+                    continue
+
                 pprint(incident)
+                incident.update(dict(skip_storage=True))
+
                 try:
                     ret = requests.post(
                         url,

@@ -1,8 +1,9 @@
-from .trigger import Trigger
-from ..log import log
-from .. import exceptions
-from bookied_sync.event import LookupEvent
 from . import SKIP_DYNAMIC_BMS
+from .trigger import Trigger
+from .. import exceptions
+from ..log import log
+from bookied_sync.event import LookupEvent
+from datetime import datetime
 
 
 class CreateTrigger(Trigger):
@@ -25,7 +26,10 @@ class CreateTrigger(Trigger):
             season = {"en": season}
         if (
             event["season"] and
-            event["season"].get("en") != season.get("en")
+            not (
+                event["season"].get("en") in season.get("en") or
+                season.get("en") in event["season"].get("en")
+            )
         ):
             err = "Seasons don't match: {} != {}".format(
                 season.get("en"),
@@ -78,6 +82,7 @@ class CreateTrigger(Trigger):
                 log.info("Creating event with teams {} in group {}.".format(
                     str(self.teams),
                     self.eventgroup.identifier))
+                # Let's create the event in this case!
                 return self.createEvent()
             except exceptions.EventCannotOpenException as e:
                 msg = (
@@ -129,6 +134,15 @@ class CreateTrigger(Trigger):
                -> Create the event
 
         """
+
+        # This case can be triggered early and does not need
+        # to wait for when we actually try to create an event
+        if self.start_time.replace(tzinfo=None) < datetime.utcnow():
+            raise exceptions.CreateIncidentTooOldException(
+                "start_time was {}".format(self.start_time)
+            )
+
+        # Do not create event that has to few incidents
         incidents = self.get_all_incidents()
         if not incidents:
             raise exceptions.InsufficientIncidents("No incident found")

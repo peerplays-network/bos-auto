@@ -1,8 +1,10 @@
 import traceback
 import grapheneapi
 import bookied_sync
+import bos_incidents
 from flask_rq import job
 from bookied_sync.lookup import Lookup
+from peerplays import PeerPlays
 from .log import log
 from .config import loadConfig
 from .triggers import (
@@ -12,14 +14,18 @@ from .triggers import (
     FinishTrigger
 )
 from . import exceptions
-import bos_incidents
 
 
 config = loadConfig()
+peerplays = PeerPlays(
+    node=config.get("node", None)
+)
 lookup = Lookup(
     proposing_account=config.get("BOOKIE_PROPOSER"),
     approving_account=config.get("BOOKIE_APPROVER"),
-    num_retries=1
+    blockchain_instance=peerplays,
+    num_retries=1,
+    network=config.get("network", "baxter")
 )
 
 
@@ -121,6 +127,10 @@ def process(
                 .format(call, message)
             )
 
+    except bookied_sync.exceptions.ObjectNotFoundInLookup as e:
+        log.info(str(e))
+        return
+
     except Exception as e:
         log.critical("Uncaught exception: {}\n\n{}".format(
             str(e),
@@ -157,6 +167,9 @@ def process(
             status_name="event missing in bos_incidents")
 
     except bookied_sync.exceptions.ObjectNotFoundInLookup as e:
+        log.info(str(e))
+
+    except exceptions.CreateIncidentTooOldException as e:
         log.warning(str(e))
 
     except Exception as e:

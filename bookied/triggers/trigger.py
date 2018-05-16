@@ -97,13 +97,33 @@ class Trigger():
         # Execute the actual Trigger
         self._trigger(*args, **kwargs)
 
+        # if a proposal is going to be published, let's enable
+        # blocking so we can obtain the proposal id
+        # FIXME: This can be optimized for speed by putting this into
+        # an independent thread or throwing it into the redis queue
+        # so the worker can continue with other incidents
+        if self.lookup.proposal_operations():
+            self.lookup.set_blocking(True)
+        else:
+            self.lookup.set_blocking(False)
+
         # Broadcast that stuff
-        transaction = self.broadcast()
+        transactions = self.broadcast()
+
+        # Obtain data from the blockchain
+        proposal_ids = [x.get_proposal_id() for x in transactions]
+        actions = [x.action() for x in transactions]
 
         # unless _trigger raises an exception
-        self.set_incident_status(status_name="done")
+        self.set_incident_status(
+            status_name="done",
+            status_add=dict(
+                proposals=proposal_ids,
+                actions=actions,
+            )
+        )
 
-        return transaction
+        return transactions
 
     def _trigger(self, *args, **kwargs):
         """ To be implemented by the sub class

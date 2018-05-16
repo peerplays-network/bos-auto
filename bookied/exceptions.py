@@ -35,3 +35,9 @@ class TooManyDifferentResultsOverThreshold(Exception):
         This should never have happend unless the thresholds are too low
     """
     pass
+
+
+class CreateIncidentTooOldException(Exception):
+    """ The create incident tries to create an event in the past
+    """
+    pass

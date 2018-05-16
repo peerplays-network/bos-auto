@@ -1,10 +1,12 @@
-from mock import MagicMock
 import unittest
-from datetime import datetime
+from copy import deepcopy
+from mock import MagicMock, PropertyMock
+from datetime import datetime, timedelta
 from peerplays import PeerPlays
 from peerplays.instance import set_shared_peerplays_instance
 from bookied_sync.lookup import Lookup
 from bookied_sync.event import LookupEvent
+from bookied_sync.eventgroup import LookupEventGroup
 from bookied_sync.eventstatus import LookupEventStatus
 from bookied_sync.bettingmarketgroup import LookupBettingMarketGroup
 from bookied_sync.bettingmarket import LookupBettingMarket
@@ -26,7 +28,7 @@ _message_create_1 = {
     "timestamp": "2018-03-12T14:48:11.418371Z",
     "id": {
         "sport": "Basketball",
-        "start_time": "2018-03-10T00:00:00Z",
+        "start_time": "2118-03-10T00:00:00Z",
         "away": "Chicago Bulls",
         "home": "Detroit Pistons",
         "event_group_name": "NBA Regular Season"
@@ -45,15 +47,18 @@ _message_create_1 = {
     },
     "call": "create"
 }
-_message_create_2 = _message_create_1.copy()
+_message_create_2 = deepcopy(_message_create_1)
 _message_create_2["provider_info"]["name"] = "foobar"
 _message_create_2["unique_string"] += "foobar"
+
+_message_create_3 = deepcopy(_message_create_1)
+_message_create_3["id"]["start_time"] = "1910-03-10T00:00:00Z"
 
 # In play incident
 _message_in_play = {
     "timestamp": "2018-03-12T14:48:11.418371Z",
     "id": {"sport": "Basketball",
-           "start_time": "2018-03-10T00:00:00Z",
+           "start_time": "2118-03-10T00:00:00Z",
            "away": "Chicago Bulls",
            "home": "Detroit Pistons",
            "event_group_name": "NBA Regular Season"},
@@ -124,7 +129,8 @@ ppy = PeerPlays(
 set_shared_peerplays_instance(ppy)
 lookup = Lookup(
     proposer="init0",
-    blockchain_instance=ppy
+    blockchain_instance=ppy,
+    network="charlie"
 )
 
 
@@ -179,16 +185,6 @@ class Testcases(unittest.TestCase):
     def setUp(self):
         lookup.clear()
 
-    """
-    def test_num_retries(self):
-        previous_url = lookup.blockchain.rpc.url
-        print(lookup.blockchain.rpc.num_retries)
-        print("=" * 80)
-        lookup.blockchain.rpc.url = "wss://rpc.example.com"
-        lookup.blockchain.rpc.get_objects(["2.0.0"])
-        lookup.blockchain.rpc.url = previous_url
-    """
-
     def test_dublicate_incident(self):
         create = CreateTrigger(
             _message_create_1,
@@ -201,12 +197,19 @@ class Testcases(unittest.TestCase):
             create.store_incident()
 
     def test_create(self):
+        start_time = (datetime.utcnow() + timedelta(days=1)).isoformat() + "Z"
+        _message_create_1["id"]["start_time"] = start_time
+        _message_create_2["id"]["start_time"] = start_time
         create = CreateTrigger(
             _message_create_1,
             lookup_instance=lookup,
             config=config,
             purge=True, mongodb="mongodbtest",
         )
+
+        LookupEvent.start_time = PropertyMock(return_value=datetime.utcnow() + timedelta(days=1))
+        LookupEvent.event_group_finish_datetime = PropertyMock(return_value=datetime.utcnow() + timedelta(days=2))
+        LookupEvent.event_group_start_datetime = PropertyMock(return_value=datetime.utcnow() + timedelta(days=-1))
 
         with self.assertRaises(bos_incidents.exceptions.EventNotFoundException):
             create.testConditions(_message_create_1.get("arguments"))
@@ -221,12 +224,28 @@ class Testcases(unittest.TestCase):
             create.testConditions(_message_create_1.get("arguments")))
 
         tx = create.trigger(_message_create_1.get("arguments"))
+        self.assertTrue(create.lookup.peerplays.blocking)
 
-        ops = tx.get("operations")
+        ops = tx[0].get("operations")
         self.assertEqual(len(ops), 1)
         self.assertEqual(ops[0][0], 22)
         self.assertTrue(len(ops[0][1]["proposed_ops"]) > 1)
         self.assertTrue(ops[0][1]["proposed_ops"][0]['op'][0], 56)
+
+        d = create.storage.get_event_by_id(_message_create_1)
+        self.assertEqual(d["create"]["status"]["actions"][0], "proposal")
+        self.assertEqual(d["create"]["status"]["name"], "done")
+
+    def test_create_old_event(self):
+        create = CreateTrigger(
+            _message_create_3,
+            lookup_instance=lookup,
+            config=config,
+            purge=True, mongodb="mongodbtest",
+        )
+
+        with self.assertRaises(exceptions.CreateIncidentTooOldException):
+            create.testConditions(_message_create_3.get("arguments"))
 
     def test_in_play(self):
         play = InProgressTrigger(
@@ -239,6 +258,8 @@ class Testcases(unittest.TestCase):
         with self.assertRaises(exceptions.EventDoesNotExistException):
             play.trigger(_message_in_play.get("arguments"))
 
+        play.storage.insert_incident(_message_in_play)
+
         self.assertTrue(play.testConditions())
 
         self.mockEvent(play, _message_in_play)
@@ -246,13 +267,19 @@ class Testcases(unittest.TestCase):
         tx = play.trigger(_message_in_play.get("arguments"))
         play.getEvent.assert_called_with()
 
-        ops = tx.get("operations")
+        self.assertTrue(play.lookup.peerplays.blocking)
+
+        ops = tx[0].get("operations")
         self.assertEqual(len(ops), 1)
         self.assertEqual(ops[0][0], 22)
         self.assertTrue(len(ops[0][1]["proposed_ops"]) == 1)
         self.assertEqual(
             ops[0][1]["proposed_ops"][0]['op'][1]["status"],
             "in_progress")
+
+        d = play.storage.get_event_by_id(_message_in_play)
+        self.assertEqual(d["in_progress"]["status"]["actions"][0], "proposal")
+        self.assertEqual(d["in_progress"]["status"]["name"], "done")
 
     def test_finish(self):
         finish = FinishTrigger(
@@ -280,13 +307,19 @@ class Testcases(unittest.TestCase):
         tx = finish.trigger(_message_finish_1.get("arguments"))
         finish.getEvent.assert_called_with()
 
-        ops = tx.get("operations")
+        self.assertTrue(finish.lookup.peerplays.blocking)
+
+        ops = tx[0].get("operations")
         self.assertEqual(len(ops), 1)
         self.assertEqual(ops[0][0], 22)
         self.assertTrue(len(ops[0][1]["proposed_ops"]) == 1)
         self.assertEqual(
             ops[0][1]["proposed_ops"][0]['op'][1]["status"],
             "finished")
+
+        d = finish.storage.get_event_by_id(_message_finish_1)
+        self.assertEqual(d["finish"]["status"]["actions"][0], "proposal")
+        self.assertEqual(d["finish"]["status"]["name"], "done")
 
     def test_result(self):
         result = ResultTrigger(
@@ -314,7 +347,9 @@ class Testcases(unittest.TestCase):
         tx = result.trigger(_message_result_1.get("arguments"))
         result.getEvent.assert_called_with()
 
-        ops = tx.get("operations")
+        self.assertTrue(result.lookup.peerplays.blocking)
+
+        ops = tx[0].get("operations")
         self.assertEqual(len(ops), 1)
         self.assertEqual(ops[0][0], 22)
         self.assertTrue(len(ops[0][1]["proposed_ops"]) == 2)
@@ -337,3 +372,7 @@ class Testcases(unittest.TestCase):
             ops[0][1]["proposed_ops"][1]['op'][1]["resolutions"][1][1],
             "win",
         )
+
+        d = result.storage.get_event_by_id(_message_result_2)
+        self.assertEqual(d["result"]["status"]["actions"][0], "proposal")
+        self.assertEqual(d["result"]["status"]["name"], "done")

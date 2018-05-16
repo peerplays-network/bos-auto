@@ -96,7 +96,10 @@ class ResultTrigger(Trigger):
         if not incidents:
             raise exceptions.InsufficientIncidents
         result_incidents = incidents.get("result", {}).get("incidents")
-        if result_incidents and len(result_incidents) < self.testThreshold():
+        if (
+            (not result_incidents) or
+            (result_incidents and len(result_incidents) < self.testThreshold())
+        ):
             log.info(
                 "Insufficient incidents for {}({})".format(
                     self.__class__.__name__,
@@ -119,10 +122,14 @@ class ResultTrigger(Trigger):
 
         # Raise if multiple results are valid
         if len(valid_results) > 1:
+            log.info("Too many different results over threshold")
             raise exceptions.TooManyDifferentResultsOverThreshold(valid_results)
         elif not valid_results:
+            log.info("Insufficient Equal Results")
             raise exceptions.InsufficientEqualResults
         else:
             result = list(valid_results.keys())[0]
             self.away_score, self.home_score = result.split(_SCORE_SEPARATOR)
+            log.info("Resolving: home - away: ({} - {})".format(
+                self.home_score, self.away_score))
             return True

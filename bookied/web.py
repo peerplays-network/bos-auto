@@ -1,3 +1,4 @@
+import pkg_resources
 from rq import use_connection, Queue
 from flask import Flask, request, jsonify
 from jsonschema import validate
@@ -26,6 +27,16 @@ def home():
     """ Let's not expose that this is a bos-auto endpoint
     """
     return "", 404
+
+
+@app.route("/isalive")
+def isalive():
+    return jsonify({
+        'versions': {
+            name: pkg_resources.require(name)[0].version
+            for name in ["bos-mint", "peerplays", "bookiesports"]
+        }
+    })
 
 
 @app.route('/trigger', methods=["GET", "POST"])
@@ -62,12 +73,13 @@ def trigger():
         # Try insert the incident into the database
         # We insert incidents right here so we still have them even if the
         # worker daemon crashes
-        try:
-            storage.insert_incident(incident.copy())  # FIXME, remove copy()
-        except exceptions.DuplicateIncidentException:
-            # We merely pass here since we have the incident already
-            # alerting anyone won't do anything
-            pass
+        if not incident.get("skip_storage", False):
+            try:
+                storage.insert_incident(incident.copy())  # FIXME, remove copy()
+            except exceptions.DuplicateIncidentException:
+                # We merely pass here since we have the incident already
+                # alerting anyone won't do anything
+                pass
 
         # Send incident to redis
         job = q.enqueue(

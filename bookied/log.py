@@ -106,4 +106,6 @@ for logger in [log, logsync]:
     log_file(logger)
     log_mail(logger)
     log_telegram(logger)
+
+# Enable full logging
 # logging.basicConfig(level=logging.DEBUG)
