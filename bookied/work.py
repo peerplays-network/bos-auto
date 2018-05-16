@@ -169,6 +169,9 @@ def process(
     except bookied_sync.exceptions.ObjectNotFoundInLookup as e:
         log.info(str(e))
 
+    except exceptions.CreateIncidentTooOldException as e:
+        log.warning(str(e))
+
     except Exception as e:
         log.critical("Uncaught exception: {}\n\n{}".format(
             str(e),
