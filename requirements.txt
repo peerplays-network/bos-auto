@@ -1,8 +1,5 @@
-peerplays
-secp256k1    # needed for fast signing of transactions!
-bookiesports
-bos-sync
-bos-incidents
+bos-sync==0.0.6
+bos-incidents==0.0.8
 
 prettytable
 click
@@ -18,3 +15,6 @@ tqdm
 
 # Notifications
 python-telegram-handler
+
+# needed for fast signing of transactions!
+secp256k1
