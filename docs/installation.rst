@@ -20,30 +20,17 @@ Installation of bos-auto
 
 In this step, we install everything we will need going forward.
 
-Install dependencies:
+Install dependencies (as root/sudo)
 ---------------------
 
 ::
 
-    sudo apt-get install libffi-dev libssl-dev python-dev
-    pip3 install peerplays bos-incidents bookiesports bos-sync
+    apt-get install libffi-dev libssl-dev python-dev python3-pip
+    pip3 install virtualenv
+    
+Note that virtualenv is a best practice for python, but installation can also be on a user/global level.
 
-Checkout bos-auto
------------------
-
-::
-
-    git checkout https://github.com/pbsa/bos-auto
-    cd bos-auto
-
-Install dependencies of bos-auto
---------------------------------
-
-::
-
-    pip3 install -r requirements.txt
-
-Install databases
+Install databases (as root/sudo)
 -----------------
 
 * `mongodb` - interaction between BOS-auto and MINT. You can find
@@ -52,21 +39,63 @@ Install databases
 * `redis` - worker queue. Please find guides and installation
   instructions for your Linux distribution in the internet.
 
+For Ubuntu 16.04. installation for mongodb is
+
+::
+
+    apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv EA312927
+    echo "deb http://repo.mongodb.org/apt/ubuntu xenial/mongodb-org/3.2 multiverse" | tee /etc/apt/sources.list.d/mongodb-org-3.2.list
+    apt-get update
+    apt-get install -y mongodb-org
+    
+and for redis 
+
+:: 
+
+    apt-get install build-essential
+    apt-get install redis-server
+
 It is highly recommended to ensure that both daemons are started on
 powerup, e.g.
 
 ::
 
-    systemctl enable mongodb
+    systemctl enable mongod
     systemctl enable redis
+
+
+Install bos-auto
+-----------------
+
+For production use install bos-auto via pip3. Suggested is a seperate user
+
+::
+    cd ~
+    mkdir bos-auto
+    cd bos-auto
+    virtualenv -p python3 env
+    source env/bin/activate
+    pip3 install bos-auto
+    
+For development use, checkout from github and install dependencies manually
+
+::
+    cd ~	
+    git checkout https://github.com/pbsa/bos-auto
+    cd bos-auto
+    virtualenv -p python3 env
+    source env/bin/activate
+    pip3 install -r requirements.txt
+
+
 
 Configuration of bos-auto
 =========================
 
 We now proceed with the steps required to setup bos-auto properly.
 
-.. warning:: At this point is is cruciual to set the default witness node to
-        your own server (ideally running in ``localhost``) using ``peerplays set node
+.. warning:: At this point is is crucial to set the default witness node to
+        your own server (ideally running in ``localhost``, see below config.yaml) using ``peerplays set node
         ws://ip:port``. If this step is skip, the setup will not work or work
         with very high latency at best.
 
@@ -75,11 +104,12 @@ Setup your python-peerplays wallet
 
 ::
 
-    peerplays addkey
+    peerplays createwallet
     # you will be asked to provide a new wallet passphrase. Later in the
     # tutorial you will be asked to store that password in a file
     # (config.yaml)
-    # Afterwards, provide active private key for the witness
+    peerplays addkey
+    # You will be prompted to enter your active private key for the witness
 
 Funding the account
 -------------------
@@ -91,10 +121,10 @@ with PPY.
 Modify configuration
 --------------------
 
-We now need to configure bos-auto
+We now need to configure bos-auto.
 
 ::
-
+   wget https://raw.githubusercontent.com/PBSA/bos-auto/master/config-example.yaml 
    mv config-example.yaml config.yaml
    # modify config.yaml
 
