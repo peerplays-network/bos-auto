@@ -23,6 +23,7 @@ setup(
     keywords=['peerplays', 'bos'],
     packages=[
         "bookied",
+        "bookied.triggers"
     ],
     classifiers=[
         'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
