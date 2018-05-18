@@ -44,6 +44,21 @@ nobroadcast: False
 passphrase: super-secret-wallet-passphrase
 
 ##################
+# Data Proxy IP Whitelist
+##################
+# This option allows to define who is allowed to access the web endpoint
+# to send messages to. This is a list of IP or hostnames that are
+# resovled at the launch time. DNS changes during run time will not
+# propagate!
+#
+#   * 0.0.0.0 - will allow anyone to send messages
+#   * dataproxy.example.com - IP address resolved at startup time.
+#
+api_whitelist:
+ - 0.0.0.0
+ - localhost
+
+##################
 # Proposer account
 ##################
 # Please provide the account name of the witnesse that is *proposing*

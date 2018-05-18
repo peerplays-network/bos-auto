@@ -139,7 +139,8 @@ class CreateTrigger(Trigger):
         # to wait for when we actually try to create an event
         if self.start_time.replace(tzinfo=None) < datetime.utcnow():
             raise exceptions.CreateIncidentTooOldException(
-                "start_time was {}".format(self.start_time)
+                "Won't create event. "
+                "'start_time' was {}".format(self.start_time)
             )
 
         # Do not create event that has to few incidents

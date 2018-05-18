@@ -7,6 +7,7 @@ from .endpointschema import schema
 from .config import loadConfig
 from .redis_con import redis
 from .log import log
+from .utils import resolve_hostnames
 from bos_incidents import factory, exceptions
 
 config = loadConfig()
@@ -20,6 +21,9 @@ q = Queue(connection=redis)
 
 # Invident Storage
 storage = factory.get_incident_storage()
+
+# API whitelist
+api_whitelist = resolve_hostnames(config.get("api_whitelist", []))
 
 
 @app.route('/')
@@ -58,6 +62,14 @@ def trigger():
                   (bos-incidents) already to allow later replaying.
     """
     if request.method == 'POST':
+        # Don't bother wit requests from IPs that are not
+        # whitelisted
+        if (
+            request.remote_addr not in api_whitelist and
+            "0.0.0.0" not in api_whitelist
+        ):
+            return "Your IP address is not allowed to post here!", 403
+
         # Obtain message from request body
         incident = request.get_json()
 
