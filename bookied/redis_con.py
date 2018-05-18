@@ -3,9 +3,10 @@ from .config import loadConfig
 from .log import log
 
 
-def open_redis_connect():
+def get_redis():
     """ Open the redis connection
     """
+    config = loadConfig()
     log.info("Opening Redis connection (redis://{}/{})".format(
         config.get("redis_host", 'localhost') or "localhost",
         config.get("redis_port", 6379) or 6379,
@@ -19,5 +20,4 @@ def open_redis_connect():
     )
 
 
-config = loadConfig()
-redis = open_redis_connect()
+# redis = get_redis()

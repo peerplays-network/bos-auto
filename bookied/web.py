@@ -5,7 +5,7 @@ from jsonschema import validate
 from . import work
 from .endpointschema import schema
 from .config import loadConfig
-from .redis_con import redis
+from .redis_con import get_redis
 from .log import log
 from .utils import resolve_hostnames
 from bos_incidents import factory, exceptions
@@ -14,7 +14,8 @@ config = loadConfig()
 
 # Flask app and parameters
 app = Flask(__name__)
-use_connection(redis)
+redis = get_redis()
+use_connection()
 
 # Flask queue
 q = Queue(connection=redis)
@@ -87,7 +88,8 @@ def trigger():
         # worker daemon crashes
         if not incident.get("skip_storage", False):
             try:
-                storage.insert_incident(incident.copy())  # FIXME, remove copy()
+                # FIXME, remove copy()
+                storage.insert_incident(incident.copy())
             except exceptions.DuplicateIncidentException:
                 # We merely pass here since we have the incident already
                 # alerting anyone won't do anything

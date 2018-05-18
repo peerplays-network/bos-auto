@@ -20,6 +20,7 @@ Submodules
    bookied.log
    bookied.redis_con
    bookied.schedule
+   bookied.utils
    bookied.web
    bookied.work
 

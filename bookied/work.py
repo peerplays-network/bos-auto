@@ -5,6 +5,7 @@ import bos_incidents
 from flask_rq import job
 from bookied_sync.lookup import Lookup
 from peerplays import PeerPlays
+from peerplays.instance import set_shared_blockchain_instance
 from .log import log
 from .config import loadConfig
 from .triggers import (
@@ -18,13 +19,14 @@ from . import exceptions
 
 config = loadConfig()
 peerplays = PeerPlays(
-    node=config.get("node", None)
+    node=config.get("node", None),
+    num_retries=1  # Only try once then trow an exception
 )
+set_shared_blockchain_instance(peerplays)
 lookup = Lookup(
     proposing_account=config.get("BOOKIE_PROPOSER"),
     approving_account=config.get("BOOKIE_APPROVER"),
     blockchain_instance=peerplays,
-    num_retries=1,
     network=config.get("network", "baxter")
 )
 

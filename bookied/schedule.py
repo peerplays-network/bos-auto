@@ -8,15 +8,17 @@ from bos_incidents import factory
 from . import work
 # from .log import log
 from .config import loadConfig
-from .redis_con import redis
+from .redis_con import get_redis
 
 config = loadConfig()
 
 
 def check_scheduled(storage=None):
+    """
+    """
 
     # Flask queue
-    q = Queue(connection=redis)
+    q = Queue(connection=get_redis())
 
     # Invident Storage
     if not storage:
@@ -47,6 +49,8 @@ def check_scheduled(storage=None):
 
 
 class PeriodicExecutor(threading.Thread):
+    """
+    """
 
     def __init__(self, sleep, func, *args, **kwargs):
 
@@ -67,5 +71,7 @@ class PeriodicExecutor(threading.Thread):
 
 
 def scheduler(delay=30):
+    """
+    """
     check_scheduled()
     PeriodicExecutor(delay, check_scheduled).run()
