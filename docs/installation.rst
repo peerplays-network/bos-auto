@@ -31,7 +31,7 @@ Install dependencies (as root/sudo)
 Note that virtualenv is a best practice for python, but installation can also be on a user/global level.
 
 Install databases (as root/sudo)
------------------
+---------------------------------------------------
 
 * `mongodb` - interaction between BOS-auto and MINT. You can find
   tutorials on how to install mongodb on your distribution in the
@@ -70,6 +70,7 @@ Install bos-auto
 For production use install bos-auto via pip3. Suggested is a seperate user
 
 ::
+
     cd ~
     mkdir bos-auto
     cd bos-auto
@@ -80,6 +81,7 @@ For production use install bos-auto via pip3. Suggested is a seperate user
 For development use, checkout from github and install dependencies manually
 
 ::
+
     cd ~	
     git checkout https://github.com/pbsa/bos-auto
     cd bos-auto
@@ -103,6 +105,7 @@ Setup your python-peerplays wallet
 ----------------------------------
 
 ::
+
     # you will be asked to provide a new wallet passphrase. Later in the
     # tutorial you will be asked to store that password in a file
     # (config.yaml)
@@ -127,6 +130,7 @@ Modify configuration
 We now need to configure bos-auto.
 
 ::
+
    wget https://raw.githubusercontent.com/PBSA/bos-auto/master/config-example.yaml 
    mv config-example.yaml config.yaml
    # modify config.yaml
