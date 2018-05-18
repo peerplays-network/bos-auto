@@ -36,12 +36,13 @@ def home():
 
 @app.route("/isalive")
 def isalive():
-    return jsonify({
-        'versions': {
-            name: pkg_resources.require(name)[0].version
-            for name in ["bos-mint", "peerplays", "bookiesports"]
-        }
-    })
+    versions = dict()
+    for name in ["bos-mint", "peerplays", "bookiesports"]:
+        try:
+            versions["name"] = pkg_resources.require(name)[0].version
+        except Exception:
+            versions["name"] = "not installed"
+    return jsonify({'versions': versions})
 
 
 @app.route('/trigger', methods=["GET", "POST"])
