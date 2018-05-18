@@ -103,11 +103,14 @@ Setup your python-peerplays wallet
 ----------------------------------
 
 ::
-
-    peerplays createwallet
     # you will be asked to provide a new wallet passphrase. Later in the
     # tutorial you will be asked to store that password in a file
     # (config.yaml)
+    peerplays createwallet
+
+    # to add the key we need to make the node known (preferably on localhost)
+    peerplays set node ws://localhost:8090
+    
     peerplays addkey
     # You will be prompted to enter your active private key for the witness
 
