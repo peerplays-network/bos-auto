@@ -67,7 +67,7 @@ powerup, e.g.
 Install bos-auto
 -----------------
 
-For production use install bos-auto via pip3. Suggested is a seperate user
+You can either install bos-auto via pypi / pip3 (production installation) or via git clone (debug installation). For production use install bos-auto via pip3 is recommended, but the git master branch is always the latest release as well, making both installations equivalent. Suggested is a seperate user
 
 ::
 
@@ -78,12 +78,12 @@ For production use install bos-auto via pip3. Suggested is a seperate user
     source env/bin/activate
     pip3 install bos-auto
     
-For development use, checkout from github and install dependencies manually
+For debug use, checkout from github and install dependencies manually (still master branch)
 
 ::
 
     cd ~	
-    git checkout https://github.com/pbsa/bos-auto
+    git clone https://github.com/pbsa/bos-auto
     cd bos-auto
     virtualenv -p python3 env
     source env/bin/activate
@@ -150,14 +150,17 @@ work for the worker via redis. The worker then takes those incidents and
 processes those. Postponed incidents are handled separately with a
 scheduler.
 
+This is a basic setup and uses the flask built-in development server (see Advanced Setup below). The commands shown are for production installation, for debug installation replace "bos-auto" with "python3 cli.py".
+
 Start the Endpoint
 ------------------
+
 ::
 
     cd bos-auto
-    python3 cli.py api --host 0.0.0.0 --port 8010        [--help for more information]
+    bos-auto api --host 0.0.0.0 --port 8010       [--help for more information]
 
-After this, you will see the following messages if correctly set up:::
+After this, you will see the following messages if correctly set up:
 
   INFO     | Opening Redis connection (redis://localhost/6379)
   * Running on http://0.0.0.0:8010/ (Press CTRL+C to quit)
@@ -205,7 +208,7 @@ Start worker
 We start the worker with::
 
     cd bos-auto
-    python3 cli.py worker      [--help for more information]
+    bos-auto worker      [--help for more information]
 
 It will already try to use the provided password to unlock the wallet
 and, if successfull, present the following text to you::
@@ -234,7 +237,7 @@ ones::
 
 store this in a file called ``replay.txt`` and run the following call::
 
-    python3 cli.py replay --url http://localhost:8010/trigger replay.txt
+    bos-auto replay --url http://localhost:8010/trigger replay.txt
 
 
 .. note:: Please note the ``trigger`` at the end of the endpoint URL.
@@ -295,15 +298,15 @@ match will happen. Those incidents are marked ``postoned`` internally
 and will be retriggered into the worker with the scheduler:::
 
     cd bos-auto
-    python3 cli.py scheduler   [--help for more information]
+    bos-auto scheduler   [--help for more information]
 
 Command Line Intervention
 #########################
 
-With the ``cli.py`` tool, we can connect to the mongodb and inspect the
+With the command line tool, we can connect to the mongodb and inspect the
 incidents that we have inserted above::
 
-    python3 cli.py incidents list
+    bos-auto incidents list
 
 The output should look like::
 
@@ -324,11 +327,11 @@ the incidents have been processed.
 
 We can now read the actual incidents with::
 
-    python3 cli.py incidents show 2018-03-16t230000z-ice-hockey-nhl-regular-season-washington-capitals-new-york-islanders-create-2018-true 5e2cdc117c9404f2609936aa3a8d49e4
+    bos-auto incidents show 2018-03-16t230000z-ice-hockey-nhl-regular-season-washington-capitals-new-york-islanders-create-2018-true 5e2cdc117c9404f2609936aa3a8d49e4
 
 and replay any of the two incidents by using::
 
-    python3 cli.py incidents resend 2018-03-16t230000z-ice-hockey-nhl-regular-season-washington-capitals-new-york-islanders-create-2018-true 5e2cdc117c9404f2609936aa3a8d49e4
+    bos-auto incidents resend 2018-03-16t230000z-ice-hockey-nhl-regular-season-washington-capitals-new-york-islanders-create-2018-true 5e2cdc117c9404f2609936aa3a8d49e4
 
 This should again cause your worker to start working.
 
