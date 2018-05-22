@@ -24,7 +24,7 @@ q = Queue(connection=redis)
 storage = factory.get_incident_storage()
 
 # API whitelist
-api_whitelist = resolve_hostnames(config.get("api_whitelist", []))
+api_whitelist = resolve_hostnames(config.get("api_whitelist", ["0.0.0.0"]))
 
 
 @app.route('/')
