@@ -1,4 +1,4 @@
-bos-sync==0.0.6
+bos-sync>=0.0.6
 bos-incidents
 
 prettytable
