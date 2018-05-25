@@ -21,7 +21,7 @@ Installation of bos-auto
 In this step, we install everything we will need going forward.
 
 Install dependencies (as root/sudo)
----------------------
+-------------------------------------------------------
 
 ::
 
@@ -43,10 +43,7 @@ For Ubuntu 16.04. installation for mongodb is
 
 ::
 
-    apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv EA312927
-    echo "deb http://repo.mongodb.org/apt/ubuntu xenial/mongodb-org/3.2 multiverse" | tee /etc/apt/sources.list.d/mongodb-org-3.2.list
-    apt-get update
-    apt-get install -y mongodb-org
+    apt-get install mongodb
     
 and for redis 
 
@@ -63,9 +60,16 @@ powerup, e.g.
     systemctl enable mongod
     systemctl enable redis
 
+To start the deamons, execute
 
-Install bos-auto
------------------
+::
+
+    systemctl start mongod
+    systemctl start redis
+
+
+Install bos-auto (as user)
+---------------------------------------------------
 
 You can either install bos-auto via pypi / pip3 (production installation) or via git clone (debug installation). For production use install bos-auto via pip3 is recommended, but the git master branch is always the latest release as well, making both installations equivalent. Suggested is a seperate user
 
@@ -74,21 +78,47 @@ You can either install bos-auto via pypi / pip3 (production installation) or via
     cd ~
     mkdir bos-auto
     cd bos-auto
+    # create virtual environment
     virtualenv -p python3 env
+    # activate environment
     source env/bin/activate
+    # install bos-auto into virtual environment
     pip3 install bos-auto
     
-For debug use, checkout from github and install dependencies manually (still master branch)
+For debug use, checkout from github (master branch) and install dependencies manually 
 
 ::
 
-    cd ~	
+    cd ~
+    # checkout from github
     git clone https://github.com/pbsa/bos-auto
     cd bos-auto
+    # create virtual environment
     virtualenv -p python3 env
+    # activate environment
     source env/bin/activate
+    # install dependencies
     pip3 install -r requirements.txt
+    
+BOS auto is supposed to run in the virtual environment. Either activate it beforehand like shown above or 
+run it directly in the env/bin folder.
 
+
+Upgrading bos-auto (as user)
+---------------------------------------------------
+
+For production installation, upgrade to the latest version - including all dependencies - via
+
+::
+
+    pip3 install --upgrade --upgrade-strategy eager bos-auto
+
+For debug installation, pull latest master branch and upgrade dependencies manually
+
+::
+
+    git pull
+    pip3 install -r requirements.txt --upgrade --upgrade-strategy eager
 
 
 Configuration of bos-auto
