@@ -7,7 +7,7 @@ HAS_TELEGRAM = False
 try:
     import telegram_handler
     HAS_TELEGRAM = True
-except:
+except Exception:
     pass
 
 

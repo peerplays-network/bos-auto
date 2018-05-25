@@ -5,6 +5,7 @@ from bookied_sync.sport import LookupSport
 from bookied_sync.eventgroup import LookupEventGroup
 from bookied_sync.event import LookupEvent
 from bos_incidents import factory
+from bookiesports.normalize import IncidentsNormalizer, NotNormalizableException
 
 
 class Trigger():
@@ -29,6 +30,19 @@ class Trigger():
         # Get the id (internally used only)
         self.id = message.get("id")
 
+        # Incident Storage
+        if "storage" in kwargs and kwargs["storage"]:
+            self.storage = kwargs["storage"]
+        else:
+            self.storage = factory.get_incident_storage(
+                kwargs.get("mongodb", None),
+                purge=kwargs.get("purge", False))
+
+        # Normalize incident
+        self.normalizer = IncidentsNormalizer(
+            chain=lookup_instance._network_name)
+        self.normalize(message)
+
         # Try obtain the sport
         self.sport = LookupSport(self.id.get("sport"))
 
@@ -45,11 +59,6 @@ class Trigger():
         # Get start time from query
         self.start_time = parse(
             self.id.get("start_time", ""))
-
-        # Invident Storage
-        self.storage = factory.get_incident_storage(
-            kwargs.get("mongodb", None),
-            purge=kwargs.get("purge", False))
 
     @property
     def incident(self):
@@ -125,10 +134,19 @@ class Trigger():
 
         return transactions
 
-    def _trigger(self, *args, **kwargs):
-        """ To be implemented by the sub class
-        """
-        pass
+    def normalize(self, *args, **kwargs):
+        try:
+            message = self.normalizer.normalize(self.message, errorIfNotFound=True)
+        except NotNormalizableException as e:
+            self.set_incident_status(status_name="not normalizable")
+            raise e
+        if message != self.message:
+            try:
+                self.storage.delete_incident(self.message)
+            except Exception:
+                pass
+            self.store_incident()
+            self.message = message
 
     def get_all_incidents(self):
         """ Let's get all the incidents for an event
@@ -143,13 +161,6 @@ class Trigger():
             call=self.call,
             **kwargs)
 
-    def testConditions(self, *args, **kwargs):
-        """ Test If we can actually call the trigger. This method is called
-            from trigger() and is supposed to be overwritten by the actual
-            trigger.
-        """
-        pass
-
     def broadcast(self):
         """ This method broadcasts the updates to the chain
         """
@@ -159,3 +170,16 @@ class Trigger():
         """ This call stores the incident in the incident-store (bos-incident)
         """
         self.storage.insert_incident(self.message)
+
+    # Methods that need to be overwritten by trigger
+    def testConditions(self, *args, **kwargs):
+        """ Test If we can actually call the trigger. This method is called
+            from trigger() and is supposed to be overwritten by the actual
+            trigger.
+        """
+        pass
+
+    def _trigger(self, *args, **kwargs):
+        """ To be implemented by the sub class
+        """
+        pass
