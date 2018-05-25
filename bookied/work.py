@@ -15,6 +15,7 @@ from .triggers import (
     FinishTrigger
 )
 from . import exceptions
+from bookiesports.normalize import NotNormalizableException
 
 
 config = loadConfig()
@@ -133,6 +134,10 @@ def process(
         log.info(str(e))
         return
 
+    except NotNormalizableException:
+        log.warning("Incident not normalizable: {}".format(message))
+        return
+
     except Exception as e:
         log.critical("Uncaught exception: {}\n\n{}".format(
             str(e),
@@ -151,9 +156,7 @@ def process(
         trigger.set_incident_status(status_name="event group closed")
 
     except exceptions.EventCannotOpenException:
-        # is set in the trigger itself
-        # self.set_incident_status(status_name="postponed")
-        pass
+        trigger.set_incident_status(status_name="postponed")
 
     except exceptions.InsufficientIncidents:
         trigger.set_incident_status(status_name="insufficient incidents")
@@ -169,12 +172,15 @@ def process(
             status_name="event missing in bos_incidents")
 
     except bookied_sync.exceptions.ObjectNotFoundInLookup as e:
+        trigger.set_incident_status(status_name="related object not found")
         log.info(str(e))
 
     except exceptions.CreateIncidentTooOldException as e:
+        trigger.set_incident_status(status_name="create too old")
         log.warning(str(e))
 
     except Exception as e:
+        trigger.set_incident_status(status_name="unhandled exception")
         log.critical("Uncaught exception: {}\n\n{}".format(
             str(e),
             traceback.format_exc()))

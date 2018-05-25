@@ -1,16 +1,21 @@
+import os
+import unittest
+import bos_incidents
+
 from mock import MagicMock, PropertyMock
 from rq import use_connection, Queue
-import unittest
 from datetime import datetime, timedelta
+
 from peerplays import PeerPlays
 from peerplays.instance import set_shared_peerplays_instance
+
 from bookied_sync.lookup import Lookup
 from bookied_sync.event import LookupEvent
+
 from bookied import exceptions
 from bookied.triggers import (
     CreateTrigger,
 )
-import bos_incidents
 
 
 # Create incidents
@@ -18,7 +23,7 @@ _message_create_1 = {
     "timestamp": "2018-03-12T14:48:11.418371Z",
     "id": {
         "sport": "Basketball",
-        "start_time": "2018-03-10T00:00:00Z",
+        "start_time": "2022-10-16T00:00:00Z",
         "away": "Chicago Bulls",
         "home": "Detroit Pistons",
         "event_group_name": "NBA Regular Season"
@@ -55,8 +60,13 @@ set_shared_peerplays_instance(ppy)
 lookup = Lookup(
     proposer="init0",
     blockchain_instance=ppy,
-    network="charlie"
+    network="unittests",
+    sports_folder=os.path.join(
+        os.path.dirname(os.path.realpath(__file__)),
+        "bookiesports"
+    ),
 )
+assert lookup.blockchain.nobroadcast
 
 
 class Testcases(unittest.TestCase):
@@ -111,7 +121,7 @@ class Testcases(unittest.TestCase):
 
         Queue.enqueue = MagicMock(return_value=MockReturn)
 
-        ret = schedule.check_scheduled(create.storage)
+        ret = schedule.check_scheduled(create.storage, func_callback=print)
 
         self.assertIn("foobar", ret)
         self.assertTrue(Queue.enqueue.called)
@@ -120,7 +130,7 @@ class Testcases(unittest.TestCase):
 
         tx = create.trigger(_message_create_1.get("arguments"))
 
-        ops = tx.get("operations")
+        ops = tx[0].get("operations")
         self.assertEqual(len(ops), 1)
         self.assertEqual(ops[0][0], 22)
         self.assertTrue(len(ops[0][1]["proposed_ops"]) > 1)

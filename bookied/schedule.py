@@ -5,7 +5,6 @@ from datetime import datetime
 from rq import Queue
 from bos_incidents import factory
 
-from . import work
 # from .log import log
 from .config import loadConfig
 from .redis_con import get_redis
@@ -13,7 +12,7 @@ from .redis_con import get_redis
 config = loadConfig()
 
 
-def check_scheduled(storage=None):
+def check_scheduled(storage=None, func_callback=None):
     """
     """
 
@@ -35,15 +34,16 @@ def check_scheduled(storage=None):
         for incidentid in event.get("create", {}).get("incidents", []):
             incident = storage.resolve_to_incident(incidentid)
 
-            job = q.enqueue(
-                work.process,
-                args=(incident,),
-                kwargs=dict(
-                    proposer=config.get("BOOKIE_PROPOSER"),
-                    approver=config.get("BOOKIE_APPROVER")
+            if func_callback:
+                job = q.enqueue(
+                    func_callback,
+                    args=(incident,),
+                    kwargs=dict(
+                        proposer=config.get("BOOKIE_PROPOSER"),
+                        approver=config.get("BOOKIE_APPROVER")
+                    )
                 )
-            )
-            ids.append(job.id)
+                ids.append(job.id)
 
     return ids
 
@@ -73,5 +73,11 @@ class PeriodicExecutor(threading.Thread):
 def scheduler(delay=30):
     """
     """
+    from . import work
     check_scheduled()
-    PeriodicExecutor(delay, check_scheduled).run()
+    PeriodicExecutor(
+        delay,
+        check_scheduled,
+        storage=None,
+        func_callback=work.process
+    ).run()

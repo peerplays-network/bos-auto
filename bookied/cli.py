@@ -34,7 +34,7 @@ def format_incidents(event):
                 "\n".join([x["unique_string"] for x in content["incidents"]]),
                 "\n".join([x["provider_info"]["name"] for x in content["incidents"]])
             ])
-        except:
+        except Exception:
             pass
     return incidents
 

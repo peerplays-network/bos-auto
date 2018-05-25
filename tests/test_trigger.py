@@ -1,18 +1,24 @@
+import os
 import unittest
+import bos_incidents
+
 from copy import deepcopy
 from mock import MagicMock, PropertyMock
 from datetime import datetime, timedelta
+
 from peerplays import PeerPlays
 from peerplays.instance import set_shared_peerplays_instance
+from peerplays.bettingmarketgroup import BettingMarketGroup
+from peerplays.blockchainobject import BlockchainObject, ObjectCache
+from peerplays.event import Event
+
 from bookied_sync.lookup import Lookup
 from bookied_sync.event import LookupEvent
 from bookied_sync.eventgroup import LookupEventGroup
 from bookied_sync.eventstatus import LookupEventStatus
 from bookied_sync.bettingmarketgroup import LookupBettingMarketGroup
 from bookied_sync.bettingmarket import LookupBettingMarket
-from peerplays.bettingmarketgroup import BettingMarketGroup
-from peerplays.blockchainobject import BlockchainObject, ObjectCache
-from peerplays.event import Event
+
 from bookied import exceptions
 from bookied.triggers import (
     CreateTrigger,
@@ -20,7 +26,6 @@ from bookied.triggers import (
     InProgressTrigger,
     FinishTrigger,
 )
-import bos_incidents
 
 
 # Create incidents
@@ -28,7 +33,7 @@ _message_create_1 = {
     "timestamp": "2018-03-12T14:48:11.418371Z",
     "id": {
         "sport": "Basketball",
-        "start_time": "2118-03-10T00:00:00Z",
+        "start_time": "2022-10-16T00:00:00Z",
         "away": "Chicago Bulls",
         "home": "Detroit Pistons",
         "event_group_name": "NBA Regular Season"
@@ -51,14 +56,11 @@ _message_create_2 = deepcopy(_message_create_1)
 _message_create_2["provider_info"]["name"] = "foobar"
 _message_create_2["unique_string"] += "foobar"
 
-_message_create_3 = deepcopy(_message_create_1)
-_message_create_3["id"]["start_time"] = "1910-03-10T00:00:00Z"
-
 # In play incident
 _message_in_play = {
     "timestamp": "2018-03-12T14:48:11.418371Z",
     "id": {"sport": "Basketball",
-           "start_time": "2118-03-10T00:00:00Z",
+           "start_time": "2022-10-16T00:00:00Z",
            "away": "Chicago Bulls",
            "home": "Detroit Pistons",
            "event_group_name": "NBA Regular Season"},
@@ -76,7 +78,7 @@ _message_in_play = {
 _message_finish_1 = {
     "timestamp": "2018-03-12T14:48:11.417374Z",
     "id": {"sport": "Basketball",
-           "start_time": "2018-03-10T00:00:00Z",
+           "start_time": "2022-10-16T00:00:00Z",
            "away": "Chicago Bulls",
            "home": "Detroit Pistons",
            "event_group_name": "NBA Regular Season"},
@@ -98,7 +100,7 @@ _message_finish_2["unique_string"] += "foobar"
 _message_result_1 = {
     "timestamp": "2018-03-12T14:48:11.419285Z",
     "id": {"sport": "Basketball",
-           "start_time": "2018-03-10T00:00:00Z",
+           "start_time": "2022-10-16T00:00:00Z",
            "away": "Chicago Bulls",
            "home": "Detroit Pistons",
            "event_group_name": "NBA Regular Season"},
@@ -130,8 +132,13 @@ set_shared_peerplays_instance(ppy)
 lookup = Lookup(
     proposer="init0",
     blockchain_instance=ppy,
-    network="charlie"
+    network="unittests",
+    sports_folder=os.path.join(
+        os.path.dirname(os.path.realpath(__file__)),
+        "bookiesports"
+    ),
 )
+assert lookup.blockchain.nobroadcast
 
 
 class Testcases(unittest.TestCase):
@@ -145,7 +152,7 @@ class Testcases(unittest.TestCase):
             "event_group_id": "1.17.12125",
             "name": [],
             "season": [],
-            "start_time": "2018-04-18T12:00:29"
+            "start_time": "2022-10-16T00:00:00"
         }, {
             "id": bm_id,
             'asset_id': '1.3.0',
@@ -197,19 +204,12 @@ class Testcases(unittest.TestCase):
             create.store_incident()
 
     def test_create(self):
-        start_time = (datetime.utcnow() + timedelta(days=1)).isoformat() + "Z"
-        _message_create_1["id"]["start_time"] = start_time
-        _message_create_2["id"]["start_time"] = start_time
         create = CreateTrigger(
             _message_create_1,
             lookup_instance=lookup,
             config=config,
             purge=True, mongodb="mongodbtest",
         )
-
-        LookupEvent.start_time = PropertyMock(return_value=datetime.utcnow() + timedelta(days=1))
-        LookupEvent.event_group_finish_datetime = PropertyMock(return_value=datetime.utcnow() + timedelta(days=2))
-        LookupEvent.event_group_start_datetime = PropertyMock(return_value=datetime.utcnow() + timedelta(days=-1))
 
         with self.assertRaises(bos_incidents.exceptions.EventNotFoundException):
             create.testConditions(_message_create_1.get("arguments"))
@@ -235,17 +235,6 @@ class Testcases(unittest.TestCase):
         d = create.storage.get_event_by_id(_message_create_1)
         self.assertEqual(d["create"]["status"]["actions"][0], "proposal")
         self.assertEqual(d["create"]["status"]["name"], "done")
-
-    def test_create_old_event(self):
-        create = CreateTrigger(
-            _message_create_3,
-            lookup_instance=lookup,
-            config=config,
-            purge=True, mongodb="mongodbtest",
-        )
-
-        with self.assertRaises(exceptions.CreateIncidentTooOldException):
-            create.testConditions(_message_create_3.get("arguments"))
 
     def test_in_play(self):
         play = InProgressTrigger(
