@@ -82,7 +82,7 @@ def trigger():
             log.error(
                 "Received invalid request: {}".format(str(incident))
             )
-            return "Invalid data format", 503
+            return "Invalid data format", 400
 
         # Try insert the incident into the database
         # We insert incidents right here so we still have them even if the
