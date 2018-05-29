@@ -46,12 +46,12 @@ schema = {
                 },
                 "whistle_start_time": {
                     "description": "The time the end was whistled on in UTC, ISO format",
-                    "type": "string",
+                    "type": ["null", "string"],
                     "format": "date-time"
                 },
                 "whistle_end_time": {
                     "description": "The time the end was whistled off in UTC, ISO format",
-                    "type": "string",
+                    "type": ["null", "string"],
                     "format": "date-time"
                 },
                 "home_score": {
