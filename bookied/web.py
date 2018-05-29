@@ -37,7 +37,7 @@ def home():
 @app.route("/isalive")
 def isalive():
     versions = dict()
-    for name in ["bos-mint", "peerplays", "bookiesports"]:
+    for name in ["peerplays", "bookiesports", "bos-incidents", "bos-sync"]:
         try:
             versions[name] = pkg_resources.require(name)[0].version
         except Exception:
