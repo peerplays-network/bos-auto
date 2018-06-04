@@ -198,7 +198,7 @@ After this, you will see the following messages if correctly set up:
   * Running on http://0.0.0.0:8010/ (Press CTRL+C to quit)
 
 
-This means that you can send incidents to `http://0.0.0.0:8010/``.
+This means that you can send incidents to `http://0.0.0.0:8010/`.
 
 Testing
 _______
@@ -230,7 +230,7 @@ hide it behind an SSL supported nginx that deals with a simple domain
 instead of ``ip:port`` pair, like ``https://dataproxy.mywitness.com/trigger``.
 
 Start worker
-------------
+------------------
 
 .. warning:: At this point is is cruciual to set the default witness node to
         your own server (ideally running in ``localhost``) using ``peerplays set node
@@ -321,7 +321,7 @@ incident above)::
 
 
 Start Scheduler
-===============
+------------------
 
 The schedulers task is to rerun incidents after a certain expiration
 time. This may happen in cases where an event is postponed from being
