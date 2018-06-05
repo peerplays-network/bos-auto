@@ -88,7 +88,7 @@ def log_telegram(logger):
 
 
 # Default logging facilities
-LOG_LEVEL = logging.getLevelName(logging_config.get("level", default="INFO"))
+LOG_LEVEL = logging.getLevelName(logging_config.get("level", "INFO"))
 LOGFORMAT = ("  %(log_color)s%(levelname)-8s%(reset)s |"
              " %(log_color)s%(message)s%(reset)s")
 logging.root.setLevel(LOG_LEVEL)
