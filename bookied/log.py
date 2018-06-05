@@ -13,18 +13,17 @@ except Exception:
 
 # Load config file
 config = loadConfig()
+logging_config = config.get("logging", {})
 
 # Enable logging
 USE_TELEGRAM = (
     bool(HAS_TELEGRAM) and
-    "telegram_token" in config and
-    config["telegram_token"] and
-    "telegram_chatid" in config and
-    config["telegram_chatid"]
+    logging_config.get("telegram_token", None) is not None and
+    logging_config.get("telegram_chatid", None) is not None
 )
-USE_MAIL = ("mailto" in config)
-USE_STREAM = True
-USE_FILE = False
+USE_MAIL = logging_config.get("mailto", None)
+USE_STREAM = logging_config.get("console", None)
+USE_FILE = logging_config.get("file", None)
 
 
 def log_stream(logger):
@@ -43,7 +42,7 @@ def log_file(logger):
     """
     if USE_FILE:
         log_handler_rotate = RotatingFileHandler(
-            'bookied.log',
+            logging_config.get("file", "bookied.log"),
             maxBytes=1024 * 1024 * 100,
             backupCount=20
         )
@@ -81,15 +80,15 @@ def log_telegram(logger):
     """
     if USE_TELEGRAM:
         tgHandler = telegram_handler.TelegramHandler(
-            token=config.get("telegram_token"),
-            chat_id=config.get("telegram_chatid")
+            token=logging_config.get("telegram_token"),
+            chat_id=logging_config.get("telegram_chatid")
         )
         tgHandler.setLevel(logging.WARNING)
         logger.addHandler(tgHandler)
 
 
 # Default logging facilities
-LOG_LEVEL = logging.INFO
+LOG_LEVEL = logging.getLevelName(logging_config.get("level", default="INFO"))
 LOGFORMAT = ("  %(log_color)s%(levelname)-8s%(reset)s |"
              " %(log_color)s%(message)s%(reset)s")
 logging.root.setLevel(LOG_LEVEL)

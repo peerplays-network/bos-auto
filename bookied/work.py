@@ -16,6 +16,8 @@ from .triggers import (
 )
 from . import exceptions
 from bookiesports.normalize import NotNormalizableException
+import logging
+import time
 
 
 config = loadConfig()
@@ -64,6 +66,12 @@ def process(
 
         Hence, this method has the look and feel of a dispatcher!
     """
+    try:
+        t = time.time()
+        logging.getLogger(__name__).debug("Processing " + message["unique_string"])
+    except Exception as e:
+        pass
+
     assert isinstance(message, dict)
     assert "id" in message
 
@@ -185,6 +193,11 @@ def process(
             str(e),
             traceback.format_exc()))
 
+    try:
+        elapsed = time.time() - t
+        logging.getLogger(__name__).debug("Done processing " + message["unique_string"] + ", elapsed time is " + str(elapsed))
+    except Exception as e:
+        pass
 
 #
 # Approve my own Proposals

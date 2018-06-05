@@ -74,7 +74,10 @@ def scheduler(delay=30):
     """
     """
     from . import work
-    check_scheduled()
+    check_scheduled(
+        storage=None,
+        func_callback=work.process
+    )
     PeriodicExecutor(
         delay,
         check_scheduled,

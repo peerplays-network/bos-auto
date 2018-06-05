@@ -79,23 +79,26 @@ BOOKIE_PROPOSER: init0
 BOOKIE_APPROVER: init0
 
 ####################################
-# Default mail destination on errors
+# Logging setup
 ####################################
-# if your server is properly set up, you will receive email
-# notifications on errors to this email address
-mailto: info@example.com
+logging:
+    level: INFO
+    console: True
+    file:
 
-###########################
-# Telegram
-###########################
-# Notifications via telgram
-#
-# Please read 
-#
-#   https://github.com/sashgorokhov/python-telegram-handler
-#
-# for setting up a telegram notification bot.
-telegram_token:
-#
-# python3 -m telegram_handler "${telegram_token}"
-telegram_chatid:
+    # Default mail destination on errors
+    # if your server is properly set up, you will receive email
+    # notifications on errors to this email address
+    mailto:
+
+    # Telegram
+    # Notifications via telgram
+    #
+    # Please read
+    #
+    #   https://github.com/sashgorokhov/python-telegram-handler
+    #
+    # for setting up a telegram notification bot.
+    # python3 -m telegram_handler "${telegram_token}"
+    telegram_token:
+    telegram_chatid:
