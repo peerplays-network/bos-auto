@@ -1,16 +1,45 @@
 import os
 import yaml
-from datetime import datetime
 
+from peerplays import PeerPlays
+from peerplays.instance import set_shared_peerplays_instance
 from peerplays.blockchainobject import BlockchainObject, ObjectCache
-from peerplays.event import Event, Events
+from peerplays.event import Events
 from peerplays.rule import Rules
 from peerplays.proposal import Proposals
 from peerplays.eventgroup import EventGroups
 from peerplays.bettingmarketgroup import BettingMarketGroups
 from peerplays.bettingmarket import BettingMarkets
 
-from bookied_sync.event import LookupEvent
+from bookied_sync.lookup import Lookup
+
+from bos_incidents import factory
+
+
+wif = "5KQwrPbwdL6PhXujxW37FSSQZ1JiwsST4cqQzDeyXtP79zkvFD3"
+config = dict(
+    nobroadcast=True
+)
+ppy = PeerPlays(
+    keys=[wif],
+    nobroadcast=config["nobroadcast"],
+    num_retries=1,
+)
+set_shared_peerplays_instance(ppy)
+lookup = Lookup(
+    proposer="init0",
+    blockchain_instance=ppy,
+    network="unittests",
+    sports_folder=os.path.join(
+        os.path.dirname(os.path.realpath(__file__)),
+        "bookiesports"
+    ),
+)
+assert lookup.blockchain.nobroadcast
+
+# Storage
+storage = factory.get_incident_storage(
+    "mongodbtest", purge=True)
 
 # Setup custom Cache
 BlockchainObject._cache = ObjectCache(

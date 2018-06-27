@@ -122,6 +122,7 @@ class CreateTrigger(Trigger):
 
             .. alert:: This is temporary set to be ``2`` until we have an
                 easier way to identify how many data proxies send data to us
+
         """
         return 2
 

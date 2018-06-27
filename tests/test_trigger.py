@@ -6,12 +6,9 @@ from copy import deepcopy
 from mock import MagicMock, PropertyMock
 from datetime import datetime, timedelta
 
-from peerplays import PeerPlays
-from peerplays.instance import set_shared_peerplays_instance
 from peerplays.bettingmarketgroup import BettingMarketGroup
 from peerplays.event import Event
 
-from bookied_sync.lookup import Lookup
 from bookied_sync.event import LookupEvent
 from bookied_sync.eventgroup import LookupEventGroup
 from bookied_sync.eventstatus import LookupEventStatus
@@ -27,30 +24,9 @@ from bookied.triggers import (
     CancelTrigger
 )
 
-from .fixtures import fixture_data
+from .fixtures import fixture_data, lookup, config
 # import logging
 # logging.basicConfig(level=logging.DEBUG)
-
-wif = "5KQwrPbwdL6PhXujxW37FSSQZ1JiwsST4cqQzDeyXtP79zkvFD3"
-config = dict(
-    nobroadcast=True
-)
-ppy = PeerPlays(
-    keys=[wif],
-    nobroadcast=config["nobroadcast"],
-    num_retries=1,
-)
-set_shared_peerplays_instance(ppy)
-lookup = Lookup(
-    proposer="init0",
-    blockchain_instance=ppy,
-    network="unittests",
-    sports_folder=os.path.join(
-        os.path.dirname(os.path.realpath(__file__)),
-        "bookiesports"
-    ),
-)
-assert lookup.blockchain.nobroadcast
 
 
 class Testcases(unittest.TestCase):
