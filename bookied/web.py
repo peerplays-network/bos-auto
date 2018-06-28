@@ -3,12 +3,12 @@ from rq import use_connection, Queue
 from flask import Flask, request, jsonify
 from jsonschema import validate
 from . import work
-from .endpointschema import schema
 from .config import loadConfig
 from .redis_con import get_redis
 from .log import log
 from .utils import resolve_hostnames
 from bos_incidents import factory, exceptions
+from bos_incidents.validator import IncidentValidator, InvalidIncidentFormatException
 
 config = loadConfig()
 
@@ -22,6 +22,8 @@ q = Queue(connection=redis)
 
 # Invident Storage
 storage = factory.get_incident_storage()
+
+validator = IncidentValidator()
 
 # API whitelist
 api_whitelist = resolve_hostnames(config.get("api_whitelist", ["0.0.0.0"]))
@@ -37,7 +39,13 @@ def home():
 @app.route("/isalive")
 def isalive():
     versions = dict()
-    for name in ["bos-auto", "peerplays", "bookiesports", "bos-incidents", "bos-sync"]:
+    for name in [
+        "bos-auto",
+        "peerplays",
+        "bookiesports",
+        "bos-incidents",
+        "bos-sync"
+    ]:
         try:
             versions[name] = pkg_resources.require(name)[0].version
         except Exception:
@@ -58,7 +66,8 @@ def trigger():
 
         and consumes POST messages with JSON formatted body.
 
-        The body is validated against the :doc:`schema`.
+        The body is validated against the incident schema defined in
+        bos-incidents
 
         .. note:: The trigger endpoint stores the incidents through
                   (bos-incidents) already to allow later replaying.
@@ -77,8 +86,8 @@ def trigger():
 
         # Ensure it is json
         try:
-            validate(incident, schema)
-        except Exception:
+            validator.validate_incident(incident)
+        except InvalidIncidentFormatException:
             log.error(
                 "Received invalid request: {}".format(str(incident))
             )
