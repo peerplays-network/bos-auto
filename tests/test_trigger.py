@@ -1,19 +1,6 @@
-import os
 import unittest
 import bos_incidents
-
 from copy import deepcopy
-from mock import MagicMock, PropertyMock
-from datetime import datetime, timedelta
-
-from peerplays.bettingmarketgroup import BettingMarketGroup
-from peerplays.event import Event
-
-from bookied_sync.event import LookupEvent
-from bookied_sync.eventgroup import LookupEventGroup
-from bookied_sync.eventstatus import LookupEventStatus
-from bookied_sync.bettingmarketgroup import LookupBettingMarketGroup
-from bookied_sync.bettingmarket import LookupBettingMarket
 
 from bookied import exceptions
 from bookied.triggers import (
@@ -137,16 +124,16 @@ class Testcases(unittest.TestCase):
         _message_in_play = {
             "timestamp": "2018-03-12T14:48:11.418371Z",
             "id": {"sport": "Basketball",
-                "start_time": "2022-10-16T00:00:00Z",
-                "home": "Atlanta Hawks",
-                "away": "Boston Celtics",
-                "event_group_name": "NBA Regular Season"},
+                   "start_time": "2022-10-16T00:00:00Z",
+                   "home": "Atlanta Hawks",
+                   "away": "Boston Celtics",
+                   "event_group_name": "NBA Regular Season"},
             "provider_info": {"match_id": "1487207",
-                            "source_file": "20180310-011131_06d6bc2c-9280-4989-b86c-9f3c9cc716ad.xml",
-                            "source": "direct string input",
-                            "name": "scorespro",
-                            "bitArray": "00000001100",
-                            "pushed": "2018-03-10T00:11:31.79Z"},
+                              "source_file": "20180310-011131_06d6bc2c-9280-4989-b86c-9f3c9cc716ad.xml",
+                              "source": "direct string input",
+                              "name": "scorespro",
+                              "bitArray": "00000001100",
+                              "pushed": "2018-03-10T00:11:31.79Z"},
             "unique_string": "2018-03-10t000000z-basketball-nba-regular-season-detroit-pistons-chicago-bulls-in_progress-2018-03-10t00112083z",
             "arguments": {"whistle_start_time": "2018-03-10T00:11:20.83Z"},
             "call": "in_progress"}
@@ -184,16 +171,16 @@ class Testcases(unittest.TestCase):
         _message_finish_1 = {
             "timestamp": "2018-03-12T14:48:11.417374Z",
             "id": {"sport": "Basketball",
-                "start_time": "2022-10-16T00:00:00Z",
-                "home": "Atlanta Hawks",
-                "away": "Boston Celtics",
-                "event_group_name": "NBA Regular Season"},
+                   "start_time": "2022-10-16T00:00:00Z",
+                   "home": "Atlanta Hawks",
+                   "away": "Boston Celtics",
+                   "event_group_name": "NBA Regular Season"},
             "provider_info": {"match_id": "1487207",
-                            "source_file": "20180310-031424_6a6448a1-36bf-47b3-9aca-e4f11a5ffea9.xml",
-                            "source": "direct string input",
-                            "name": "scorespro",
-                            "bitArray": "00000000100",
-                            "pushed": "2018-03-10T02:14:24.588Z"},
+                              "source_file": "20180310-031424_6a6448a1-36bf-47b3-9aca-e4f11a5ffea9.xml",
+                              "source": "direct string input",
+                              "name": "scorespro",
+                              "bitArray": "00000000100",
+                              "pushed": "2018-03-10T02:14:24.588Z"},
             "unique_string": "2018-03-10t000000z-basketball-nba-regular-season-detroit-pistons-chicago-bulls-finish-2018-03-10t021409751z",
             "arguments": {"whistle_end_time": "2018-03-10T02:14:09.751Z"},
             "call": "finish"}
@@ -239,19 +226,19 @@ class Testcases(unittest.TestCase):
         _message_result_1 = {
             "timestamp": "2018-03-12T14:48:11.419285Z",
             "id": {"sport": "Basketball",
-                "start_time": "2022-10-16T00:00:00Z",
-                "home": "Atlanta Hawks",
-                "away": "Boston Celtics",
-                "event_group_name": "NBA Regular Season"},
+                   "start_time": "2022-10-16T00:00:00Z",
+                   "home": "Atlanta Hawks",
+                   "away": "Boston Celtics",
+                   "event_group_name": "NBA Regular Season"},
             "provider_info": {"match_id": "1487207",
-                            "source_file": "20180310-031424_6a6448a1-36bf-47b3-9aca-e4f11a5ffea9.xml",
-                            "source": "direct string input",
-                            "name": "scorespro",
-                            "bitArray": "00000000100",
-                            "pushed": "2018-03-10T02:14:24.588Z"},
+                              "source_file": "20180310-031424_6a6448a1-36bf-47b3-9aca-e4f11a5ffea9.xml",
+                              "source": "direct string input",
+                              "name": "scorespro",
+                              "bitArray": "00000000100",
+                              "pushed": "2018-03-10T02:14:24.588Z"},
             "unique_string": "2018-03-10t000000z-basketball-nba-regular-season-detroit-pistons-chicago-bulls-result-99-83",
             "arguments": {"home_score": "99",
-                        "away_score": "83"},
+                          "away_score": "83"},
             "call": "result"}
         _message_result_2 = _message_result_1.copy()
         _message_result_2["provider_info"]["name"] = "foobar"
@@ -313,23 +300,22 @@ class Testcases(unittest.TestCase):
         _message_cancel_1 = {
             "timestamp": "2018-03-12T14:48:11.417374Z",
             "id": {"sport": "Basketball",
-                "start_time": "2022-10-16T00:00:00Z",
-                "home": "Atlanta Hawks",
-                "away": "Boston Celtics",
-                "event_group_name": "NBA Regular Season"},
+                   "start_time": "2022-10-16T00:00:00Z",
+                   "home": "Atlanta Hawks",
+                   "away": "Boston Celtics",
+                   "event_group_name": "NBA Regular Season"},
             "provider_info": {"match_id": "1487207",
-                            "source_file": "20180310-031424_6a6448a1-36bf-47b3-9aca-e4f11a5ffea9.xml",
-                            "source": "direct string input",
-                            "name": "scorespro",
-                            "bitArray": "00000000100",
-                            "pushed": "2018-03-10T02:14:24.588Z"},
+                              "source_file": "20180310-031424_6a6448a1-36bf-47b3-9aca-e4f11a5ffea9.xml",
+                              "source": "direct string input",
+                              "name": "scorespro",
+                              "bitArray": "00000000100",
+                              "pushed": "2018-03-10T02:14:24.588Z"},
             "unique_string": "2018-03-10t000000z-basketball-nba-regular-season-detroit-pistons-chicago-bulls-cancel-2018-03-10t021409751z",
             "arguments": {},
             "call": "canceled"}
         _message_cancel_2 = _message_cancel_1.copy()
         _message_cancel_2["provider_info"]["name"] = "foobar"
         _message_cancel_2["unique_string"] += "foobar"
-
 
         cancel = CancelTrigger(
             _message_cancel_1,

@@ -4,6 +4,7 @@ import yaml
 from peerplays import PeerPlays
 from peerplays.instance import set_shared_peerplays_instance
 from peerplays.blockchainobject import BlockchainObject, ObjectCache
+from peerplays.sport import Sports
 from peerplays.event import Events
 from peerplays.rule import Rules
 from peerplays.proposal import Proposals
@@ -68,6 +69,12 @@ def fixture_data():
         data = yaml.safe_load(fid)
     for ob in data.keys():
         add_to_object_cache(data[ob])
+
+    for sport in data.get("sports", []):
+        id = "sports"
+        if id not in Sports.cache and not Sports.cache[id]:
+            Sports.cache[id] = []
+        Sports.cache[id].append(sport)
 
     for event_group in data.get("eventgroups", []):
         id = event_group["sport_id"]
