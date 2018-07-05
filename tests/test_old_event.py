@@ -20,12 +20,7 @@ from bookied_sync.bettingmarketgroup import LookupBettingMarketGroup
 from bookied_sync.bettingmarket import LookupBettingMarket
 
 from bookied import exceptions
-from bookied.triggers import (
-    CreateTrigger,
-    ResultTrigger,
-    InProgressTrigger,
-    FinishTrigger,
-)
+from bookied.triggers.create import CreateTrigger
 
 from .fixtures import fixture_data, lookup, config
 

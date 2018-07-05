@@ -24,16 +24,26 @@ events:
  - id: "1.18.2242"
    status: "upcoming"
    name: [['en', 'Boston Celtics @ Atlanta Hawks']]
+   # Home: Atlanta
+   # Away: Boston
+   season: [["en", "2017"]]
+   start_time: "2022-10-16T00:00:00"
+   event_group_id: "1.17.12"
+
+ - id: "1.18.2243"
+   status: "upcoming"
+   name: [['en', 'Boston Celtics @ Brooklyn Nets']]
+   # Home: Brooklyn Nets
+   # Away: Boston
    season: [["en", "2017"]]
    start_time: "2022-10-16T00:00:00"
    event_group_id: "1.17.12"
 
 bettingmarketgroups:
- - id: "1.20.212"
+ - id: "1.20.211"
    asset_id: '1.3.0'
    delay_before_settling: 0
    description: [['en', 'MSeaward BMG1']]
-   settling_time: None
    status: 'upcoming'
    rules_id: '1.19.10'
    event_id: '1.18.2241'
@@ -41,11 +51,122 @@ bettingmarketgroups:
  - id: "1.20.212"
    asset_id: '1.3.0'
    delay_before_settling: 0
-   description: [['en', 'Moneyline']]
-   settling_time: None
+   description: [["sen", "Moneyline"],
+                 ["en", "Moneyline"],
+                 ["display_name", "Moneyline"]]
    status: 'upcoming'
    rules_id: '1.19.11'
    event_id: '1.18.2242'
+
+#  - id: "1.20.213"
+#    asset_id: '1.3.0'
+#    delay_before_settling: 0
+#    description:
+#    - [display_name, 'HC (0:1)']
+#    - [en, 'Handicap (0:1)']
+#    - [sen, 'Handicap (0:1)']
+#    - ["_dynamic", "hc"]
+#    - ["_hch", "1"]
+#    - ["_hca", "-1"]
+#    status: 'upcoming'
+#    rules_id: '1.19.10'
+#    event_id: '1.18.2242'
+# 
+#  - id: "1.20.214"
+#    asset_id: '1.3.0'
+#    delay_before_settling: 0
+#    description:
+#    - [display_name, 'HC (0:2)']
+#    - [en, 'Handicap (0:2)']
+#    - [sen, 'Handicap (0:2)']
+#    - ["_hch", "2"]
+#    - ["_hca", "-2"]
+#    status: 'upcoming'
+#    rules_id: '1.19.10'
+#    event_id: '1.18.2242'
+# 
+ - id: "1.20.215"
+   asset_id: '1.3.0'
+   delay_before_settling: 0
+   description:
+   - [display_name, 'HC (9:0)']
+   - [en, 'Handicap (9:0)']
+   - [sen, 'Handicap (9:0)']
+   - ["_dynamic", "hc"]
+   - ["_hch", "-9"]
+   - ["_hca", "9"]
+   status: 'upcoming'
+   rules_id: '1.19.10'
+   event_id: '1.18.2243'  # Brooklyn vs. Boston
+# 
+#  - id: "1.20.216"
+#    asset_id: '1.3.0'
+#    delay_before_settling: 0
+#    description:
+#    - [display_name, 'HC (0:3)']
+#    - [en, 'Handicap (0:3)']
+#    - [sen, 'Handicap (0:3)']
+#    - ["_dynamic", "hc"]
+#    - ["_hch", "3"]
+#    - ["_hca", "-3"]
+#    status: 'upcoming'
+#    rules_id: '1.19.10'
+#    event_id: '1.18.2242'
+# 
+#  - id: "1.20.217"
+#    asset_id: '1.3.0'
+#    delay_before_settling: 0
+#    description:
+#    - [display_name, 'HC (0:2)']
+#    - [en, 'Handicap (0:2)']
+#    - [sen, 'Handicap (0:2)']
+#    - ["_dynamic", "hc"]
+#    - ["_hch", "2"]
+#    - ["_hca", "-2"]
+#    status: 'upcoming'
+#    rules_id: '1.19.10'
+#    event_id: '1.18.2242'
+# 
+#  - id: "1.20.218"
+#    asset_id: '1.3.0'
+#    delay_before_settling: 0
+#    description:
+#    - ["display_name", "Over/Under 3.5 pts"]
+#    - ["en", "Over/Under 3.5 pts"]
+#    - ["sen", "Total Points"]
+#    - ["_dynamic", "ou"]
+#    - ["_ou", "3.5"]
+#    status: 'upcoming'
+#    rules_id: '1.19.10'
+#    event_id: '1.18.2242'
+# 
+#  - id: "1.20.219"
+#    asset_id: '1.3.0'
+#    delay_before_settling: 0
+#    description:
+#    - [display_name, 'HC (3:0)']
+#    - [en, 'Handicap (3:0)']
+#    - [sen, 'Handicap (3:0)']
+#    - ["_dynamic", "hc"]
+#    - ["_hch", "-3"]
+#    - ["_hca", "-3"]
+#    status: 'upcoming'
+#    rules_id: '1.19.10'
+#    event_id: '1.18.2242'
+# 
+#  - id: "1.20.220"
+#    asset_id: '1.3.0'
+#    delay_before_settling: 0
+#    description:
+#    - [display_name, 'HC (0:5)']
+#    - [en, 'Handicap (0:5)']
+#    - [sen, 'Handicap (0:5)']
+#    - ["_dynamic", "hc"]
+#    - ["_hch", "5"]
+#    - ["_hca", "-5"]
+#    status: 'upcoming'
+#    rules_id: '1.19.10'
+#    event_id: '1.18.2242'
 
 bettingmarkets:
  - id: '1.21.2950'
@@ -58,6 +179,84 @@ bettingmarkets:
    group_id: '1.20.212'
    status: 'unresolved'
 
+#  ###################
+#  - id: '1.21.2952'
+#    description:
+#     - ['en', 'Atlanta Hawks (1)']
+#    group_id: '1.20.213'
+#    status: 'unresolved'
+# 
+#  - id: '1.21.2953'
+#    description:
+#     - ['en', 'Boston Celtics (-1)']
+#    group_id: '1.20.213'
+#    status: 'unresolved'
+#  ###################
+# 
+#  - id: '1.21.2954'
+#    description:
+#     - ['en', 'Atlanta Hawks (2)']
+#    group_id: '1.20.214'
+#    status: 'unresolved'
+# 
+#  - id: '1.21.2955'
+#    description:
+#     - ['en', 'Boston Celtics (-2)']
+#    group_id: '1.20.214'
+#    status: 'unresolved'
+#  ###################
+# 
+#  - id: '1.21.2956'
+#    description:
+#     - ['en', 'Atlanta Hawks (-2)']
+#    group_id: '1.20.215'
+#    status: 'unresolved'
+# 
+#  - id: '1.21.2957'
+#    description:
+#     - ['en', 'Boston Celtics (2)']
+#    group_id: '1.20.215'
+#    status: 'unresolved'
+#  ###################
+# 
+#  - id: '1.21.2958'
+#    description:
+#     - ['en', 'Atlanta Hawks (3)']
+#    group_id: '1.20.216'
+#    status: 'unresolved'
+# 
+#  - id: '1.21.2959'
+#    description:
+#     - ['en', 'Boston Celtics (-3)']
+#    group_id: '1.20.216'
+#    status: 'unresolved'
+#  ###################
+# 
+#  - id: '1.21.2960'
+#    description:
+#     - ['en', 'Atlanta Hawks (-2)']
+#    group_id: '1.20.217'
+#    status: 'unresolved'
+# 
+#  - id: '1.21.2961'
+#    description:
+#     - ['en', 'Boston Celtics (2)']
+#    group_id: '1.20.217'
+#    status: 'unresolved'
+#  ###################
+# 
+#  - id: '1.21.2962'
+#    description:
+#     - ['en', 'Over 3.5']
+#    group_id: '1.20.218'
+#    status: 'unresolved'
+# 
+#  - id: '1.21.2963'
+#    description:
+#     - ['en', 'Under 3.5']
+#    group_id: '1.20.218'
+#    status: 'unresolved'
+
 rules:
  - id: "1.19.10"
    name:
@@ -65,15 +264,15 @@ rules:
     - ["identifier", "R_NBA_HCP_1"]
    description:
     - ["en", "Foobar"]
-    - ["grading", '{"resolutions":[{"void":"False","not_win":"{metric} < 0","win":"{metric} > 0"},{"void":"False","not_win":"{metric} > 0","win":"{metric} < 0"}],"metric":"{result.awayteam} XXX - {result.hometeam} XXX"}%']
+    - ["grading", '{"resolutions":[{"void":"False","not_win":"{metric} <= 0","win":"{metric} > 0"},{"void":"False","not_win":"{metric} >= 0","win":"{metric} < 0"}],"metric":"({result.home} - {handicaps.home}) - ({result.away} - {handicaps.away})"}']
 
  - id: "1.19.11"
    name:
     - ["en", "R_NBA_ML_1"]
     - ["identifier", "R_NBA_ML_1"]
    description:
-    - ["en", "Foobar"]
-    - ["grading", '{"resolutions":[{"void":"False","not_win":"{metric} < 0","win":"{metric} > 0"},{"void":"False","not_win":"{metric} > 0","win":"{metric} < 0"}],"metric":"{result.awayteam} - {result.hometeam}"}']
+    - ['en', 'MARKET INFORMATION Who will win this match? This market INCLUDES overtime. At the start of play any unmatched bets will be automatically cancelled and the market will turn in-play. Please note that this market will not be actively managed therefore it is the responsibility of all users to manage their in-play positions. Please also be aware that transmissions described as "live" may actually involve a certain time delay which can vary from case to case. Commission and Transaction Fees apply to all bets placed in this market. For further information please see Bookie Rules.']
+    - ['grading', '{"metric": "{result.awayteam} - {result.hometeam}", "resolutions": [{"not_win": "{metric} <= 0", "void": "False", "win": "{metric} > 0"}, {"not_win": "{metric} >= 0", "void": "False", "win": "{metric} < 0"}]}']
 
  - id: "1.19.12"
    name:
@@ -81,4 +280,4 @@ rules:
     - ["identifier", "R_NBA_OU_1"]
    description:
     - ["en", "Foobar"]
-    - ["grading", '{"metric": "{result.hometeam} - {result.awayteam}", "resolutions": [{"not_win": "{metric} <= 0", "void": "False", "win": "{metric} > 0"}, {"not_win": "{metric} >= 0", "void": "False", "win": "{metric} < 0"}, {"not_win": "{metric} != 0", "void": "False", "win": "{metric} == 0"}]}']
+    - ["grading", '{"metric": "{result.total}", "resolutions": [{"not_win": "{metric} > {overunder.value}", "void": "False", "win": "{metric} <= {overunder.value}"}, {"not_win": "{metric} <= {overunder.value}", "void": "False", "win": "{metric} > {overunder.value}"}]}']

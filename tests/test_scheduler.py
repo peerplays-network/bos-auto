@@ -14,9 +14,7 @@ from bookied_sync.lookup import Lookup
 from bookied_sync.event import LookupEvent
 
 from bookied import exceptions
-from bookied.triggers import (
-    CreateTrigger,
-)
+from bookied.triggers.create import CreateTrigger
 
 from .fixtures import fixture_data, lookup, config
 

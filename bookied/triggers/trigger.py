@@ -6,6 +6,7 @@ from bookied_sync.eventgroup import LookupEventGroup
 from bookied_sync.event import LookupEvent
 from bos_incidents import factory
 from bookiesports.normalize import IncidentsNormalizer, NotNormalizableException
+from peerplays.bettingmarketgroup import BettingMarketGroups
 
 
 class Trigger():
@@ -51,6 +52,8 @@ class Trigger():
             self.sport,
             self.id.get("event_group_name"))
 
+        self.event = None  # Will be filled in after receiving a trigger
+
         # Get Teams from query
         self.teams = [
             self.id.get("home"),
@@ -83,6 +86,9 @@ class Trigger():
         )
 
         if event:
+
+            # Store in object
+            self.event = event
 
             eventgroup = event.eventgroup
             if not eventgroup.is_open:
@@ -170,6 +176,16 @@ class Trigger():
         """ This call stores the incident in the incident-store (bos-incident)
         """
         self.storage.insert_incident(self.message)
+
+    def get_onchain_bmgs(self):
+        """ Returns a list of BettingMarketGroups of the event that already
+            exist on the Blockchain
+        """
+        if not self.event:
+            self.event = self.getEvent()
+            if not self.event:
+                return []
+        return BettingMarketGroups(self.event.id)
 
     # Methods that need to be overwritten by trigger
     def testConditions(self, *args, **kwargs):

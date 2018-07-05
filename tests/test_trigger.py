@@ -3,13 +3,12 @@ import bos_incidents
 from copy import deepcopy
 
 from bookied import exceptions
-from bookied.triggers import (
-    CreateTrigger,
-    ResultTrigger,
-    InProgressTrigger,
-    FinishTrigger,
-    CancelTrigger
-)
+from bookied.triggers.create import CreateTrigger
+from bookied.triggers.result import ResultTrigger
+from bookied.triggers.in_progress import InProgressTrigger
+from bookied.triggers.finish import FinishTrigger
+from bookied.triggers.cancel import CancelTrigger
+from bookied.triggers.dynamic_bmg import DynamicBmgTrigger
 
 from .fixtures import fixture_data, lookup, config
 # import logging

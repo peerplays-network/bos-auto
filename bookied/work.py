@@ -8,11 +8,13 @@ from peerplays import PeerPlays
 from peerplays.instance import set_shared_blockchain_instance
 from .log import log
 from .config import loadConfig
+from . import triggers
 from .triggers import (
     CreateTrigger,
     ResultTrigger,
     InProgressTrigger,
-    FinishTrigger
+    FinishTrigger,
+    CancelTrigger
 )
 from . import exceptions
 from bookiesports.normalize import NotNormalizableException
@@ -32,6 +34,15 @@ lookup = Lookup(
     blockchain_instance=peerplays,
     network=config.get("network", "baxter")
 )
+
+_triggers = {
+    "create": triggers.create.CreateTrigger,
+    "in_progress": triggers.in_progress.InProgressTrigger,
+    "finish": triggers.finish.FinishTrigger,
+    "result": triggers.result.ResultTrigger,
+    "cancel": triggers.cancel.CancelTrigger,
+    "dynamic_bmgs": triggers.dynamic_bmg.DynamicBmgTrigger
+}
 
 
 def unlock():
@@ -100,30 +111,9 @@ def process(
         call, str(args)
     ))
     try:
-        # Instanciate trigger
-        if call == "create":
-            trigger = CreateTrigger(
-                message,
-                lookup_instance=lookup,
-                config=config,
-            )
 
-        elif call == "in_progress":
-            trigger = InProgressTrigger(
-                message,
-                lookup_instance=lookup,
-                config=config,
-            )
-
-        elif call == "finish":
-            trigger = FinishTrigger(
-                message,
-                lookup_instance=lookup,
-                config=config,
-            )
-
-        elif call == "result":
-            trigger = ResultTrigger(
+        if call in _triggers:
+            trigger = _triggers[call](
                 message,
                 lookup_instance=lookup,
                 config=config,
@@ -164,6 +154,9 @@ def process(
         trigger.set_incident_status(status_name="event group closed")
 
     except exceptions.EventCannotOpenException:
+        trigger.set_incident_status(status_name="postponed")
+
+    except exceptions.PostPoneIncidentException:
         trigger.set_incident_status(status_name="postponed")
 
     except exceptions.InsufficientIncidents:

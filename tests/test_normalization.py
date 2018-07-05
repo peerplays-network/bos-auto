@@ -10,9 +10,7 @@ from bookied_sync.lookup import Lookup
 
 from bookiesports.normalize import NotNormalizableException
 
-from bookied.triggers import (
-    CreateTrigger,
-)
+from bookied.triggers.create import CreateTrigger
 
 from .fixtures import fixture_data, lookup, config, storage
 
