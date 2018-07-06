@@ -20,6 +20,8 @@ from bookied_sync.lookup import Lookup
 from bookied_sync.eventgroup import LookupEventGroup
 from bookied_sync.event import LookupEvent
 
+from bos_incidents import factory
+
 
 wif = "5KQwrPbwdL6PhXujxW37FSSQZ1JiwsST4cqQzDeyXtP79zkvFD3"
 config = dict(
@@ -42,6 +44,10 @@ lookup = Lookup(
 )
 lookup.set_approving_account("init0")
 assert lookup.blockchain.nobroadcast
+
+# Storage
+storage = factory.get_incident_storage(
+    "mongodbtest", purge=True)
 
 # Setup custom Cache
 BlockchainObject._cache = ObjectCache(
@@ -81,6 +87,14 @@ def add_event(data):
 
 
 def fixture_data():
+    BettingMarkets.cache = dict()
+    Rules.cache = dict()
+    Proposals.cache = dict()
+    BettingMarketGroups.cache = dict()
+    Events.cache = dict()
+    EventGroups.cache = dict()
+    Sports.cache = dict()
+
     with open(os.path.join(
         os.path.dirname(__file__),
         "fixtures.yaml"
@@ -91,37 +105,37 @@ def fixture_data():
 
     for sport in data.get("sports", []):
         id = "sports"
-        if id not in Sports.cache and not Sports.cache[id]:
+        if id not in Sports.cache or not Sports.cache[id]:
             Sports.cache[id] = []
         Sports.cache[id].append(sport)
 
     for event_group in data.get("eventgroups", []):
         id = event_group["sport_id"]
-        if id not in EventGroups.cache and not EventGroups.cache[id]:
+        if id not in EventGroups.cache or not EventGroups.cache[id]:
             EventGroups.cache[id] = []
         EventGroups.cache[id].append(event_group)
 
     for event in data.get("events", []):
         id = event["event_group_id"]
-        if id not in Events.cache and not Events.cache[id]:
+        if id not in Events.cache or not Events.cache[id]:
             Events.cache[id] = []
         Events.cache[id].append(event)
 
     for bettingmarketgroup in data.get("bettingmarketgroups", []):
         id = bettingmarketgroup["event_id"]
-        if id not in BettingMarketGroups.cache and not BettingMarketGroups.cache[id]:
+        if id not in BettingMarketGroups.cache or not BettingMarketGroups.cache[id]:
             BettingMarketGroups.cache[id] = []
         BettingMarketGroups.cache[id].append(bettingmarketgroup)
 
     for bettingmarket in data.get("bettingmarkets", []):
         id = bettingmarket["group_id"]
-        if id not in BettingMarkets.cache and not BettingMarkets.cache[id]:
+        if id not in BettingMarkets.cache or not BettingMarkets.cache[id]:
             BettingMarkets.cache[id] = []
         BettingMarkets.cache[id].append(bettingmarket)
 
     for rule in data.get("rules", []):
         id = "rules"
-        if id not in Rules.cache and not Rules.cache[id]:
+        if id not in Rules.cache or not Rules.cache[id]:
             Rules.cache[id] = []
         Rules.cache[id].append(rule)
 
@@ -135,7 +149,7 @@ def fixture_data():
                     [operations[opName], op]
                 )
         # Proposal!
-        proposal_id = proposal.get("id", '1.10.336')
+        proposal_id = proposal["proposal_id"]
         proposal_data = {'available_active_approvals': [],
                          'available_key_approvals': [],
                          'available_owner_approvals': [],
@@ -150,7 +164,8 @@ def fixture_data():
                          'required_active_approvals': ['1.2.1'],
                          'required_owner_approvals': []}
 
-        if id not in Proposals.cache and not Proposals.cache[id]:
+        if id not in Proposals.cache or not Proposals.cache[id]:
             Proposals.cache[id] = []
         Proposals.cache[id].append(proposal_data)
+        # Also define the actual object in the Object Cache
         BlockchainObject._cache[proposal_id] = proposal_data

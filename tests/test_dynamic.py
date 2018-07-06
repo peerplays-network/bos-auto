@@ -97,13 +97,13 @@ class Testcases(unittest.TestCase):
         self.assertEqual(ops[0][0], 22)
         self.assertTrue(len(ops[0][1]["proposed_ops"]) == 3)
         self.assertIn(
-            ["en", "Over/Under 8.5 pts"],
+            ["en", "Over/Under 8.0 pts"],
             ops[0][1]["proposed_ops"][0]['op'][1]["description"])
         self.assertIn(
-            ['en', 'Under 8.5'],
+            ['en', 'Under 8.0'],
             ops[0][1]["proposed_ops"][1]['op'][1]["description"])
         self.assertIn(
-            ['en', 'Over 8.5'],
+            ['en', 'Over 8.0'],
             ops[0][1]["proposed_ops"][2]['op'][1]["description"])
 
     def test_dynamic_hc(self):
@@ -323,13 +323,13 @@ class Testcases(unittest.TestCase):
         self.assertEqual(ops[0][0], 22)
         self.assertTrue(len(ops[0][1]["proposed_ops"]) == 3)
         self.assertIn(
-            ["en", "Over/Under 9.5 pts"],
+            ["en", "Over/Under 9.0 pts"],
             ops[0][1]["proposed_ops"][0]['op'][1]["description"])
         self.assertIn(
-            ['en', 'Under 9.5'],
+            ['en', 'Under 9.0'],
             ops[0][1]["proposed_ops"][1]['op'][1]["description"])
         self.assertIn(
-            ['en', 'Over 9.5'],
+            ['en', 'Over 9.0'],
             ops[0][1]["proposed_ops"][2]['op'][1]["description"])
 
     def test_dynamic_ou_fuzzy(self):
@@ -348,7 +348,7 @@ class Testcases(unittest.TestCase):
             "unique_string": "not-so-unique",
             "arguments": {
                 "types": [{
-                    "value": "3.0",
+                    "value": "3.5",
                     "type": "ou"
                 }]},
             "provider_info": {
@@ -368,4 +368,5 @@ class Testcases(unittest.TestCase):
 
         trigger.storage.insert_incident(_message)
         tx = trigger.trigger(_message.get("arguments"))
-        self.assertFalse(tx)
+        self.assertEqual(len(tx), 1)
+        self.assertTrue(tx[0].is_approval())

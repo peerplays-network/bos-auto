@@ -1,7 +1,5 @@
 from .trigger import Trigger
-from . import (
-    SKIP_DYNAMIC_BMS,
-)
+from bookied_sync.bettingmarketgroup import LookupBettingMarketGroup
 from bookied_sync.bettingmarketgroupresolve import (
     LookupBettingMarketGroupResolve
 )
@@ -40,12 +38,24 @@ class ResultTrigger(Trigger):
         """ Resolve the BMGs
         """
         for bmg in event.bettingmarketgroups:
+            if bmg["dynamic"]:
+                # Update and crate BMs
+                fuzzy_args = {
+                    "test_operation_equal_search": [
+                        LookupBettingMarketGroup.cmp_event(),
+                        LookupBettingMarketGroup.cmp_description("_dynamic"),
+                    ],
+                    "find_id_search": [
+                        LookupBettingMarketGroup.cmp_event(),
+                        LookupBettingMarketGroup.cmp_description("_dynamic"),
+                    ]
+                }
+            else:
+                fuzzy_args = {}
 
-            # Skip dynamic bmgs
-            if SKIP_DYNAMIC_BMS and bmg["dynamic"]:
-                log.info("Skipping dynamic BMG: {}".format(
-                    str(bmg.identifier)))
-                continue
+            # Let's try find an id with fuzzy
+            # This also sets the dynamic parameters in the bmg object!
+            _ = bmg.find_id(**fuzzy_args)
 
             # Skip those bmgs that coudn't be found
             if not bmg.find_id():
