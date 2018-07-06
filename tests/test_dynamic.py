@@ -97,13 +97,13 @@ class Testcases(unittest.TestCase):
         self.assertEqual(ops[0][0], 22)
         self.assertTrue(len(ops[0][1]["proposed_ops"]) == 3)
         self.assertIn(
-            ["en", "Over/Under 8 pts"],
+            ["en", "Over/Under 8.5 pts"],
             ops[0][1]["proposed_ops"][0]['op'][1]["description"])
         self.assertIn(
-            ['en', 'Under 8'],
+            ['en', 'Under 8.5'],
             ops[0][1]["proposed_ops"][1]['op'][1]["description"])
         self.assertIn(
-            ['en', 'Over 8'],
+            ['en', 'Over 8.5'],
             ops[0][1]["proposed_ops"][2]['op'][1]["description"])
 
     def test_dynamic_hc(self):
@@ -323,11 +323,49 @@ class Testcases(unittest.TestCase):
         self.assertEqual(ops[0][0], 22)
         self.assertTrue(len(ops[0][1]["proposed_ops"]) == 3)
         self.assertIn(
-            ["en", "Over/Under 9 pts"],
+            ["en", "Over/Under 9.5 pts"],
             ops[0][1]["proposed_ops"][0]['op'][1]["description"])
         self.assertIn(
-            ['en', 'Under 9'],
+            ['en', 'Under 9.5'],
             ops[0][1]["proposed_ops"][1]['op'][1]["description"])
         self.assertIn(
-            ['en', 'Over 9'],
+            ['en', 'Over 9.5'],
             ops[0][1]["proposed_ops"][2]['op'][1]["description"])
+
+    def test_dynamic_ou_fuzzy(self):
+        """ Let's test fuzzy matching logic for updating/creating a BMG
+
+            There is a proposal for a BMG with overunder 3.5 on chain already!
+        """
+        _message = {
+            "timestamp": "2018-06-26T08:39:32Z",
+            "call": "dynamic_bmgs",
+            "id": {"sport": "Basketball",
+                   "start_time": "2022-10-16T00:00:00Z",
+                   "home": "Cleveland Cavaliers",
+                   "away": "Dallas Mavericks",
+                   "event_group_name": "NBA Regular Season"},
+            "unique_string": "not-so-unique",
+            "arguments": {
+                "types": [{
+                    "value": "3.0",
+                    "type": "ou"
+                }]},
+            "provider_info": {
+                "name": "",
+                "beb_id": "452",
+                "source_file": "20180624-000114_c7a7901b-2eae-4343-b4f7-075f0c79a067.json",
+                "tzfix": True,
+                "pushed": "2018-06-23T22:01:13Z",
+                "source": "event_id=2663863"}}
+
+        trigger = DynamicBmgTrigger(
+            _message,
+            lookup_instance=lookup,
+            config=config,
+            purge=True, mongodb="mongodbtest",
+        )
+
+        trigger.storage.insert_incident(_message)
+        tx = trigger.trigger(_message.get("arguments"))
+        self.assertFalse(tx)

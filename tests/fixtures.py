@@ -1,5 +1,8 @@
 import os
 import yaml
+import datetime
+
+from dateutil.parser import parse
 
 from peerplays import PeerPlays
 from peerplays.instance import set_shared_peerplays_instance
@@ -11,10 +14,11 @@ from peerplays.proposal import Proposals
 from peerplays.eventgroup import EventGroups
 from peerplays.bettingmarketgroup import BettingMarketGroups
 from peerplays.bettingmarket import BettingMarkets
+from peerplaysbase.operationids import operations
 
 from bookied_sync.lookup import Lookup
-
-from bos_incidents import factory
+from bookied_sync.eventgroup import LookupEventGroup
+from bookied_sync.event import LookupEvent
 
 
 wif = "5KQwrPbwdL6PhXujxW37FSSQZ1JiwsST4cqQzDeyXtP79zkvFD3"
@@ -36,11 +40,8 @@ lookup = Lookup(
         "bookiesports"
     ),
 )
+lookup.set_approving_account("init0")
 assert lookup.blockchain.nobroadcast
-
-# Storage
-storage = factory.get_incident_storage(
-    "mongodbtest", purge=True)
 
 # Setup custom Cache
 BlockchainObject._cache = ObjectCache(
@@ -49,10 +50,28 @@ BlockchainObject._cache = ObjectCache(
 )
 
 
+def lookup_test_event(id):
+    event = {
+        "id": "1.18.2242",
+        "teams": ["Atlanta Hawks", "Boston Celtics"],
+        "eventgroup_identifier": "NBA",
+        "sport_identifier": "Basketball",
+        "season": {"en": "2017-00-00"},
+        "start_time": parse("2022-10-16T00:00:00"),
+        "status": "upcoming",
+    }
+    return LookupEvent(**event)
+
+
+def lookup_test_eventgroup(id):
+    return LookupEventGroup("Basketball", "NBA")
+
+
 def add_to_object_cache(objects):
     if objects:
         for i in objects:
-            BlockchainObject._cache[i["id"]] = i
+            if "id" in i and i["id"]:
+                BlockchainObject._cache[i["id"]] = i
 
 
 def add_event(data):
@@ -107,7 +126,31 @@ def fixture_data():
         Rules.cache[id].append(rule)
 
     for proposal in data.get("proposals", []):
-        id = proposal["required_active_approvals"][0]
+        # id = proposal["required_active_approvals"][0]
+        id = "1.2.1"
+        ops = list()
+        for _op in proposal["operations"]:
+            for opName, op in _op.items():
+                ops.append(
+                    [operations[opName], op]
+                )
+        # Proposal!
+        proposal_id = proposal.get("id", '1.10.336')
+        proposal_data = {'available_active_approvals': [],
+                         'available_key_approvals': [],
+                         'available_owner_approvals': [],
+                         'expiration_time': '2018-05-29T10:23:13',
+                         'id': proposal_id,
+                         'proposed_transaction': {'expiration': '2018-05-29T10:23:13',
+                                                  'extensions': [],
+                                                  'operations': ops,
+                                                  'ref_block_num': 0,
+                                                  'ref_block_prefix': 0},
+                         'proposer': '1.2.7',
+                         'required_active_approvals': ['1.2.1'],
+                         'required_owner_approvals': []}
+
         if id not in Proposals.cache and not Proposals.cache[id]:
             Proposals.cache[id] = []
-        Proposals.cache[id].append(proposal)
+        Proposals.cache[id].append(proposal_data)
+        BlockchainObject._cache[proposal_id] = proposal_data

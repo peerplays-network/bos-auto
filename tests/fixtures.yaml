@@ -39,6 +39,15 @@ events:
    start_time: "2022-10-16T00:00:00"
    event_group_id: "1.17.12"
 
+ - id: "1.18.2244"
+   status: "upcoming"
+   name: [['en', "Dallas Mavericks @ Cleveland Cavaliers"]]
+   # Home: Cleveland Cavaliers
+   # Away: Dallas Mavericks
+   season: [["en", "2017"]]
+   start_time: "2022-10-16T00:00:00"
+   event_group_id: "1.17.12"
+
 bettingmarketgroups:
  - id: "1.20.211"
    asset_id: '1.3.0'
@@ -244,18 +253,6 @@ bettingmarkets:
 #    group_id: '1.20.217'
 #    status: 'unresolved'
 #  ###################
-# 
-#  - id: '1.21.2962'
-#    description:
-#     - ['en', 'Over 3.5']
-#    group_id: '1.20.218'
-#    status: 'unresolved'
-# 
-#  - id: '1.21.2963'
-#    description:
-#     - ['en', 'Under 3.5']
-#    group_id: '1.20.218'
-#    status: 'unresolved'
 
 rules:
  - id: "1.19.10"
@@ -281,3 +278,31 @@ rules:
    description:
     - ["en", "Foobar"]
     - ["grading", '{"metric": "{result.total}", "resolutions": [{"not_win": "{metric} > {overunder.value}", "void": "False", "win": "{metric} <= {overunder.value}"}, {"not_win": "{metric} <= {overunder.value}", "void": "False", "win": "{metric} > {overunder.value}"}]}']
+
+proposals:
+ - proposal_id: 1.10.1
+   operations:
+    - betting_market_group_create:
+        extensions: []
+        fee: {amount: 0, asset_id: 1.3.0}
+        asset_id: '1.3.0'
+        delay_before_settling: 0
+        description:
+        - ["display_name", "Over/Under 3.5 pts"]
+        - ["en", "Over/Under 3.5 pts"]
+        - ["sen", "Total Points"]
+        - ["_dynamic", "ou"]
+        - ["_ou", "3.5"]
+        status: 'upcoming'
+        rules_id: '1.19.10'
+        event_id: '1.18.2244'
+
+    - betting_market_create:
+        description:
+         - ['en', 'Under 3.5']
+        group_id: '0.0.0'
+
+    - betting_market_create:
+        description:
+         - ['en', 'Over 3.5']
+        group_id: '0.0.0'

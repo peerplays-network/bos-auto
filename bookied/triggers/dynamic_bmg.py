@@ -4,26 +4,13 @@ from .trigger import Trigger
 from .. import exceptions
 from ..log import log
 from bookied_sync.event import LookupEvent
+from bookied_sync.bettingmarketgroup import LookupBettingMarketGroup
+from bookied_sync.bettingmarket import LookupBettingMarket
 from datetime import datetime, timedelta
 from dateutil.parser import parse
 from pprint import pprint
 from ..utils import dList2Dict
 MIN_AGE_INCIDENT = 1
-
-
-def is_type(x, typ):
-    if is_hc(typ):
-        return is_hc(x)
-    else:
-        return is_ou(x)
-
-
-def is_hc(x):
-    return x == "hc" or x == "1x2_hc"
-
-
-def is_ou(x):
-    return x == "ou"
 
 
 def obtain_participant_side(participant, teams):
@@ -57,7 +44,7 @@ class DynamicBmgTrigger(Trigger):
                 if (
                     "_dynamic" in description and
                     description["_dynamic"] and
-                    is_type(description["_dynamic"], incident_type["type"])
+                    LookupBettingMarketGroup.is_dynamic_type(description["_dynamic"], incident_type["type"])
                 ):
                     exists_on_chain = True
                     # We *DO* have this on chain already!
@@ -81,9 +68,9 @@ class DynamicBmgTrigger(Trigger):
         for incident in incidents:
             for incident_type in incident["arguments"]["types"]:
                 # Same type?
-                if is_type(incident_type["type"], t):
+                if LookupBettingMarketGroup.is_dynamic_type(incident_type["type"], t):
 
-                    if is_hc(t):
+                    if LookupBettingMarketGroup.is_hc_type(t):
                         # Correct team orientation?
                         this_side = obtain_participant_side(incident_type["participant"], self.teams)
                         # If sides don't match, we need to invert values
@@ -92,10 +79,9 @@ class DynamicBmgTrigger(Trigger):
                         else:
                             values.append(-float(incident_type["value"]))
 
-                    elif is_ou(t):
+                    elif LookupBettingMarketGroup.is_ou_type(t):
                         values.append(float(incident_type["value"]))
 
-        print(values, statistics.median(values))
         return statistics.median(values)
 
     def createBmgs(self, event, incident_type):
@@ -104,31 +90,45 @@ class DynamicBmgTrigger(Trigger):
         assert "type" in incident_type
         assert "value" in incident_type
         typ = incident_type["type"]
-        value = incident_type["value"]
 
         # Let's find the BM according to bookiesports
         for bmg in event.bettingmarketgroups:
 
             # Only do dynamic ones here
-            if (not bmg["dynamic"] or not is_type(bmg["type"], typ)):
+            if (not bmg["dynamic"] or not LookupBettingMarketGroup.is_dynamic_type(bmg["type"], typ)):
                 continue
 
             # If this is a Overunder BMG
-            if(is_ou(bmg.get("type")) and is_ou(typ)):
+            if(LookupBettingMarketGroup.is_ou_type(bmg.get("type")) and LookupBettingMarketGroup.is_ou_type(typ)):
 
                 # Let's obtain the overunder value
-                overunder = round(self.median_value("ou")) + 0.5
+                # overunder = math.floor(self.median_value("ou")) + 0.5
+                overunder = self.median_value("ou")  # The rounding will need to happen somewhere else!
 
                 # Set Overunder
                 bmg.set_overunder(overunder)
 
                 # Update and crate BMs
-                bmg.update()
+                fuzzy_args = {
+                    "test_operation_equal_search": [
+                        LookupBettingMarketGroup.cmp_required_keys(),
+                        LookupBettingMarketGroup.cmp_status(),
+                        LookupBettingMarketGroup.cmp_event(),
+                        LookupBettingMarketGroup.cmp_description("_dynamic"),
+                        LookupBettingMarketGroup.cmp_fuzzy(1),
+                    ],
+                    "find_id_search": [
+                        LookupBettingMarketGroup.cmp_event(),
+                        LookupBettingMarketGroup.cmp_fuzzy(1),
+                        LookupBettingMarketGroup.cmp_description("_dynamic"),
+                    ]
+                }
+                bmg.update(**fuzzy_args)
                 self.createBms(bmg)
                 return
 
             # If this is a Handicap BMG
-            elif(is_hc(bmg.get("type")) and is_hc(typ)):
+            elif(LookupBettingMarketGroup.is_hc_type(bmg.get("type")) and LookupBettingMarketGroup.is_hc_type(typ)):
                 # Identify which player has the handicap
                 side = obtain_participant_side(incident_type["participant"], self.teams)
 
@@ -137,7 +137,21 @@ class DynamicBmgTrigger(Trigger):
                 bmg.set_handicaps(**{side: handicap})
 
                 # Update and crate BMs
-                bmg.update()
+                fuzzy_args = {
+                    "test_operation_equal_search": [
+                        LookupBettingMarketGroup.cmp_required_keys(),
+                        LookupBettingMarketGroup.cmp_status(),
+                        LookupBettingMarketGroup.cmp_event(),
+                        LookupBettingMarketGroup.cmp_description("_dynamic"),
+                        LookupBettingMarketGroup.cmp_fuzzy(1),
+                    ],
+                    "find_id_search": [
+                        LookupBettingMarketGroup.cmp_event(),
+                        LookupBettingMarketGroup.cmp_fuzzy(1),
+                        LookupBettingMarketGroup.cmp_description("_dynamic"),
+                    ]
+                }
+                bmg.update(**fuzzy_args)
                 self.createBms(bmg)
                 return
 
