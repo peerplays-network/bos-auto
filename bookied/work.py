@@ -8,14 +8,14 @@ from peerplays import PeerPlays
 from peerplays.instance import set_shared_blockchain_instance
 from .log import log
 from .config import loadConfig
-from . import triggers
-from .triggers import (
-    CreateTrigger,
-    ResultTrigger,
-    InProgressTrigger,
-    FinishTrigger,
-    CancelTrigger
-)
+
+from bookied.triggers.create import CreateTrigger
+from bookied.triggers.result import ResultTrigger
+from bookied.triggers.in_progress import InProgressTrigger
+from bookied.triggers.finish import FinishTrigger
+from bookied.triggers.cancel import CancelTrigger
+from bookied.triggers.dynamic_bmg import DynamicBmgTrigger
+
 from . import exceptions
 from bookiesports.normalize import NotNormalizableException
 import logging
@@ -36,12 +36,12 @@ lookup = Lookup(
 )
 
 _triggers = {
-    "create": triggers.create.CreateTrigger,
-    "in_progress": triggers.in_progress.InProgressTrigger,
-    "finish": triggers.finish.FinishTrigger,
-    "result": triggers.result.ResultTrigger,
-    "cancel": triggers.cancel.CancelTrigger,
-    "dynamic_bmgs": triggers.dynamic_bmg.DynamicBmgTrigger
+    "create": CreateTrigger,
+    "in_progress": InProgressTrigger,
+    "finish": FinishTrigger,
+    "result": ResultTrigger,
+    "cancel": CancelTrigger,
+    "dynamic_bmgs": DynamicBmgTrigger
 }
 
 

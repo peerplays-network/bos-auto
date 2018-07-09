@@ -1,13 +1,16 @@
 #!/usr/bin/env python3
 
+import threading
 import click
+
 from click_datetime import Datetime
 from rq import Connection, Worker, use_connection, Queue
-from .config import loadConfig
-from .log import log
 from prettytable import PrettyTable, ALL as ALLBORDERS
 from dateutil import parser
 from pprint import pprint
+
+from .config import loadConfig
+from .log import log
 
 config = loadConfig()
 
@@ -59,11 +62,6 @@ def main():
     default="127.0.0.1"
 )
 @click.option(
-    "--host",
-    type=str,
-    default="127.0.0.1"
-)
-@click.option(
     '--debug',
     is_flag=True,
     default=False
@@ -77,6 +75,14 @@ def main():
 def api(port, host, debug, proposer, approver):
     """ Start the API endpoint
     """
+    from .schedule import scheduler as start_scheduler
+    threads = []
+    threads.append(threading.Thread(target=start_scheduler))
+    for t in threads:
+        log.info("Starting thread for {}".format(t))
+        t.start()
+        #t.join()
+
     from bookied.web import app
     app.config["BOOKIE_PROPOSER"] = proposer
     app.config["BOOKIE_APPROVER"] = approver
