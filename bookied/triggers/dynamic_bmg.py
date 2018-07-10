@@ -95,11 +95,11 @@ class DynamicBmgTrigger(Trigger):
         for bmg in event.bettingmarketgroups:
 
             # Only do dynamic ones here
-            if (not bmg["dynamic"] or not LookupBettingMarketGroup.is_dynamic_type(bmg["type"], typ)):
+            if (not bmg["dynamic"] or not LookupBettingMarketGroup.is_dynamic_type(bmg["dynamic"], typ)):
                 continue
 
             # If this is a Overunder BMG
-            if(LookupBettingMarketGroup.is_ou_type(bmg.get("type")) and LookupBettingMarketGroup.is_ou_type(typ)):
+            if(LookupBettingMarketGroup.is_ou_type(bmg.get("dynamic")) and LookupBettingMarketGroup.is_ou_type(typ)):
 
                 # Let's obtain the overunder value
                 # overunder = math.floor(self.median_value("ou")) + 0.5
@@ -128,7 +128,7 @@ class DynamicBmgTrigger(Trigger):
                 return
 
             # If this is a Handicap BMG
-            elif(LookupBettingMarketGroup.is_hc_type(bmg.get("type")) and LookupBettingMarketGroup.is_hc_type(typ)):
+            elif(LookupBettingMarketGroup.is_hc_type(bmg.get("dynamic")) and LookupBettingMarketGroup.is_hc_type(typ)):
                 # Identify which player has the handicap
                 side = obtain_participant_side(incident_type["participant"], self.teams)
 
