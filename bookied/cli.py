@@ -7,6 +7,7 @@ from click_datetime import Datetime
 from rq import Connection, Worker, use_connection, Queue
 from prettytable import PrettyTable, ALL as ALLBORDERS
 from dateutil import parser
+from datetime import datetime
 from pprint import pprint
 
 from .config import loadConfig
@@ -18,7 +19,9 @@ INCIDENT_CALLS = [
     "create",
     "in_progress",
     "finish",
-    "result"]
+    "result",
+    "dynamic_bmgs",
+]
 
 
 def format_incidents(event):
@@ -28,7 +31,7 @@ def format_incidents(event):
     incidents.align = 'l'
     for call, content in event.items():
         if "incidents" not in content:
-            continue
+            log.warning("no 'incidents' in content: {}".format(content))
 
         try:  # FIXME why can some incidents not be resolved?
             incidents.add_row([
@@ -81,7 +84,7 @@ def api(port, host, debug, proposer, approver):
     for t in threads:
         log.info("Starting thread for {}".format(t))
         t.start()
-        #t.join()
+        # t.join()
 
     from bookied.web import app
     app.config["BOOKIE_PROPOSER"] = proposer
@@ -198,15 +201,11 @@ def replay(filename, proposer, approver, url, call, dry_run):
 def scheduler():
     """ Test for postponed incidents and process them
     """
-    from .schedule import scheduler
-    scheduler()
-
-
-@main.group()
-def incidents():
-    """ Incidents calls
-    """
     pass
+    # Scheduler is now integrated into 'api' call
+
+    # from .schedule import scheduler
+    # scheduler()
 
 
 @main.group()
@@ -317,6 +316,13 @@ def replay(identifier, call, status_name, url):
                 log.error(str(e))
 
 
+@main.group()
+def incidents():
+    """ Incidents calls
+    """
+    pass
+
+
 @incidents.command()
 @click.argument("begin", required=False, type=Datetime(format='%Y/%m/%d'))
 @click.argument("end", required=False, type=Datetime(format='%Y/%m/%d'))
@@ -369,6 +375,30 @@ def show(unique_string, provider):
     incident = storage.get_incident_by_unique_string_and_provider(
         unique_string, provider)
     pprint(incident)
+
+
+@incidents.command()
+def postponed():
+    """ Show postponed incidents
+    """
+    import builtins
+    from bos_incidents import factory
+
+    t = PrettyTable(["identifier", "Incidents"], hrules=ALLBORDERS)
+    t.align = 'l'
+
+    storage = factory.get_incident_storage()
+    events = storage.get_events_by_call_status(
+        call="create",
+        status_name="postponed")
+
+    for event in events:
+        full_event = storage.get_event_by_id(event["id_string"])
+        t.add_row([
+            event["id_string"],
+            str(format_incidents(full_event))
+        ])
+    click.echo(t)
 
 
 @incidents.command()
