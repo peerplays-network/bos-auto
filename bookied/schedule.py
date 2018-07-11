@@ -5,7 +5,8 @@ from datetime import datetime
 from rq import Queue
 from bos_incidents import factory
 
-# from .log import log
+from . import INCIDENT_CALLS
+from .log import log
 from .config import loadConfig
 from .redis_con import get_redis
 
@@ -15,6 +16,7 @@ config = loadConfig()
 def check_scheduled(storage=None, func_callback=None):
     """
     """
+    log.info("Scheduler checking incidents database ...")
 
     # Flask queue
     q = Queue(connection=get_redis())
@@ -23,27 +25,30 @@ def check_scheduled(storage=None, func_callback=None):
     if not storage:
         storage = factory.get_incident_storage()
 
-    events = storage.get_events_by_call_status(
-        call="create",
-        status_name="postponed",
-        status_expired_before=datetime.utcnow())
-    events = list(events)
+    for call in INCIDENT_CALLS:
+        log.info("- testing call {}".format(call))
+        events = storage.get_events_by_call_status(
+            call=call,
+            status_name="postponed",
+            status_expired_before=datetime.utcnow())
+        events = list(events)
 
-    ids = list()
-    for event in events:
-        for incidentid in event.get("create", {}).get("incidents", []):
-            incident = storage.resolve_to_incident(incidentid)
+        ids = list()
+        for event in events:
+            for incidentid in event.get(call, {}).get("incidents", []):
+                incident = storage.resolve_to_incident(incidentid)
 
-            if func_callback:
-                job = q.enqueue(
-                    func_callback,
-                    args=(incident,),
-                    kwargs=dict(
-                        proposer=config.get("BOOKIE_PROPOSER"),
-                        approver=config.get("BOOKIE_APPROVER")
+                log.info("Scheduler retriggering incident ...")
+                if func_callback:
+                    job = q.enqueue(
+                        func_callback,
+                        args=(incident,),
+                        kwargs=dict(
+                            proposer=config.get("BOOKIE_PROPOSER"),
+                            approver=config.get("BOOKIE_APPROVER")
+                        )
                     )
-                )
-                ids.append(job.id)
+                    ids.append(job.id)
 
     return ids
 
@@ -70,14 +75,18 @@ class PeriodicExecutor(threading.Thread):
             self.func(*self.args, **self.kwargs)
 
 
-def scheduler(delay=30):
+def scheduler(delay=None):
     """
     """
     from . import work
+    if not delay:
+        delay = config["scheduler"]["interval"]
+
     check_scheduled(
         storage=None,
         func_callback=work.process
     )
+
     PeriodicExecutor(
         delay,
         check_scheduled,

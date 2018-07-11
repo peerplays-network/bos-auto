@@ -10,18 +10,12 @@ from dateutil import parser
 from datetime import datetime
 from pprint import pprint
 
+from . import INCIDENT_CALLS
 from .config import loadConfig
 from .log import log
 
-config = loadConfig()
 
-INCIDENT_CALLS = [
-    "create",
-    "in_progress",
-    "finish",
-    "result",
-    "dynamic_bmgs",
-]
+config = loadConfig()
 
 
 def format_incidents(event):
@@ -201,11 +195,10 @@ def replay(filename, proposer, approver, url, call, dry_run):
 def scheduler():
     """ Test for postponed incidents and process them
     """
-    pass
-    # Scheduler is now integrated into 'api' call
-
-    # from .schedule import scheduler
-    # scheduler()
+    from bos_incidents import factory
+    from .schedule import check_scheduled
+    storage = factory.get_incident_storage()
+    check_scheduled(storage, func_callback=print)
 
 
 @main.group()
@@ -243,7 +236,7 @@ def list():
 @event.command()
 @click.argument("identifier")
 def show(identifier):
-    """ List events
+    """ Show event
     """
     from bos_incidents import factory
     t = PrettyTable(["identifier", "Incidents"], hrules=ALLBORDERS)
@@ -335,7 +328,7 @@ def list(begin, end):
 
     storage = factory.get_incident_storage()
 
-    for event in storage.get_events():
+    for event in storage.get_events(resolve=True):
 
         # pprint(event)
         if not ("id" in event and event["id"]):
@@ -388,9 +381,7 @@ def postponed():
     t.align = 'l'
 
     storage = factory.get_incident_storage()
-    events = storage.get_events_by_call_status(
-        call="create",
-        status_name="postponed")
+    events = storage.get_events_by_call_status(status_name="postponed")
 
     for event in events:
         full_event = storage.get_event_by_id(event["id_string"])

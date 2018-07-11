@@ -1,16 +1,24 @@
 import math
 import statistics
-from .trigger import Trigger
-from .. import exceptions
-from ..log import log
-from bookied_sync.event import LookupEvent
-from bookied_sync.bettingmarketgroup import LookupBettingMarketGroup
-from bookied_sync.bettingmarket import LookupBettingMarket
+
 from datetime import datetime, timedelta
 from dateutil.parser import parse
 from pprint import pprint
+
+from bookied_sync.event import LookupEvent
+from bookied_sync.bettingmarketgroup import LookupBettingMarketGroup
+from bookied_sync.bettingmarket import LookupBettingMarket
+
+from .trigger import Trigger
+from .. import exceptions
+from ..log import log
 from ..utils import dList2Dict
+from ..config import loadConfig
+
 MIN_AGE_INCIDENT = 1
+
+
+config = loadConfig()
 
 
 def obtain_participant_side(participant, teams):
@@ -26,7 +34,7 @@ class DynamicBmgTrigger(Trigger):
     def _trigger(self, args):
         """ Trigger the 'create' message
         """
-        log.info("Looking up event to create ")
+        log.info("Looking up event to create")
         self.event = self.getEvent()
         self.teams = self.event.teams
 
@@ -34,6 +42,7 @@ class DynamicBmgTrigger(Trigger):
         incident_types = self.incident["arguments"]["types"]
 
         # We need to deal with each of the incidents individually
+        log.info("Testing incidents and existing BMGs")
         types_done = list()
         for incident_type in incident_types:
             exists_on_chain = False
@@ -56,6 +65,9 @@ class DynamicBmgTrigger(Trigger):
             if not exists_on_chain and incident_type["type"] not in types_done:
                 self.createBmgs(self.event, incident_type)
                 types_done.append(incident_type["type"])
+            else:
+                log.info("Already found BMGs on chain.. Aborting")
+                # just return, the worker will set the incident status to done
 
     def median_value(self, t, side=None):
         incidents = self.get_all_incidents()
@@ -115,11 +127,11 @@ class DynamicBmgTrigger(Trigger):
                         LookupBettingMarketGroup.cmp_status(),
                         LookupBettingMarketGroup.cmp_event(),
                         LookupBettingMarketGroup.cmp_description("_dynamic"),
-                        LookupBettingMarketGroup.cmp_fuzzy(1),
+                        LookupBettingMarketGroup.cmp_fuzzy(config["dynamic"]["overunder"]["fuzzy_value"]),
                     ],
                     "find_id_search": [
                         LookupBettingMarketGroup.cmp_event(),
-                        LookupBettingMarketGroup.cmp_fuzzy(1),
+                        LookupBettingMarketGroup.cmp_fuzzy(config["dynamic"]["overunder"]["fuzzy_value"]),
                         LookupBettingMarketGroup.cmp_description("_dynamic"),
                     ]
                 }
@@ -143,11 +155,11 @@ class DynamicBmgTrigger(Trigger):
                         LookupBettingMarketGroup.cmp_status(),
                         LookupBettingMarketGroup.cmp_event(),
                         LookupBettingMarketGroup.cmp_description("_dynamic"),
-                        LookupBettingMarketGroup.cmp_fuzzy(1),
+                        LookupBettingMarketGroup.cmp_fuzzy(config["dynamic"]["handicap"]["fuzzy_value"]),
                     ],
                     "find_id_search": [
                         LookupBettingMarketGroup.cmp_event(),
-                        LookupBettingMarketGroup.cmp_fuzzy(1),
+                        LookupBettingMarketGroup.cmp_fuzzy(config["dynamic"]["handicap"]["fuzzy_value"]),
                         LookupBettingMarketGroup.cmp_description("_dynamic"),
                     ]
                 }
@@ -177,7 +189,9 @@ class DynamicBmgTrigger(Trigger):
         # We test if the incident we received is X hours old
         # This happens if the incident is retriggered after being postpond
         my_time = parse(self.incident["timestamp"]).replace(tzinfo=None)
-        time_limit = (datetime.utcnow() - timedelta(hours=MIN_AGE_INCIDENT))
+        time_limit = (datetime.utcnow() - timedelta(
+            seconds=config["conditions"]["dynamic_bmgs"]["incident-min-age"])
+        )
 
         # We only allow this trigger if it is older than x hours
         if my_time <= time_limit:

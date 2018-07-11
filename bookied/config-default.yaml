@@ -47,8 +47,21 @@ api_whitelist:
  - 0.0.0.0
  - localhost
 
+
 scheduler:
  interval: 60
  expirations:
-  EventCannotOpenException: 60 * 60
-  PostPoneIncidentException: 60 * 60
+  EventCannotOpenException: 3600
+  PostPoneIncidentException: 3600
+
+
+dynamic:
+ handicap:
+  fuzzy_value: 1
+ overunder:
+  fuzzy_value: 1
+
+ 
+conditions:
+ dynamic_bmgs:
+  incident-min-age: 3600

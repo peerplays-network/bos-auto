@@ -53,7 +53,8 @@ class CreateTrigger(Trigger):
         for bmg in event.bettingmarketgroups:
 
             # Skip dynamic bmgs
-            if SKIP_DYNAMIC_BMS and bmg["dynamic"]:
+            if bmg["dynamic"]:
+                # Dynamic BMGs are created separately
                 log.info("Skipping dynamic BMG: {}".format(
                     str(bmg.identifier)))
                 continue
