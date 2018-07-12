@@ -13,10 +13,18 @@ from .redis_con import get_redis
 config = loadConfig()
 
 
-def check_scheduled(storage=None, func_callback=None):
+def check_scheduled(
+    storage=None,
+    func_callback=None,
+    proposer=None,
+    approver=None,
+):
     """
     """
-    log.info("Scheduler checking incidents database ...")
+    log.info(
+        "Scheduler checking incidents database ... "
+        "(approver: {}/ proposer: {})".format(
+            approver, proposer))
 
     # Flask queue
     q = Queue(connection=get_redis())
@@ -24,6 +32,11 @@ def check_scheduled(storage=None, func_callback=None):
     # Invident Storage
     if not storage:
         storage = factory.get_incident_storage()
+
+    if not proposer:
+        proposer = config.get("BOOKIE_PROPOSER")
+    if not approver:
+        approver = config.get("BOOKIE_APPROVER")
 
     for call in INCIDENT_CALLS:
         log.info("- testing call {}".format(call))
@@ -44,8 +57,8 @@ def check_scheduled(storage=None, func_callback=None):
                         func_callback,
                         args=(incident,),
                         kwargs=dict(
-                            proposer=config.get("BOOKIE_PROPOSER"),
-                            approver=config.get("BOOKIE_APPROVER")
+                            proposer=proposer,
+                            approver=approver
                         )
                     )
                     ids.append(job.id)
@@ -75,21 +88,34 @@ class PeriodicExecutor(threading.Thread):
             self.func(*self.args, **self.kwargs)
 
 
-def scheduler(delay=None):
+def scheduler(
+    delay=None,
+    proposer=None,
+    approver=None,
+):
     """
     """
     from . import work
     if not delay:
         delay = config["scheduler"]["interval"]
 
+    if not proposer:
+        proposer = config.get("BOOKIE_PROPOSER")
+    if not approver:
+        approver = config.get("BOOKIE_APPROVER")
+
     check_scheduled(
         storage=None,
-        func_callback=work.process
+        func_callback=work.process,
+        proposer=proposer,
+        approver=approver
     )
 
     PeriodicExecutor(
         delay,
         check_scheduled,
         storage=None,
-        func_callback=work.process
+        func_callback=work.process,
+        proposer=proposer,
+        approver=approver
     ).run()

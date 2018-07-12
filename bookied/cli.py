@@ -69,16 +69,21 @@ def main():
 @click.option(
     "--approver"
 )
-def api(port, host, debug, proposer, approver):
+@click.option(
+    "--scheduler/--no-scheduler",
+    default=True
+)
+def api(port, host, debug, proposer, approver, scheduler):
     """ Start the API endpoint
     """
-    from .schedule import scheduler as start_scheduler
-    threads = []
-    threads.append(threading.Thread(target=start_scheduler))
-    for t in threads:
-        log.info("Starting thread for {}".format(t))
-        t.start()
-        # t.join()
+    if scheduler:
+        from .schedule import scheduler as start_scheduler
+        threads = []
+        threads.append(threading.Thread(target=start_scheduler))
+        for t in threads:
+            log.info("Starting thread for {}".format(t))
+            t.start()
+            # t.join()
 
     from bookied.web import app
     app.config["BOOKIE_PROPOSER"] = proposer
@@ -191,14 +196,28 @@ def replay(filename, proposer, approver, url, call, dry_run):
             log.error(str(e))
 
 
+@click.option(
+    "--proposer"
+)
+@click.option(
+    "--approver"
+)
 @main.command()
-def scheduler():
+def scheduler(proposer, approver):
     """ Test for postponed incidents and process them
+    """
     """
     from bos_incidents import factory
     from .schedule import check_scheduled
     storage = factory.get_incident_storage()
     check_scheduled(storage, func_callback=print)
+    """
+    from .schedule import scheduler
+    scheduler(
+        proposer=proposer,
+        approver=approver,
+    )
+
 
 
 @main.group()
