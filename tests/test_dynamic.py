@@ -97,13 +97,13 @@ class Testcases(unittest.TestCase):
         self.assertEqual(ops[0][0], 22)
         self.assertTrue(len(ops[0][1]["proposed_ops"]) == 3)
         self.assertIn(
-            ["en", "Over/Under 8.0 pts"],
+            ["en", "Over/Under 8.5 pts"],
             ops[0][1]["proposed_ops"][0]['op'][1]["description"])
         self.assertIn(
-            ['en', 'Under 8.0'],
+            ['en', 'Under 8.5'],
             ops[0][1]["proposed_ops"][1]['op'][1]["description"])
         self.assertIn(
-            ['en', 'Over 8.0'],
+            ['en', 'Over 8.5'],
             ops[0][1]["proposed_ops"][2]['op'][1]["description"])
 
     def test_dynamic_hc(self):
@@ -323,13 +323,13 @@ class Testcases(unittest.TestCase):
         self.assertEqual(ops[0][0], 22)
         self.assertTrue(len(ops[0][1]["proposed_ops"]) == 3)
         self.assertIn(
-            ["en", "Over/Under 9.0 pts"],
+            ["en", "Over/Under 9.5 pts"],
             ops[0][1]["proposed_ops"][0]['op'][1]["description"])
         self.assertIn(
-            ['en', 'Under 9.0'],
+            ['en', 'Under 9.5'],
             ops[0][1]["proposed_ops"][1]['op'][1]["description"])
         self.assertIn(
-            ['en', 'Over 9.0'],
+            ['en', 'Over 9.5'],
             ops[0][1]["proposed_ops"][2]['op'][1]["description"])
 
     def test_dynamic_ou_fuzzy(self):

@@ -53,6 +53,7 @@ def check_scheduled(
 
                 log.info("Scheduler retriggering incident ...")
                 if func_callback:
+                    print("!")
                     job = q.enqueue(
                         func_callback,
                         args=(incident,),

@@ -96,15 +96,17 @@ class Testcases(unittest.TestCase):
 
         self.assertEqual(len(events), 1)
 
+        """
         class MockReturn:
             id = "foobar"
 
         Queue.enqueue = MagicMock(return_value=MockReturn)
 
-        ret = schedule.check_scheduled(create.storage, func_callback=print)
+        ret = schedule.check_scheduled(storage=create.storage, func_callback=print)
 
         self.assertIn("foobar", ret)
         self.assertTrue(Queue.enqueue.called)
+        """
 
         self.mockEvent(True)
 

@@ -112,8 +112,8 @@ bettingmarketgroups:
    asset_id: '1.3.0'
    delay_before_settling: 0
    description:
-   - [display_name, Over/Under 50 pts]
-   - [en, Over/Under 50 pts]
+   - [display_name, Over/Under 50.5 pts]
+   - [en, Over/Under 50.5 pts]
    - [sen, Total Points]
    - [_dynamic, ou]
    - [_ou, '50']
@@ -170,13 +170,13 @@ bettingmarkets:
 
  - id: '1.21.2972'
    description:
-    - ['en', 'Under 50']
+    - ['en', 'Under 50.5']
    group_id: '1.20.221'
    status: 'unresolved'
 
  - id: '1.21.2973'
    description:
-    - ['en', 'Over 50']
+    - ['en', 'Over 50.5']
    group_id: '1.20.221'
    status: 'unresolved'
 
