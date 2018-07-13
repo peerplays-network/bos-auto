@@ -10,10 +10,7 @@ class InProgressTrigger(Trigger):
         """ Set a BMG to ``in_progress``
         """
         log.info("Setting a event to 'in_progress'...")
-
         event = self.getEvent()
-
-        event.update()
         event.status_update("in_progress")
 
     def testConditions(self, *args, **kwargs):

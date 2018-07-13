@@ -41,3 +41,11 @@ class CreateIncidentTooOldException(Exception):
     """ The create incident tries to create an event in the past
     """
     pass
+
+
+class InvalidParticipantException(Exception):
+    pass
+
+
+class PostPoneIncidentException(Exception):
+    pass

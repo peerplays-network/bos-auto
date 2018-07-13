@@ -1,21 +1,21 @@
 #!/usr/bin/env python3
 
+import threading
 import click
+
 from click_datetime import Datetime
 from rq import Connection, Worker, use_connection, Queue
-from .config import loadConfig
-from .log import log
 from prettytable import PrettyTable, ALL as ALLBORDERS
 from dateutil import parser
+from datetime import datetime
 from pprint import pprint
 
-config = loadConfig()
+from . import INCIDENT_CALLS
+from .config import loadConfig
+from .log import log
 
-INCIDENT_CALLS = [
-    "create",
-    "in_progress",
-    "finish",
-    "result"]
+
+config = loadConfig()
 
 
 def format_incidents(event):
@@ -25,7 +25,7 @@ def format_incidents(event):
     incidents.align = 'l'
     for call, content in event.items():
         if "incidents" not in content:
-            continue
+            log.warning("no 'incidents' in content: {}".format(content))
 
         try:  # FIXME why can some incidents not be resolved?
             incidents.add_row([
@@ -59,11 +59,6 @@ def main():
     default="127.0.0.1"
 )
 @click.option(
-    "--host",
-    type=str,
-    default="127.0.0.1"
-)
-@click.option(
     '--debug',
     is_flag=True,
     default=False
@@ -74,9 +69,22 @@ def main():
 @click.option(
     "--approver"
 )
-def api(port, host, debug, proposer, approver):
+@click.option(
+    "--scheduler/--no-scheduler",
+    default=True
+)
+def api(port, host, debug, proposer, approver, scheduler):
     """ Start the API endpoint
     """
+    if scheduler:
+        from .schedule import scheduler as start_scheduler
+        threads = []
+        threads.append(threading.Thread(target=start_scheduler))
+        for t in threads:
+            log.info("Starting thread for {}".format(t))
+            t.start()
+            # t.join()
+
     from bookied.web import app
     app.config["BOOKIE_PROPOSER"] = proposer
     app.config["BOOKIE_APPROVER"] = approver
@@ -188,19 +196,28 @@ def replay(filename, proposer, approver, url, call, dry_run):
             log.error(str(e))
 
 
+@click.option(
+    "--proposer"
+)
+@click.option(
+    "--approver"
+)
 @main.command()
-def scheduler():
+def scheduler(proposer, approver):
     """ Test for postponed incidents and process them
     """
-    from .schedule import scheduler
-    scheduler()
-
-
-@main.group()
-def incidents():
-    """ Incidents calls
     """
-    pass
+    from bos_incidents import factory
+    from .schedule import check_scheduled
+    storage = factory.get_incident_storage()
+    check_scheduled(storage, func_callback=print)
+    """
+    from .schedule import scheduler
+    scheduler(
+        proposer=proposer,
+        approver=approver,
+    )
+
 
 
 @main.group()
@@ -238,7 +255,7 @@ def list():
 @event.command()
 @click.argument("identifier")
 def show(identifier):
-    """ List events
+    """ Show event
     """
     from bos_incidents import factory
     t = PrettyTable(["identifier", "Incidents"], hrules=ALLBORDERS)
@@ -311,6 +328,13 @@ def replay(identifier, call, status_name, url):
                 log.error(str(e))
 
 
+@main.group()
+def incidents():
+    """ Incidents calls
+    """
+    pass
+
+
 @incidents.command()
 @click.argument("begin", required=False, type=Datetime(format='%Y/%m/%d'))
 @click.argument("end", required=False, type=Datetime(format='%Y/%m/%d'))
@@ -323,7 +347,7 @@ def list(begin, end):
 
     storage = factory.get_incident_storage()
 
-    for event in storage.get_events():
+    for event in storage.get_events(resolve=True):
 
         # pprint(event)
         if not ("id" in event and event["id"]):
@@ -363,6 +387,28 @@ def show(unique_string, provider):
     incident = storage.get_incident_by_unique_string_and_provider(
         unique_string, provider)
     pprint(incident)
+
+
+@incidents.command()
+def postponed():
+    """ Show postponed incidents
+    """
+    import builtins
+    from bos_incidents import factory
+
+    t = PrettyTable(["identifier", "Incidents"], hrules=ALLBORDERS)
+    t.align = 'l'
+
+    storage = factory.get_incident_storage()
+    events = storage.get_events_by_call_status(status_name="postponed")
+
+    for event in events:
+        full_event = storage.get_event_by_id(event["id_string"])
+        t.add_row([
+            event["id_string"],
+            str(format_incidents(full_event))
+        ])
+    click.echo(t)
 
 
 @incidents.command()

@@ -1,23 +1,29 @@
+import time
+import logging
 import traceback
 import grapheneapi
 import bookied_sync
 import bos_incidents
+
 from flask_rq import job
+from datetime import datetime, timedelta
+
 from bookied_sync.lookup import Lookup
 from peerplays import PeerPlays
 from peerplays.instance import set_shared_blockchain_instance
+
+from bookied.triggers.create import CreateTrigger
+from bookied.triggers.result import ResultTrigger
+from bookied.triggers.in_progress import InProgressTrigger
+from bookied.triggers.finish import FinishTrigger
+from bookied.triggers.cancel import CancelTrigger
+from bookied.triggers.dynamic_bmg import DynamicBmgTrigger
+
+from bookiesports.normalize import NotNormalizableException
+
 from .log import log
 from .config import loadConfig
-from .triggers import (
-    CreateTrigger,
-    ResultTrigger,
-    InProgressTrigger,
-    FinishTrigger
-)
 from . import exceptions
-from bookiesports.normalize import NotNormalizableException
-import logging
-import time
 
 
 config = loadConfig()
@@ -32,6 +38,15 @@ lookup = Lookup(
     blockchain_instance=peerplays,
     network=config.get("network", "baxter")
 )
+
+_triggers = {
+    "create": CreateTrigger,
+    "in_progress": InProgressTrigger,
+    "finish": FinishTrigger,
+    "result": ResultTrigger,
+    "cancel": CancelTrigger,
+    "dynamic_bmgs": DynamicBmgTrigger
+}
 
 
 def unlock():
@@ -100,30 +115,9 @@ def process(
         call, str(args)
     ))
     try:
-        # Instanciate trigger
-        if call == "create":
-            trigger = CreateTrigger(
-                message,
-                lookup_instance=lookup,
-                config=config,
-            )
 
-        elif call == "in_progress":
-            trigger = InProgressTrigger(
-                message,
-                lookup_instance=lookup,
-                config=config,
-            )
-
-        elif call == "finish":
-            trigger = FinishTrigger(
-                message,
-                lookup_instance=lookup,
-                config=config,
-            )
-
-        elif call == "result":
-            trigger = ResultTrigger(
+        if call in _triggers:
+            trigger = _triggers[call](
                 message,
                 lookup_instance=lookup,
                 config=config,
@@ -142,7 +136,7 @@ def process(
         log.info(str(e))
         return
 
-    except NotNormalizableException:
+    except NotNormalizableException as e:
         log.warning("Incident not normalizable: {}".format(message))
         return
 
@@ -158,24 +152,44 @@ def process(
         trigger.trigger(args)
 
     except exceptions.EventDoesNotExistException:
+        log.warning("Event does not exist on chain!")
         trigger.set_incident_status(status_name="event missing")
 
     except exceptions.EventGroupClosedException:
+        log.warning("The event group is closed!")
         trigger.set_incident_status(status_name="event group closed")
 
     except exceptions.EventCannotOpenException:
-        trigger.set_incident_status(status_name="postponed")
+        trigger.set_incident_status(
+            status_name="postponed",
+            status_expiration=datetime.utcnow() + timedelta(
+                seconds=int(config["scheduler"]["expirations"]["EventCannotOpenException"])
+            )
+        )
+
+    except exceptions.PostPoneIncidentException:
+        log.info("This incident has been postponed")
+        trigger.set_incident_status(
+            status_name="postponed",
+            status_expiration=datetime.utcnow() + timedelta(
+                seconds=int(config["scheduler"]["expirations"]["PostPoneIncidentException"])
+            )
+        )
 
     except exceptions.InsufficientIncidents:
         trigger.set_incident_status(status_name="insufficient incidents")
 
     except exceptions.InsufficientEqualResults:
+        log.info("This incident couldn't lead to a decision")
         trigger.set_incident_status(status_name="undecided")
 
     except grapheneapi.exceptions.NumRetriesReached:
+        log.critical("Connection to backend node has been lost!")
         trigger.set_incident_status(status_name="connection lost")
 
-    except bos_incidents.exceptions.EventNotFoundException:
+    except bos_incidents.exceptions.EventNotFoundException as e:
+        traceback.format_exc()
+        log.warning("Invalid bos_incident event!")
         trigger.set_incident_status(
             status_name="event missing in bos_incidents")
 

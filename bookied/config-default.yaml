@@ -1,0 +1,67 @@
+######################
+# Witness endpoint
+######################
+# Ideally, the witness endpoint runs on localhost somewhere
+node: ws://ec2-35-183-1-21.ca-central-1.compute.amazonaws.com:8090
+
+######################
+# PeerPlays network
+######################
+# This allows you to specify which version of bookiesport to take
+# If you connect to Alice (PeerPlays) and try to use network Baxter
+# (PeerPlays testnetwork), an exception will be raised!
+network: charlie
+
+
+redis_host:
+redis_port:
+redis_password:
+redis_db:
+
+nobroadcast: False
+passphrase: posaune
+
+BOOKIE_PROPOSER: init0
+BOOKIE_APPROVER: init0
+
+#telegram_token: 546146492:AAFUN0yG4soGYgFH94hNXEj68VA_WLx5on0
+## python3 -m telegram_handler "${telegram_token}"
+#telegram_chatid: 13109052
+
+#mailhost: localhost
+#mailfrom: bookied@pbsa-01.dev.blockchainprojectsbv.com
+#mailto: Fabian.Schuh@blockchainprojectsbv.com
+
+##################
+# Data Proxy IP Whitelist
+##################
+# This option allows to define who is allowed to access the web endpoint
+# to send messages to. This is a list of IP or hostnames that are
+# resovled at the launch time. DNS changes during run time will not
+# propagate!
+#
+#   * 0.0.0.0 - will allow anyone to send messages
+#   * dataproxy.example.com - IP address resolved at startup time.
+#
+api_whitelist:
+ - 0.0.0.0
+ - localhost
+
+
+scheduler:
+ interval: 60
+ expirations:
+  EventCannotOpenException: 3600
+  PostPoneIncidentException: 3600
+
+
+dynamic:
+ handicap:
+  fuzzy_value: 1
+ overunder:
+  fuzzy_value: 1
+
+ 
+conditions:
+ dynamic_bmgs:
+  incident-min-age: 3600

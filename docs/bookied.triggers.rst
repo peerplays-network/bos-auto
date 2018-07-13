@@ -6,7 +6,9 @@ Submodules
 
 .. toctree::
 
+   bookied.triggers.cancel
    bookied.triggers.create
+   bookied.triggers.dynamic_bmg
    bookied.triggers.finish
    bookied.triggers.in_progress
    bookied.triggers.result

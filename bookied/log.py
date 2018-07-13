@@ -22,7 +22,7 @@ USE_TELEGRAM = (
     logging_config.get("telegram_chatid", None) is not None
 )
 USE_MAIL = logging_config.get("mailto", None)
-USE_STREAM = logging_config.get("console", None)
+USE_STREAM = True  # logging_config.get("console", None)
 USE_FILE = logging_config.get("file", None)
 
 
@@ -94,7 +94,7 @@ LOGFORMAT = ("  %(log_color)s%(levelname)-8s%(reset)s |"
 logging.root.setLevel(LOG_LEVEL)
 formatter = ColoredFormatter(LOGFORMAT)
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("bookied.*")
 log.setLevel(LOG_LEVEL)
 
 logsync = logging.getLogger("bookied_sync")
