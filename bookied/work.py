@@ -44,7 +44,7 @@ _triggers = {
     "in_progress": InProgressTrigger,
     "finish": FinishTrigger,
     "result": ResultTrigger,
-    "cancel": CancelTrigger,
+    "canceled": CancelTrigger,
     "dynamic_bmgs": DynamicBmgTrigger
 }
 
