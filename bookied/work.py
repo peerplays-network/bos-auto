@@ -131,6 +131,7 @@ def process(
                 "Received an unknown trigger {} with content: {}"
                 .format(call, message)
             )
+            return
 
     except bookied_sync.exceptions.ObjectNotFoundInLookup as e:
         log.info(str(e))
