@@ -3,5 +3,6 @@ INCIDENT_CALLS = [
     "in_progress",
     "finish",
     "result",
+    "canceled",
     "dynamic_bmgs",
 ]
