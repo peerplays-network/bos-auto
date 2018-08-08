@@ -1,4 +1,5 @@
 from .trigger import Trigger
+from bookied_sync import comparators
 from bookied_sync.bettingmarketgroup import LookupBettingMarketGroup
 from bookied_sync.bettingmarketgroupresolve import (
     LookupBettingMarketGroupResolve
@@ -42,12 +43,12 @@ class ResultTrigger(Trigger):
                 # Update and crate BMs
                 fuzzy_args = {
                     "test_operation_equal_search": [
-                        LookupBettingMarketGroup.cmp_event(),
-                        LookupBettingMarketGroup.cmp_description("_dynamic"),
+                        comparators.cmp_event(),
+                        comparators.cmp_description("_dynamic"),
                     ],
                     "find_id_search": [
-                        LookupBettingMarketGroup.cmp_event(),
-                        LookupBettingMarketGroup.cmp_description("_dynamic"),
+                        comparators.cmp_event(),
+                        comparators.cmp_description("_dynamic"),
                     ]
                 }
             else:

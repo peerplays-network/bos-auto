@@ -72,7 +72,7 @@ class Testcases(unittest.TestCase):
         ops = tx[0].get("operations")
         self.assertEqual(len(ops), 1)
         self.assertEqual(ops[0][0], 22)
-        self.assertEqual(len(ops[0][1]["proposed_ops"]), 4)
+        self.assertEqual(len(ops[0][1]["proposed_ops"]), 3)
         self.assertEqual(
             ops[0][1]["proposed_ops"][0]['op'][1]["status"],
             "finished")

@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 from dateutil.parser import parse
 from pprint import pprint
 
+from bookied_sync import comparators
 from bookied_sync.event import LookupEvent
 from bookied_sync.bettingmarketgroup import LookupBettingMarketGroup
 from bookied_sync.bettingmarket import LookupBettingMarket
@@ -123,16 +124,22 @@ class DynamicBmgTrigger(Trigger):
                 # Update and crate BMs
                 fuzzy_args = {
                     "test_operation_equal_search": [
-                        LookupBettingMarketGroup.cmp_required_keys(),
-                        LookupBettingMarketGroup.cmp_status(),
-                        LookupBettingMarketGroup.cmp_event(),
-                        LookupBettingMarketGroup.cmp_description("_dynamic"),
-                        LookupBettingMarketGroup.cmp_fuzzy(config["dynamic"]["overunder"]["fuzzy_value"]),
+                        comparators.cmp_required_keys([
+                            "betting_market_group_id", "new_description",
+                            "new_event_id", "new_rules_id"
+                        ], [
+                            "betting_market_group_id", "description",
+                            "event_id", "rules_id"
+                        ]),
+                        comparators.cmp_status(),
+                        comparators.cmp_event(),
+                        comparators.cmp_description("_dynamic"),
+                        comparators.cmp_fuzzy(config["dynamic"]["overunder"]["fuzzy_value"]),
                     ],
                     "find_id_search": [
-                        LookupBettingMarketGroup.cmp_event(),
-                        LookupBettingMarketGroup.cmp_fuzzy(config["dynamic"]["overunder"]["fuzzy_value"]),
-                        LookupBettingMarketGroup.cmp_description("_dynamic"),
+                        comparators.cmp_event(),
+                        comparators.cmp_fuzzy(config["dynamic"]["overunder"]["fuzzy_value"]),
+                        comparators.cmp_description("_dynamic"),
                     ]
                 }
                 bmg.update(**fuzzy_args)
@@ -151,16 +158,22 @@ class DynamicBmgTrigger(Trigger):
                 # Update and crate BMs
                 fuzzy_args = {
                     "test_operation_equal_search": [
-                        LookupBettingMarketGroup.cmp_required_keys(),
-                        LookupBettingMarketGroup.cmp_status(),
-                        LookupBettingMarketGroup.cmp_event(),
-                        LookupBettingMarketGroup.cmp_description("_dynamic"),
-                        LookupBettingMarketGroup.cmp_fuzzy(config["dynamic"]["handicap"]["fuzzy_value"]),
+                        comparators.cmp_required_keys([
+                            "betting_market_group_id", "new_description",
+                            "new_event_id", "new_rules_id"
+                        ], [
+                            "betting_market_group_id", "description",
+                            "event_id", "rules_id"
+                        ]),
+                        comparators.cmp_status(),
+                        comparators.cmp_event(),
+                        comparators.cmp_description("_dynamic"),
+                        comparators.cmp_fuzzy(config["dynamic"]["handicap"]["fuzzy_value"]),
                     ],
                     "find_id_search": [
-                        LookupBettingMarketGroup.cmp_event(),
-                        LookupBettingMarketGroup.cmp_fuzzy(config["dynamic"]["handicap"]["fuzzy_value"]),
-                        LookupBettingMarketGroup.cmp_description("_dynamic"),
+                        comparators.cmp_event(),
+                        comparators.cmp_fuzzy(config["dynamic"]["handicap"]["fuzzy_value"]),
+                        comparators.cmp_description("_dynamic"),
                     ]
                 }
                 bmg.update(**fuzzy_args)

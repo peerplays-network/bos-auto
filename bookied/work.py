@@ -44,7 +44,7 @@ _triggers = {
     "in_progress": InProgressTrigger,
     "finish": FinishTrigger,
     "result": ResultTrigger,
-    "cancel": CancelTrigger,
+    "canceled": CancelTrigger,
     "dynamic_bmgs": DynamicBmgTrigger
 }
 
@@ -83,7 +83,7 @@ def process(
     """
     try:
         t = time.time()
-        logging.getLogger(__name__).debug("Processing " + message["unique_string"])
+        log.debug("Processing " + message["unique_string"])
     except Exception as e:
         pass
 
@@ -131,6 +131,7 @@ def process(
                 "Received an unknown trigger {} with content: {}"
                 .format(call, message)
             )
+            return
 
     except bookied_sync.exceptions.ObjectNotFoundInLookup as e:
         log.info(str(e))
@@ -209,9 +210,10 @@ def process(
 
     try:
         elapsed = time.time() - t
-        logging.getLogger(__name__).debug("Done processing " + message["unique_string"] + ", elapsed time is " + str(elapsed))
+        log.debug("Done processing " + message["unique_string"] + ", elapsed time is " + str(elapsed))
     except Exception as e:
         pass
+
 
 #
 # Approve my own Proposals
