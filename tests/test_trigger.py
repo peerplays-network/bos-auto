@@ -83,7 +83,7 @@ class Testcases(unittest.TestCase):
             "call": "create"
         }
         _message_create_2 = deepcopy(_message_create_1)
-        _message_create_2["provider_info"]["name"] = "foobar"
+        _message_create_2["provider_info"]["name"] += "foobar"
         _message_create_2["unique_string"] += "foobar"
 
         create = CreateTrigger(
@@ -184,8 +184,8 @@ class Testcases(unittest.TestCase):
             "arguments": {"whistle_end_time": "2018-03-10T02:14:09.751Z"},
             "call": "finish"}
 
-        _message_finish_2 = _message_finish_1.copy()
-        _message_finish_2["provider_info"]["name"] = "foobar"
+        _message_finish_2 = deepcopy(_message_finish_1)
+        _message_finish_2["provider_info"]["name"] += "foobar"
         _message_finish_2["unique_string"] += "foobar"
 
         finish = FinishTrigger(
@@ -239,8 +239,8 @@ class Testcases(unittest.TestCase):
             "arguments": {"home_score": "99",
                           "away_score": "83"},
             "call": "result"}
-        _message_result_2 = _message_result_1.copy()
-        _message_result_2["provider_info"]["name"] = "foobar"
+        _message_result_2 = deepcopy(_message_result_1)
+        _message_result_2["provider_info"]["name"] += "foobar"
         _message_result_2["unique_string"] += "foobar"
 
         result = ResultTrigger(
@@ -312,8 +312,8 @@ class Testcases(unittest.TestCase):
             "unique_string": "2018-03-10t000000z-basketball-nba-regular-season-detroit-pistons-chicago-bulls-cancel-2018-03-10t021409751z",
             "arguments": {},
             "call": "canceled"}
-        _message_cancel_2 = _message_cancel_1.copy()
-        _message_cancel_2["provider_info"]["name"] = "foobar"
+        _message_cancel_2 = deepcopy(_message_cancel_1)
+        _message_cancel_2["provider_info"]["name"] += "foobar"
         _message_cancel_2["unique_string"] += "foobar"
 
         cancel = CancelTrigger(

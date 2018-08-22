@@ -150,12 +150,12 @@ class CreateTrigger(Trigger):
         if not incidents:
             raise exceptions.InsufficientIncidents("No incident found")
         create_incidents = incidents.get("create", {}).get("incidents", [])
-        provider_hashes = {}
+        provider_hashes = set()
         for incident in create_incidents:
             provider_hash = incident.get("provider_info", {}).get("name", None)
             if provider_hash is not None:
-                provider_hashes[provider_hash] = provider_hash
-        if len(provider_hashes.keys()) >= self.testThreshold():
+                provider_hashes.add(provider_hash)
+        if len(provider_hashes) >= self.testThreshold():
             return True
         else:
             msg = "Insufficient incidents for {}({})".format(

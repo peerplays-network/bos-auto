@@ -40,8 +40,8 @@ class Testcases(unittest.TestCase):
             "arguments": {"home_score": "99",
                           "away_score": "83"},
             "call": "result"}
-        _message_result_2 = _message_result_1.copy()
-        _message_result_2["provider_info"]["name"] = "foobar"
+        _message_result_2 = deepcopy(_message_result_1)
+        _message_result_2["provider_info"]["name"] += "foobar"
         _message_result_2["unique_string"] += "foobar"
 
         result = ResultTrigger(
