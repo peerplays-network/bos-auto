@@ -1,4 +1,5 @@
 import os
+import time
 import unittest
 import bos_incidents
 
@@ -102,16 +103,18 @@ class Testcases(unittest.TestCase):
             purge=True, mongodb="mongodbtest",
         )
 
-        with self.assertRaises(exceptions.EventCannotOpenException):
-            create.getIncidentEvent()
         with self.assertRaises(exceptions.EventDoesNotExistException):
             create.getEvent()
+        with self.assertRaises(exceptions.EventCannotOpenException):
+            create.createEvent()
+        with self.assertRaises(exceptions.EventCannotOpenException):
+            create.getIncidentEvent()
 
-        event = LookupEvent(
-            teams=create.teams,
-            start_time=create.start_time,
-            eventgroup_identifier=create.eventgroup.identifier,
-            sport_identifier=create.sport.identifier
-        )
-        self.assertEqual(str(event.can_open_by), "2022-10-14 00:00:00")
-        self.assertFalse(event.can_open)
+        self.assertEqual(str(create.event.can_open_by), "2022-10-14 00:00:00")
+        self.assertFalse(create.event.can_open)
+
+        now = int(time.mktime(datetime.utcnow().timetuple()))
+        expiration_time = create.event.can_open_by + timedelta(seconds=(now % 120))
+
+        self.assertLessEqual(expiration_time, create.event.can_open_by + timedelta(seconds=120))
+        self.assertGreaterEqual(expiration_time, create.event.can_open_by)
