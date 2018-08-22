@@ -12,18 +12,11 @@ from bookied_sync.lookup import Lookup
 from peerplays import PeerPlays
 from peerplays.instance import set_shared_blockchain_instance
 
-from bookied.triggers.create import CreateTrigger
-from bookied.triggers.result import ResultTrigger
-from bookied.triggers.in_progress import InProgressTrigger
-from bookied.triggers.finish import FinishTrigger
-from bookied.triggers.cancel import CancelTrigger
-from bookied.triggers.dynamic_bmg import DynamicBmgTrigger
-
 from bookiesports.normalize import NotNormalizableException
 
 from .log import log
 from .config import loadConfig
-from . import exceptions
+from . import exceptions, TRIGGERS
 
 
 config = loadConfig()
@@ -38,15 +31,6 @@ lookup = Lookup(
     blockchain_instance=peerplays,
     network=config.get("network", "baxter")
 )
-
-_triggers = {
-    "create": CreateTrigger,
-    "in_progress": InProgressTrigger,
-    "finish": FinishTrigger,
-    "result": ResultTrigger,
-    "canceled": CancelTrigger,
-    "dynamic_bmgs": DynamicBmgTrigger
-}
 
 
 def unlock():
@@ -116,8 +100,8 @@ def process(
     ))
     try:
 
-        if call in _triggers:
-            trigger = _triggers[call](
+        if call in TRIGGERS:
+            trigger = TRIGGERS[call](
                 message,
                 lookup_instance=lookup,
                 config=config,
