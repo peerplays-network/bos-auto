@@ -3,16 +3,17 @@
 import threading
 import click
 
-from click_datetime import Datetime
 from rq import Connection, Worker, use_connection, Queue
-from prettytable import PrettyTable, ALL as ALLBORDERS
+from pprint import pprint
 from dateutil import parser
 from datetime import datetime
-from pprint import pprint
+from prettytable import PrettyTable, ALL as ALLBORDERS
+from bos_incidents import factory
+from click_datetime import Datetime
 
 from . import INCIDENT_CALLS
-from .config import loadConfig
 from .log import log
+from .config import loadConfig
 
 
 config = loadConfig()
@@ -81,7 +82,52 @@ def worker(queue):
     """
     from .redis_con import get_redis
     from . import work
+
     work.unlock()
+    # Let's drop the redis database and refill it from incident store
+    with Connection(get_redis()):
+
+        def retrigger_from_events(events, call):
+            for event in events:
+                for incidentid in event.get(call, {}).get("incidents", []):
+                    incident = storage.resolve_to_incident(incidentid)
+                    job = q.enqueue(
+                        work.process,
+                        args=(incident,),
+                        kwargs=dict(
+                            proposer=config.get("BOOKIE_PROPOSER"),
+                            approver=config.get("BOOKIE_APPROVER")
+                        )
+                    )
+
+
+        q = Queue("default")
+        # Empty queue!
+        q.empty()
+        log.info("Redis Queue cleared")
+
+        log.info("Refilling redis queue from incident store")
+        storage = factory.get_incident_storage()
+        for call in INCIDENT_CALLS:
+            for status_name in [
+                "insufficient incidents",
+                "undecided",
+                "connection lost",
+                "related object not found",
+                "event missing in bos_incidents",
+                "postponed",
+                # "event missing",
+            ]:
+                events = list(
+                    storage.get_events_by_call_status(
+                        call=call, status_name=status_name))
+                if len(events):
+                    log.info(
+                        "Retriggering {} {}:{} incidents".format(
+                            len(events), call, status_name))
+                retrigger_from_events(events, call)
+
+    # This runs the Worker as thread
     with Connection(get_redis()):
         w = Worker([queue])
         w.work()
