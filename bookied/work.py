@@ -161,6 +161,17 @@ def process(
         trigger.set_incident_status(status_name="event group closed")
 
     except exceptions.EventCannotOpenException:
+        log.info("This incident has been postponed")
+        """
+        now = int(time.mktime(datetime.utcnow().timetuple()))
+        expiration_time = trigger.event.can_open_by + timedelta(seconds=(now % 120))
+
+        trigger.set_incident_status(
+            status_name="postponed",
+            status_expiration=expiration_time
+        )
+
+        """
         trigger.set_incident_status(
             status_name="postponed",
             status_expiration=datetime.utcnow() + timedelta(
