@@ -56,7 +56,9 @@ def isalive():
     queue_status = {}
     with Connection():
         for queue in q.all():
-            queue_status[queue.name] = queue.count
+            queue_status[queue.name] = dict(
+                count=queue.count,
+            )
 
     return jsonify(dict(
         versions=versions,
