@@ -91,7 +91,7 @@ def worker(queue):
             for event in events:
                 for incidentid in event.get(call, {}).get("incidents", []):
                     incident = storage.resolve_to_incident(incidentid)
-                    job = q.enqueue(
+                    q.enqueue(
                         work.process,
                         args=(incident,),
                         kwargs=dict(
@@ -116,6 +116,7 @@ def worker(queue):
                 "related object not found",
                 "event missing in bos_incidents",
                 "postponed",
+                "unknown",  # unhandled incidents
                 # "event missing",
             ]:
                 events = list(
