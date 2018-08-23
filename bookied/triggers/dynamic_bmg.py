@@ -3,7 +3,6 @@ import statistics
 
 from datetime import datetime, timedelta
 from dateutil.parser import parse
-from pprint import pprint
 
 from bookied_sync import comparators
 from bookied_sync.event import LookupEvent

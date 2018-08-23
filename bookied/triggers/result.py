@@ -107,10 +107,12 @@ class ResultTrigger(Trigger):
         if not incidents:
             raise exceptions.InsufficientIncidents
         result_incidents = incidents.get("result", {}).get("incidents")
-        if (
-            (not result_incidents) or
-            (result_incidents and len(result_incidents) < self.testThreshold())
-        ):
+        provider_hashes = set()
+        for incident in result_incidents:
+            provider_hash = incident.get("provider_info", {}).get("name", None)
+            if provider_hash is not None:
+                provider_hashes.add(provider_hash)
+        if len(provider_hashes) < self.testThreshold():
             log.info(
                 "Insufficient incidents for {}({})".format(
                     self.__class__.__name__,

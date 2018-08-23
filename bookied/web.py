@@ -1,6 +1,6 @@
 import traceback
 import pkg_resources
-from rq import use_connection, Queue
+from rq import use_connection, Connection, Queue
 from flask import Flask, request, jsonify
 from jsonschema import validate
 from . import work
@@ -52,7 +52,18 @@ def isalive():
             versions[name] = pkg_resources.require(name)[0].version
         except Exception:
             versions[name] = "not installed"
-    return jsonify({'versions': versions})
+    # queue status
+    queue_status = {}
+    with Connection():
+        for queue in q.all():
+            queue_status[queue.name] = dict(
+                count=queue.count,
+            )
+
+    return jsonify(dict(
+        versions=versions,
+        queue=dict(status=queue_status),
+    ))
 
 
 @app.route('/trigger', methods=["GET", "POST"])

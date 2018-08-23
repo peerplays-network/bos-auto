@@ -45,7 +45,12 @@ class FinishTrigger(Trigger):
         if not incidents:
             raise exceptions.InsufficientIncidents
         finish_incidents = incidents.get("finish", {}).get("incidents")
-        if finish_incidents and len(finish_incidents) >= self.testThreshold():
+        provider_hashes = set()
+        for incident in finish_incidents:
+            provider_hash = incident.get("provider_info", {}).get("name", None)
+            if provider_hash is not None:
+                provider_hashes.add(provider_hash)
+        if len(provider_hashes) >= self.testThreshold():
             return True
         else:
             log.info(

@@ -16,8 +16,8 @@ class CreateTrigger(Trigger):
         log.info("Creating a new event ...")
 
         # Let's see if we can find an Event in the Lookup
-        event = self.getIncidentEvent()
-        if not event:
+        self.event = self.getIncidentEvent()
+        if not self.event:
             return
 
         # Set parameters
@@ -25,32 +25,32 @@ class CreateTrigger(Trigger):
         if isinstance(season, str):
             season = {"en": season}
         if (
-            event["season"] and
+            self.event["season"] and
             not (
-                event["season"].get("en") in season.get("en") or
-                season.get("en") in event["season"].get("en")
+                self.event["season"].get("en") in season.get("en") or
+                season.get("en") in self.event["season"].get("en")
             )
         ):
             err = "Seasons don't match: {} != {}".format(
                 season.get("en"),
-                event["season"].get("en"))
+                self.event["season"].get("en"))
             log.critical(err)
             raise Exception(err)
-        event["season"] = season
-        event["status"] = "upcoming"
+        self.event["season"] = season
+        self.event["status"] = "upcoming"
 
-        # Update event
-        event.update()
+        # Update self.event
+        self.event.update()
 
         # Create Betting market Groups
-        self.createBmgs(event)
+        self.createBmgs()
 
         return True
 
-    def createBmgs(self, event):
+    def createBmgs(self):
         """ Go through all Betting Market groups and create them
         """
-        for bmg in event.bettingmarketgroups:
+        for bmg in self.event.bettingmarketgroups:
 
             # Skip dynamic bmgs
             if bmg["dynamic"]:
@@ -98,7 +98,7 @@ class CreateTrigger(Trigger):
     def createEvent(self):
         """ Create event
         """
-        event = LookupEvent(
+        self.event = LookupEvent(
             teams=self.teams,
             start_time=self.start_time,
             eventgroup_identifier=self.eventgroup.identifier,
@@ -106,8 +106,8 @@ class CreateTrigger(Trigger):
         )
 
         # This tests for leadtime_max
-        if not event.can_open:
-            can_open_by = event.can_open_by
+        if not self.event.can_open:
+            can_open_by = self.event.can_open_by
             self.set_incident_status(
                 status_name="postponed",
                 status_expiration=can_open_by)
@@ -115,7 +115,7 @@ class CreateTrigger(Trigger):
                 "Can only open after {}".format(
                     str(can_open_by)))
 
-        return event
+        return self.event
 
     def testThreshold(self):
         """ The threshold that needs to be crossed in order to create an event
@@ -150,12 +150,12 @@ class CreateTrigger(Trigger):
         if not incidents:
             raise exceptions.InsufficientIncidents("No incident found")
         create_incidents = incidents.get("create", {}).get("incidents", [])
-        provider_hashes = {}
+        provider_hashes = set()
         for incident in create_incidents:
             provider_hash = incident.get("provider_info", {}).get("name", None)
             if provider_hash is not None:
-                provider_hashes[provider_hash] = provider_hash
-        if len(provider_hashes.keys()) >= self.testThreshold():
+                provider_hashes.add(provider_hash)
+        if len(provider_hashes) >= self.testThreshold():
             return True
         else:
             msg = "Insufficient incidents for {}({})".format(

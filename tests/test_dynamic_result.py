@@ -40,8 +40,8 @@ class Testcases(unittest.TestCase):
             "arguments": {"home_score": "99",
                           "away_score": "83"},
             "call": "result"}
-        _message_result_2 = _message_result_1.copy()
-        _message_result_2["provider_info"]["name"] = "foobar"
+        _message_result_2 = deepcopy(_message_result_1)
+        _message_result_2["provider_info"]["name"] += "foobar"
         _message_result_2["unique_string"] += "foobar"
 
         result = ResultTrigger(
@@ -72,7 +72,12 @@ class Testcases(unittest.TestCase):
         ops = tx[0].get("operations")
         self.assertEqual(len(ops), 1)
         self.assertEqual(ops[0][0], 22)
-        self.assertEqual(len(ops[0][1]["proposed_ops"]), 3)
+        # 4 Ops
+        # - status update to finished
+        # - resolve moneyline
+        # - resolve handicap
+        # - resolve overunder
+        self.assertEqual(len(ops[0][1]["proposed_ops"]), 4)
         self.assertEqual(
             ops[0][1]["proposed_ops"][0]['op'][1]["status"],
             "finished")

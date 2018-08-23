@@ -2,7 +2,7 @@
 # Witness endpoint
 ######################
 # Ideally, the witness endpoint runs on localhost somewhere
-node: ws://ec2-35-183-1-21.ca-central-1.compute.amazonaws.com:8090
+node: ws://ec2-35-183-78-0.ca-central-1.compute.amazonaws.com:8090
 
 ######################
 # PeerPlays network
@@ -19,7 +19,7 @@ redis_password:
 redis_db:
 
 nobroadcast: False
-passphrase: posaune
+passphrase: password
 
 BOOKIE_PROPOSER: init0
 BOOKIE_APPROVER: init0
@@ -51,7 +51,6 @@ api_whitelist:
 scheduler:
  interval: 60
  expirations:
-  EventCannotOpenException: 3600
   PostPoneIncidentException: 3600
 
 
