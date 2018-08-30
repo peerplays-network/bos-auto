@@ -4,12 +4,7 @@ import threading
 import click
 
 from rq import Connection, Worker, use_connection, Queue
-from pprint import pprint
-from dateutil import parser
-from datetime import datetime
-from prettytable import PrettyTable, ALL as ALLBORDERS
 from bos_incidents import factory
-from click_datetime import Datetime
 
 from . import INCIDENT_CALLS
 from .log import log
@@ -99,7 +94,8 @@ def worker(queue):
                             approver=config.get("BOOKIE_APPROVER")
                         )
                     )
-
+                    # only reply the first incident!
+                    break
 
         q = Queue("default")
         # Empty queue!
