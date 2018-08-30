@@ -110,7 +110,7 @@ def worker(queue):
         storage = factory.get_incident_storage()
         for call in INCIDENT_CALLS:
             for status_name in [
-                "insufficient incidents",
+                # "insufficient incidents",
                 "undecided",
                 "connection lost",
                 "related object not found",
