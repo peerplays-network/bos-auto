@@ -12,6 +12,7 @@ redis
 dateutils
 colorlog
 tqdm
+strict_rfc3339
 
 # Notifications
 python-telegram-handler
