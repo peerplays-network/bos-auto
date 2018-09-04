@@ -1,3 +1,11 @@
+Release 0.1.9
+-------------
+
+* Worker restart purges redis and replays incidents from mongo store.
+* The default scheduler time has been raised from 60s to 1h to reduce
+  stress on queue.
+* Fix library stop after "broken pipe" error
+
 Release 0.1.8
 -------------
 
