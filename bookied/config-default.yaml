@@ -49,7 +49,7 @@ api_whitelist:
 
 
 scheduler:
- interval: 3600
+ interval: 1700
  expirations:
   PostPoneIncidentException: 3600
 
