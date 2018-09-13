@@ -221,7 +221,7 @@ def process(
 
     try:
         elapsed = time.time() - t
-        log.debug("Done processing " + message["unique_string"] + ", elapsed time is " + str(elapsed))
+        log.debug("Done processing " + message["unique_string"] + ", call status now " + trigger.get_incident_status() + ", elapsed time is " + str(elapsed))
     except Exception as e:
         pass
 
