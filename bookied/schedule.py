@@ -46,6 +46,13 @@ def check_scheduled(
             status_expired_before=datetime.utcnow())
         events = list(events)
 
+        events_unhandled = storage.get_events_by_call_status(
+            call=call,
+            status_name="unhandled exception",
+            status_expired_before=datetime.utcnow())
+        for event in events_unhandled:
+            events.append(event)
+
         ids = list()
         for event in events:
             for incidentid in event.get(call, {}).get("incidents", []):
