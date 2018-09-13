@@ -48,7 +48,7 @@ def check_scheduled(
 
         events_unhandled = storage.get_events_by_call_status(
             call=call,
-            status_name="unhandled exception",
+            status_name="unhandled exception, retrying soon",
             status_expired_before=datetime.utcnow())
         for event in events_unhandled:
             events.append(event)

@@ -200,9 +200,9 @@ def process(
 
     except Exception as e:
         # retry uncaught exception once (to reduce ghost errors)
-        if trigger.get_incident_status() == "unhandled exception":
+        if trigger.get_incident_status() == "unhandled exception, retrying soon":
             # already retried, finalize
-            trigger.set_incident_status(status_name="unhandled exception (retried)")
+            trigger.set_incident_status(status_name="unhandled exception")
             log.critical("Uncaught exception: {}\n\n{}".format(
                 str(e),
                 traceback.format_exc()))
@@ -212,7 +212,7 @@ def process(
             expiration_in_seconds = max(30, int(config["scheduler"]["expirations"]["UnhandledException"]) - random_offset)
 
             trigger.set_incident_status(
-                status_name="unhandled exception",
+                status_name="unhandled exception, retrying soon",
                 status_expiration=datetime.utcnow() + timedelta(
                     seconds=expiration_in_seconds
                 )
