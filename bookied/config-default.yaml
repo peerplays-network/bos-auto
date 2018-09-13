@@ -49,9 +49,11 @@ api_whitelist:
 
 
 scheduler:
- interval: 3600
+ interval: 60
  expirations:
+  EventCannotOpenException: 7200
   PostPoneIncidentException: 3600
+  UnhandledException: 300
 
 
 dynamic:

@@ -4,6 +4,7 @@ import traceback
 import grapheneapi
 import bookied_sync
 import bos_incidents
+import random
 
 from flask_rq import job
 from datetime import datetime, timedelta
@@ -198,14 +199,29 @@ def process(
         log.warning(str(e))
 
     except Exception as e:
-        trigger.set_incident_status(status_name="unhandled exception")
-        log.critical("Uncaught exception: {}\n\n{}".format(
-            str(e),
-            traceback.format_exc()))
+        # retry uncaught exception once (to reduce ghost errors)
+        if trigger.get_incident_status() == "unhandled exception, retrying soon":
+            # already retried, finalize
+            trigger.set_incident_status(status_name="unhandled exception")
+            log.critical("Uncaught exception: {}\n\n{}".format(
+                str(e),
+                traceback.format_exc()))
+        else:
+            # randomize it
+            random_offset = random.randint(1, 3) * 60
+            expiration_in_seconds = max(30, int(config["scheduler"]["expirations"]["UnhandledException"]) - random_offset)
+
+            trigger.set_incident_status(
+                status_name="unhandled exception, retrying soon",
+                status_expiration=datetime.utcnow() + timedelta(
+                    seconds=expiration_in_seconds
+                )
+            )
+            log.info("Uncaught exception, retrying: {}".format(str(e)))
 
     try:
         elapsed = time.time() - t
-        log.debug("Done processing " + message["unique_string"] + ", elapsed time is " + str(elapsed))
+        log.debug("Done processing " + message["unique_string"] + ", call status now " + trigger.get_incident_status() + ", elapsed time is " + str(elapsed))
     except Exception as e:
         pass
 

@@ -167,6 +167,14 @@ class Trigger():
             call=self.call,
             **kwargs)
 
+    def get_incident_status(self):
+        """ Get the current status of an **event** in the incidents storage
+        """
+        event = self.storage.get_event_by_id(
+            self.id,
+            False)
+        return event.get(self.call, {}).get("status", None)
+
     def broadcast(self):
         """ This method broadcasts the updates to the chain
         """
