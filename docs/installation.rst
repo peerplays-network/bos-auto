@@ -35,13 +35,13 @@ Install databases (as root/sudo)
 
 Within BOS, redis is used as an async queue for the python processes, whereas MondoDB is used as the persistent storage.
 
-* `mongodb` - interaction between BOS-auto and MINT. You can find
+* `mongodb` - interaction between BOS-auto and MINT.
   Please find tutorials on how to install mongodb on your distribution. 
   Make sure that the MongoDB is running reliable with automatic restart on failure.
-* `redis` - worker queue. Please find guides and installation
+* `redis` - worker queue.
   Please find instructions to install redisdb on your Linux distribution.
   Make sure that RedisDB is running reliable with automatic restart on failure.
-  Furhtermore, Redis can be run without any disk persistance
+  Furthermore, Redis should run without any disk persistance.
 
 For Ubuntu 16.04. installation for mongodb is
 
@@ -233,6 +233,39 @@ ________________________
 Data proxies are interested in this particular endpoint as they will
 push incidents to it. This means that you need to provide them with your
 ip address as well as the port that you have opened above.
+
+Monitoring
+___________
+
+The endpoint has an `isalive` call that should be used for monitoring:: 
+
+   curl http://localhost:8010/isalive
+   
+which produces an output like::
+   
+   {
+      "queue": {
+         "status": {
+            "default": {
+               "count": 1
+            },
+            "failed": {
+               "count": 0
+            }
+         }
+      },
+      "versions": {
+         "bookiesports": "0.2.6",
+         "bos-auto": "0.1.10",
+         "bos-incidents": "0.1.5",
+         "bos-sync": "0.1.8",
+         "peerplays": "0.1.32"
+      }
+   }
+   
+Interesting are here the listed versions and `queue.status.default.count`. The count should be 0 most of the times,
+it reflects how many unhandled incidents are currently in the cache.
+
 
 Production deployment
 _______________________
