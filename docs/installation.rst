@@ -174,18 +174,20 @@ Spinning up bos-auto
 ====================
 
 In the following, we are spinning up bos-auto and see if it works
-properly. To do so, we need to start an endpoint that takes incident
-reports from the data proxy and stores them in mongodb as well as issues
-work for the worker via redis. The worker then takes those incidents and
-processes those. Postponed incidents are handled separately with a
-scheduler. Overall bos-auto requires three processes: the endpoint, the worker and the scheduler. 
+properly. To do so, we need to start three processes:
+
+ - An endpoint that takes incident reports from the data proxy and stores them in mongodb as well as issues
+work for the worker via redis.
+ - The worker then takes those incidents and processes those. 
+ - The scheduler that handles postponed incidents.
+
 It is recommended to run all three via system services.
 
 The commands shown are for production installation, for debug installation replace "bos-auto" with "python3 cli.py".
 
 Start the Endpoint
 ------------------
-This is a basic setup and uses the flask built-in development server, see Advanced Setup below. 
+This is a basic setup and uses the flask built-in development server, see Production deployment below. 
 
 ::
 
@@ -221,12 +223,11 @@ Data proxies are interested in this particular endpoint as they will
 push incidents to it. This means that you need to provide them with your
 ip address as well as the port that you have opened above.
 
-Advanced Setup
+Production deployment
 ______________
 
-The above setup is basic. Going forward, a witness may want to deploy
-UWSGI with parallel workers for the endpoint, create a local socket and
-hide it behind an SSL supported nginx that deals with a simple domain
+Going into production mode, a witness may want to deploy the endpoint via UWSGI, 
+create a local socket and hide it behind an SSL supported nginx that deals with a simple domain
 instead of ``ip:port`` pair, like ``https://dataproxy.mywitness.com/trigger``.
 
 Start worker
