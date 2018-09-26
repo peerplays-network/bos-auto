@@ -8,7 +8,7 @@ and then go over to installing BOS-MINT (Manual intervention module) and
 also show how to use the command line tool for inspections.
 
 Overall Structure
-=================
+=====================
 
  .. image:: _static/flow.jpg
     :width: 600 px
@@ -33,11 +33,15 @@ Note that virtualenv is a best practice for python, but installation can also be
 Install databases (as root/sudo)
 ---------------------------------------------------
 
+Within BOS, redis is used as an async queue for the python processes, whereas MondoDB is used as the persistent storage.
+
 * `mongodb` - interaction between BOS-auto and MINT. You can find
-  tutorials on how to install mongodb on your distribution in the
-  internet
+  Please find tutorials on how to install mongodb on your distribution. 
+  Make sure that the MongoDB is running reliable with automatic restart on failure.
 * `redis` - worker queue. Please find guides and installation
-  instructions for your Linux distribution in the internet.
+  Please find instructions to install redisdb on your Linux distribution.
+  Make sure that RedisDB is running reliable with automatic restart on failure.
+  Furhtermore, Redis can be run without any disk persistance
 
 For Ubuntu 16.04. installation for mongodb is
 
@@ -67,6 +71,14 @@ To start the deamons, execute
     systemctl start mongod
     systemctl start redis
 
+
+Common issues
+________________
+
+ - Exception that contains `Can't save in background: fork` or `MISCONF Redis is configured to save RDB snapshots`. This indicates that either your queue is very full and the RAM is insufficient, or that your disk is full and the snapshot can't be persisted. Create your own Redis configuration file (https://redis.io/topics/config) and use it to deactivate caching and activate overcommit memory, e.g. as shown here
+     - https://redis.io/topics/faq#background-saving-fails-with-a-fork-error-under-linux-even-if-i-have-a-lot-of-free-ram or https://stackoverflow.com/questions/19581059/misconf-redis-is-configured-to-save-rdb-snapshots/49839193#49839193
+     - https://gist.github.com/kapkaev/4619127
+ - Exception that contains `IncidentStorageLostException: localhost:27017: [Errno 111] Connection refused` or similar. This indicates that your MondoDB is not running properly.
 
 Install bos-auto (as user)
 ---------------------------------------------------
@@ -122,7 +134,7 @@ For debug installation, pull latest master branch and upgrade dependencies manua
 
 
 Configuration of bos-auto
-=========================
+==============================
 
 We now proceed with the steps required to setup bos-auto properly.
 
@@ -132,7 +144,7 @@ We now proceed with the steps required to setup bos-auto properly.
         with very high latency at best.
 
 Setup your python-peerplays wallet
-----------------------------------
+----------------------------------------
 
 ::
 
@@ -148,14 +160,14 @@ Setup your python-peerplays wallet
     # You will be prompted to enter your active private key for the witness
 
 Funding the account
--------------------
+-----------------------
 
 Since your witness account is going to create and approve proposals
 automatically, you need to ensure that the witness account is funded
 with PPY.
 
 Modify configuration
---------------------
+------------------------
 
 We now need to configure bos-auto.
 
@@ -171,13 +183,12 @@ The variables are described below:
    :literal:
 
 Spinning up bos-auto
-====================
+========================
 
 In the following, we are spinning up bos-auto and see if it works
 properly. To do so, we need to start three processes:
 
- - An endpoint that takes incident reports from the data proxy and stores them in mongodb as well as issues
-work for the worker via redis.
+ - An endpoint that takes incident reports from the data proxy and stores them in mongodb as well as issues work for the worker via redis.
  - The worker then takes those incidents and processes those. 
  - The scheduler that handles postponed incidents.
 
@@ -186,7 +197,7 @@ It is recommended to run all three via system services.
 The commands shown are for production installation, for debug installation replace "bos-auto" with "python3 cli.py".
 
 Start the Endpoint
-------------------
+----------------------
 This is a basic setup and uses the flask built-in development server, see Production deployment below. 
 
 ::
@@ -224,7 +235,7 @@ push incidents to it. This means that you need to provide them with your
 ip address as well as the port that you have opened above.
 
 Production deployment
-______________
+_______________________
 
 Going into production mode, a witness may want to deploy the endpoint via UWSGI, 
 create a local socket and hide it behind an SSL supported nginx that deals with a simple domain
@@ -256,7 +267,7 @@ and, if successfull, present the following text to you::
 Nothing else needs to be done at this point
 
 Testing
-_______
+__________
 
 .. warning:: For testing, we highly recommend that you set the
            ``nobroadcast`` flag in ``config.yaml`` to ``True``!
