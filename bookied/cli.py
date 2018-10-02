@@ -53,16 +53,16 @@ def api(port, host, debug, proposer, approver, scheduler):
     """
     if scheduler:
         from .schedule import scheduler as start_scheduler
-        threads = []
-        threads.append(threading.Thread(target=start_scheduler))
-        for t in threads:
+        from bookied.web import background_threads
+        background_threads.append(threading.Thread(name="scheduler", target=start_scheduler))
+        for t in background_threads:
             log.info("Starting thread for {}".format(t))
             t.start()
-            # t.join()
 
     from bookied.web import app
     app.config["BOOKIE_PROPOSER"] = proposer
     app.config["BOOKIE_APPROVER"] = approver
+
     app.run(
         host=host,
         port=port,
@@ -105,15 +105,12 @@ def worker(queue):
         log.info("Refilling redis queue from incident store")
         storage = factory.get_incident_storage()
         for call in INCIDENT_CALLS:
+            # "postponed", "unhandled exception, retrying soon" and "unknown" handled by scheduler
             for status_name in [
-                # "insufficient incidents",
                 "undecided",
                 "connection lost",
                 "related object not found",
-                "event missing in bos_incidents",
-                "postponed",
-                "unknown",  # unhandled incidents
-                # "event missing",
+                "event missing in bos_incidents"
             ]:
                 events = list(
                     storage.get_events_by_call_status(

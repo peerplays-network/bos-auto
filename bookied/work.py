@@ -199,13 +199,19 @@ def process(
         log.warning(str(e))
 
     except Exception as e:
+        exception_details = "{}\n\n{}".format(str(e), traceback.format_exc())
+
         # retry uncaught exception once (to reduce ghost errors)
-        if trigger.get_incident_status() == "unhandled exception, retrying soon":
+        if trigger.get_incident_status()["name"] == "unhandled exception, retrying soon":
             # already retried, finalize
-            trigger.set_incident_status(status_name="unhandled exception")
+            trigger.set_incident_status(
+                status_name="unhandled exception",
+                status_add={"details": exception_details}
+            )
             log.critical("Uncaught exception: {}\n\n{}".format(
                 str(e),
-                traceback.format_exc()))
+                traceback.format_exc())
+            )
         else:
             # randomize it
             random_offset = random.randint(1, 3) * 60
@@ -215,7 +221,8 @@ def process(
                 status_name="unhandled exception, retrying soon",
                 status_expiration=datetime.utcnow() + timedelta(
                     seconds=expiration_in_seconds
-                )
+                ),
+                status_add={"details": exception_details}
             )
             log.info("Uncaught exception, retrying: {}".format(str(e)))
 

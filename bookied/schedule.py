@@ -39,7 +39,8 @@ def check_scheduled(
         approver = config.get("BOOKIE_APPROVER")
 
     for call in INCIDENT_CALLS:
-        log.info("- testing call {}".format(call))
+        log.info("- querying call {}".format(call))
+
         events = storage.get_events_by_call_status(
             call=call,
             status_name="postponed",
@@ -53,14 +54,19 @@ def check_scheduled(
         for event in events_unhandled:
             events.append(event)
 
+        events_unknown = storage.get_events_by_call_status(
+            call=call,
+            status_name="unknown")
+        for event in events_unknown:
+            events.append(event)
+
         ids = list()
+        log.info("Scheduler retriggering " + str(len(events)) + " incident ...")
         for event in events:
             for incidentid in event.get(call, {}).get("incidents", []):
                 incident = storage.resolve_to_incident(incidentid)
 
-                log.info("Scheduler retriggering incident ...")
                 if func_callback:
-                    print("!")
                     job = q.enqueue(
                         func_callback,
                         args=(incident,),
