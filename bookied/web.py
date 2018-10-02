@@ -1,8 +1,8 @@
-import traceback
+
 import pkg_resources
 from rq import use_connection, Connection, Queue
 from flask import Flask, request, jsonify
-from jsonschema import validate
+
 from . import work
 from .config import loadConfig
 from .redis_con import get_redis
@@ -29,6 +29,8 @@ validator = IncidentValidator()
 
 # API whitelist
 api_whitelist = resolve_hostnames(config.get("api_whitelist", ["0.0.0.0"]))
+
+background_threads = []
 
 
 @app.route('/')
@@ -60,10 +62,46 @@ def isalive():
                 count=queue.count,
             )
 
+    background_threads_dict = {}
+    for t in background_threads:
+        try:
+            background_threads_dict[t.name] = {"running": t.is_alive()}
+        except Exception as e:
+            log.error(
+                "Error in background task: {}".format(str(e))
+            )
+
     return jsonify(dict(
         versions=versions,
         queue=dict(status=queue_status),
+        background=background_threads_dict
     ))
+
+
+@app.route("/events")
+@app.route("/events/<event_id>")
+def events(event_id=None):
+    if event_id is not None:
+        event = storage.get_event_by_id(event_id, True, True)
+        event.pop("_id")
+        return jsonify(
+            dict(event)
+        )
+    else:
+        return jsonify(
+            storage.get_incidents_count()
+        )
+
+
+# @app.route("/events/set/<event_id>/<call>/<status>")
+# def events_replay(event_id, call, status):
+#     # only added for debugging
+#     storage.update_event_status_by_id(event_id, call, status)
+#     event = storage.get_event_by_id(event_id, True, True)
+#     event.pop("_id")
+#     return jsonify(
+#         dict(event)
+#     )
 
 
 @app.route('/trigger', methods=["GET", "POST"])
