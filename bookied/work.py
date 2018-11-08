@@ -12,6 +12,8 @@ from datetime import datetime, timedelta
 from bookied_sync.lookup import Lookup
 from peerplays import PeerPlays
 from peerplays.instance import set_shared_blockchain_instance
+from peerplays.account import Account
+from peerplays.proposal import Proposals
 
 from bookiesports.normalize import NotNormalizableException
 
@@ -30,7 +32,7 @@ lookup = Lookup(
     proposing_account=config.get("BOOKIE_PROPOSER"),
     approving_account=config.get("BOOKIE_APPROVER"),
     blockchain_instance=peerplays,
-    network=config.get("network", "baxter")
+    network=config.get("network", "beatrice")
 )
 
 
@@ -66,6 +68,7 @@ def process(
 
         Hence, this method has the look and feel of a dispatcher!
     """
+    peerplays.rpc.connect()
     try:
         t = time.time()
         log.debug("Processing " + message["unique_string"])
@@ -244,12 +247,7 @@ def approve(*args, **kwargs):
         The reason for this is that proposals created by accountA are not
         automatically also approved by accountA and need an explicit approval.
     """
-    from peerplays.account import Account
-    from peerplays.proposal import Proposals
-    from .config import loadConfig
-
-    config = loadConfig()
-
+    peerplays.rpc.connect()
     myapprover = kwargs.get("approver", None)
     if not myapprover:
         myapprover = config.get("BOOKIE_APPROVER")
@@ -263,13 +261,10 @@ def approve(*args, **kwargs):
         "created by {} that we could approve by {}"
         .format(myproposer, myapprover))
 
-    peerplays = lookup.peerplays
-    proposals = Proposals("witness-account", peerplays_instance=peerplays)
-    approver = Account(myapprover, peerplays_instance=peerplays)
+    proposals = Proposals("witness-account")
+    approver = Account(myapprover)
     for proposal in proposals:
-        proposer = Account(
-            proposal.proposer,
-            peerplays_instance=peerplays)
+        proposer = Account(proposal.proposer)
         if (
             proposer["name"] == myproposer and
             approver["id"] not in proposal["available_active_approvals"]
