@@ -186,15 +186,18 @@ Spinning up bos-auto
 ========================
 
 In the following, we are spinning up bos-auto and see if it works
-properly. To do so, we need to start three processes:
+properly. To do so, we need to start two processes:
 
  - An endpoint that takes incident reports from the data proxy and stores them in mongodb as well as issues work for the worker via redis.
  - The worker then takes those incidents and processes those. 
- - The scheduler that handles postponed incidents.
 
-It is recommended to run all three via system services.
+It is recommended to run both via system services.
 
 The commands shown are for production installation, for debug installation replace "bos-auto" with "python3 cli.py".
+
+Note:
+
+ - Former installations also required to run the scheduler as a separate process. This is no longer necessary, it is spawned as a subprocess.
 
 Start the Endpoint
 ----------------------
@@ -363,19 +366,6 @@ incident above)::
           ``bookied.work.approve()`` call. The former does the heavy
           lifting and may produce a proposal, while the latter approves
           proposals that we have created on our own.
-
-
-Start Scheduler
-------------------
-
-The schedulers task is to rerun incidents after a certain expiration
-time. This may happen in cases where an event is postponed from being
-opened because it would not add value until 2 weeks before the actual
-match will happen. Those incidents are marked ``postoned`` internally
-and will be retriggered into the worker with the scheduler:::
-
-    cd bos-auto
-    bos-auto scheduler   [--help for more information]
 
 Command Line Intervention
 #########################
