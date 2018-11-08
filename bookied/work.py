@@ -32,7 +32,7 @@ lookup = Lookup(
     proposing_account=config.get("BOOKIE_PROPOSER"),
     approving_account=config.get("BOOKIE_APPROVER"),
     blockchain_instance=peerplays,
-    network=config.get("network", "baxter")
+    network=config.get("network", "beatrice")
 )
 
 
