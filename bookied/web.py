@@ -17,10 +17,7 @@ config = loadConfig()
 # Flask app and parameters
 app = Flask(__name__)
 redis = get_redis()
-use_connection()
-
-# Flask queue
-q = Queue(connection=redis)
+use_connection(redis)
 
 # Invident Storage
 storage = factory.get_incident_storage()
@@ -42,6 +39,7 @@ def home():
 
 @app.route("/isalive")
 def isalive():
+
     versions = dict()
     for name in [
         "bos-auto",
@@ -56,7 +54,8 @@ def isalive():
             versions[name] = "not installed"
     # queue status
     queue_status = {}
-    with Connection():
+    with Connection(redis):
+        q = Queue(connection=redis)
         for queue in q.all():
             queue_status[queue.name] = dict(
                 count=queue.count,
@@ -154,28 +153,31 @@ def trigger():
             pass
 
         # Send incident to redis
-        job = q.enqueue(
-            work.process,
-            args=(incident,),
-            kwargs=dict(
-                proposer=app.config.get("BOOKIE_PROPOSER"),
-                approver=app.config.get("BOOKIE_APPROVER")
+        with Connection(redis):
+            q = Queue(connection=redis)
+            job = q.enqueue(
+                work.process,
+                args=(incident,),
+                kwargs=dict(
+                    proposer=app.config.get("BOOKIE_PROPOSER"),
+                    approver=app.config.get("BOOKIE_APPROVER")
+                )
             )
-        )
-        log.info(
-            "Forwarded incident {} to worker via redis".format(
-                incident.get("call")))
+            log.info(
+                "Forwarded incident {} to worker via redis".format(
+                    incident.get("call")))
 
-        # In case we "proposed" something, we also need to approve,
-        # we do that by queuing a approve
-        approve_job = q.enqueue(
-            work.approve,
-            args=(),
-            kwargs=dict(
-                proposer=app.config.get("BOOKIE_PROPOSER"),
-                approver=app.config.get("BOOKIE_APPROVER")
+            # In case we "proposed" something, we also need to approve,
+            # we do that by queuing a approve
+            approve_job = q.enqueue(
+                work.approve,
+                args=(),
+                kwargs=dict(
+                    proposer=app.config.get("BOOKIE_PROPOSER"),
+                    approver=app.config.get("BOOKIE_APPROVER")
+                )
             )
-        )
+
         # Return message with id
         return jsonify(dict(
             result="processing",
