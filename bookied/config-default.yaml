@@ -106,7 +106,7 @@ scheduler:
  interval: 60
  expirations:
   # event can't be opened due to leadtime_max in bookiesports yet
-  EventCannotOpenException: 7200
+  EventCannotOpenException: 43200
   # waiting for more incidents before executing (dynamic betting markets)
   PostPoneIncidentException: 3600
   # retry unhandled exception once after this time, randomization is added
