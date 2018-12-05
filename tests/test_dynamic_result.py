@@ -92,29 +92,29 @@ class Testcases(unittest.TestCase):
         # Moneyline
         self.assertEqual(
             ops[0][1]["proposed_ops"][1]['op'][1]["resolutions"][0],
-            ["1.21.2960", "win"],
+            ["1.25.2960", "win"],
         )
         self.assertEqual(
             ops[0][1]["proposed_ops"][1]['op'][1]["resolutions"][1],
-            ["1.21.2961", "not_win"],
+            ["1.25.2961", "not_win"],
         )
 
         ## Dynamic BMGs!!
         self.assertEqual(
             ops[0][1]["proposed_ops"][2]['op'][1]["resolutions"][0],
-            ["1.21.2974", "win"],
+            ["1.25.2974", "win"],
         )
         self.assertEqual(
             ops[0][1]["proposed_ops"][2]['op'][1]["resolutions"][1],
-            ["1.21.2975", "not_win"],
+            ["1.25.2975", "not_win"],
         )
         self.assertEqual(
             ops[0][1]["proposed_ops"][3]['op'][1]["resolutions"][0],
-            ["1.21.2972", "not_win"],
+            ["1.25.2972", "not_win"],
         )
         self.assertEqual(
             ops[0][1]["proposed_ops"][3]['op'][1]["resolutions"][1],
-            ["1.21.2973", "win"],
+            ["1.25.2973", "win"],
         )
 
         d = result.storage.get_event_by_id(_message_result_2)

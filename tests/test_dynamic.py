@@ -369,4 +369,6 @@ class Testcases(unittest.TestCase):
         trigger.storage.insert_incident(_message)
         tx = trigger.trigger(_message.get("arguments"))
         self.assertEqual(len(tx), 1)
+        from pprint import pprint
+        pprint(tx)
         self.assertTrue(tx[0].is_approval())
