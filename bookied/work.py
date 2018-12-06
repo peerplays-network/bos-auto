@@ -210,8 +210,11 @@ def process(
         exception_details = "{}\n\n{}".format(str(e), traceback.format_exc())
 
         # retry uncaught exception once (to reduce ghost errors)
-        if trigger.get_incident_status()["name"] == "unhandled exception, retrying soon" or\
-                trigger.get_incident_status()["name"] == "unhandled exception":
+        if trigger.get_incident_status() is not None and\
+                (
+                    trigger.get_incident_status()["name"] == "unhandled exception, retrying soon" or
+                    trigger.get_incident_status()["name"] == "unhandled exception"
+        ):
             # already retried, finalize
             trigger.set_incident_status(
                 status_name="unhandled exception",
