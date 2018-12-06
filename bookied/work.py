@@ -25,6 +25,7 @@ from . import exceptions, TRIGGERS
 config = loadConfig()
 peerplays = PeerPlays(
     node=config.get("node", None),
+    nobroadcast=config.get("nobroadcast", False),
     num_retries=1  # Only try once then trow an exception
 )
 set_shared_blockchain_instance(peerplays)
@@ -194,6 +195,10 @@ def process(
             status_name="event missing in bos_incidents")
 
     except bookied_sync.exceptions.ObjectNotFoundInLookup as e:
+        trigger.set_incident_status(status_name="related object not found")
+        log.info(str(e))
+
+    except bookied_sync.exceptions.ObjectNotFoundError as e:
         trigger.set_incident_status(status_name="related object not found")
         log.info(str(e))
 
