@@ -247,6 +247,9 @@ The endpoint has an `isalive` call that should be used for monitoring::
 which produces an output like::
    
    {
+      "background": {
+         "scheduler": True
+      },
       "queue": {
          "status": {
             "default": {
@@ -408,3 +411,26 @@ Manual Intervention
 Bos-mint is a web-based manual intervention module that allows you to
 do with all sorts of manual interactions with the blockchain. It comes
 with it's own documentation at: http://bos-mint.readthedocs.io/
+
+Monitoring bos-auto
+========================
+
+The `isalive` call should be used for monitoring. The scheduler must be running, and the default queue a low count (< 10).
+
+Here is an example of a positive `isalive` check::
+
+
+    {
+      "background": {
+         "scheduler": True
+      },
+      "queue": {
+         "status": {
+            "default": {
+               "count": 0
+            },
+            ...
+         }
+      },
+      ...
+   }
