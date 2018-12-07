@@ -34,7 +34,6 @@ class DynamicBmgTrigger(Trigger):
     def _trigger(self, args):
         """ Trigger the 'create' message
         """
-        log.info("Looking up event to create")
         self.event = self.getEvent()
         self.teams = self.event.teams
 
@@ -42,9 +41,9 @@ class DynamicBmgTrigger(Trigger):
         incident_types = self.incident["arguments"]["types"]
 
         # We need to deal with each of the incidents individually
-        log.info("Testing incidents and existing BMGs")
-        log.info("Number of types in the incident:  {}".format(len(incident_types)))
-        log.info("Number of existing on-chain BMGs: {}".format(len(on_chain_bmgs)))
+        log.debug("Testing incidents and existing BMGs")
+        log.debug("Number of types in the incident:  {}".format(len(incident_types)))
+        log.debug("Number of existing on-chain BMGs: {}".format(len(on_chain_bmgs)))
 
         types_done = list()
         for incident_type in incident_types:
@@ -74,7 +73,7 @@ class DynamicBmgTrigger(Trigger):
                 # just return, the worker will set the incident status to done
 
     def median_value(self, t, side=None):
-        log.info("Obtaining median value of incidents")
+        log.debug("Obtaining median value of incidents")
         incidents = self.get_all_incidents()
         if not incidents:
             raise exceptions.InsufficientIncidents("No incident found")
@@ -96,11 +95,11 @@ class DynamicBmgTrigger(Trigger):
                             values.append(float(incident_type["value"]))
                         else:
                             values.append(-float(incident_type["value"]))
-                        log.info("Dealing with Handicap value: {}".format(incident_type["value"]))
+                        log.debug("Dealing with Handicap value: {}".format(incident_type["value"]))
 
                     elif LookupBettingMarketGroup.is_ou_type(t):
                         values.append(float(incident_type["value"]))
-                        log.info("Dealing with over/under value: {}".format(incident_type["value"]))
+                        log.debug("Dealing with over/under value: {}".format(incident_type["value"]))
 
                     else:
                         log.error("Type '{}' isn't known!".format(t))
@@ -108,7 +107,7 @@ class DynamicBmgTrigger(Trigger):
                     log.error("Not same type: {} != {}".format(incident_type["type"], t))
 
         if values:
-            log.info("Obtaining median ({}) for values: {}".format(t, str(values)))
+            log.debug("Obtaining median ({}) for values: {}".format(t, str(values)))
             return statistics.median(values)
         else:
             log.warning("No values could be processed for type {}!".format(t))
@@ -122,17 +121,17 @@ class DynamicBmgTrigger(Trigger):
 
         # Let's find the BM according to bookiesports
         bmgs = list(event.bettingmarketgroups)
-        log.info("Expected number of BMGs: {}". format(len(bmgs)))
+        log.debug("Expected number of BMGs: {}". format(len(bmgs)))
         for bmg in bmgs:
 
             # Only do dynamic ones here
             if (not bmg["dynamic"] or not LookupBettingMarketGroup.is_dynamic_type(bmg["dynamic"], typ)):
-                log.info("BMG is not dynamic: {}".format(bmg.identifier))
+                log.debug("BMG is not dynamic: {}".format(bmg.identifier))
                 continue
 
             # If this is a Overunder BMG
             if(LookupBettingMarketGroup.is_ou_type(bmg.get("dynamic")) and LookupBettingMarketGroup.is_ou_type(typ)):
-                log.info("BMG is dynamic Over/Under: {}".format(bmg.identifier))
+                log.debug("BMG is dynamic Over/Under: {}".format(bmg.identifier))
 
                 # Let's obtain the overunder value
                 # overunder = math.floor(self.median_value("ou")) + 0.5
@@ -168,7 +167,7 @@ class DynamicBmgTrigger(Trigger):
 
             # If this is a Handicap BMG
             elif(LookupBettingMarketGroup.is_hc_type(bmg.get("dynamic")) and LookupBettingMarketGroup.is_hc_type(typ)):
-                log.info("BMG is dynamic Handicap: {}".format(bmg.identifier))
+                log.debug("BMG is dynamic Handicap: {}".format(bmg.identifier))
 
                 # Identify which player has the handicap
                 side = obtain_participant_side(incident_type["participant"], self.teams)
@@ -209,9 +208,9 @@ class DynamicBmgTrigger(Trigger):
     def createBms(self, bmg):
         """ Go through all betting markets and create them
         """
-        log.info("Updating Betting Markets ...")
+        log.debug("Updating Betting Markets ...")
         for bm in bmg.bettingmarkets:
-            log.info(
+            log.debug(
                 "Updating Betting Market {} ...".format(
                     bm["description"].get("en")
                 ))

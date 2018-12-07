@@ -11,6 +11,7 @@ from bos_incidents import factory, exceptions
 from bos_incidents.validator import IncidentValidator, InvalidIncidentFormatException
 
 from .log import log
+from . import INCIDENT_CALLS
 
 config = loadConfig()
 
@@ -92,15 +93,37 @@ def events(event_id=None):
         )
 
 
-# @app.route("/events/set/<event_id>/<call>/<status>")
-# def events_replay(event_id, call, status):
-#     # only added for debugging
-#     storage.update_event_status_by_id(event_id, call, status)
-#     event = storage.get_event_by_id(event_id, True, True)
-#     event.pop("_id")
-#     return jsonify(
-#         dict(event)
-#     )
+@app.route("/finalize")
+def finalize():
+    # only added for debugging
+    for call in INCIDENT_CALLS:
+        log.info("- querying call for finalizing {}".format(call))
+
+        events = storage.get_events_by_call_status(
+            call=call,
+            status_name="postponed")
+        events = list(events)
+
+        events_unhandled = storage.get_events_by_call_status(
+            call=call,
+            status_name="unhandled exception, retrying soon")
+        for event in events_unhandled:
+            events.append(event)
+
+        events_unknown = storage.get_events_by_call_status(
+            call=call,
+            status_name="unknown")
+        for event in events_unknown:
+            events.append(event)
+
+        log.info("Finalizing " + str(len(events)) + " events ...")
+        for event in events:
+            storage.update_event_status_by_id(event["id"], call=call, status_name="manually finalized")
+
+
+@app.route("/finalize/purge")
+def finalize_purge():
+    storage = factory.get_incident_storage(purge=True)
 
 
 @app.route('/trigger', methods=["GET", "POST"])
