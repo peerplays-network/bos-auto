@@ -81,7 +81,7 @@ def check_scheduled(
 
 
 class PeriodicExecutor(threading.Thread):
-    """
+    """ Periodically execute a task
     """
 
     def __init__(self, sleep, func, *args, **kwargs):
@@ -94,12 +94,16 @@ class PeriodicExecutor(threading.Thread):
         threading.Thread.__init__(
             self,
             name="PeriodicExecutor")
-        self.setDaemon(1)
+        self.setDaemon(True)
 
     def run(self):
-        while 1:
-            time.sleep(self.sleep)
-            self.func(*self.args, **self.kwargs)
+        while true:
+            try:
+                self.func(*self.args, **self.kwargs)
+                time.sleep(self.sleep)
+            except Exception as e:
+                log.error(str(e))
+                time.sleep(self.sleep)
 
 
 def scheduler(
