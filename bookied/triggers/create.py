@@ -55,7 +55,7 @@ class CreateTrigger(Trigger):
             # Skip dynamic bmgs
             if bmg["dynamic"]:
                 # Dynamic BMGs are created separately
-                log.info("Skipping dynamic BMG: {}".format(
+                log.debug("Skipping dynamic BMG: {}".format(
                     str(bmg.identifier)))
                 continue
             bmg.update()
@@ -64,9 +64,9 @@ class CreateTrigger(Trigger):
     def createBms(self, bmg):
         """ Go through all betting markets and create them
         """
-        log.info("Updating Betting Markets ...")
+        log.debug("Updating Betting Markets ...")
         for bm in bmg.bettingmarkets:
-            log.info(
+            log.debug(
                 "Updating Betting Market {} ...".format(
                     bm["description"].get("en")
                 ))

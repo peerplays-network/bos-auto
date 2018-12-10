@@ -26,9 +26,6 @@ def check_scheduled(
         "(approver: {}/ proposer: {})".format(
             approver, proposer))
 
-    # Flask queue
-    q = Queue(connection=get_redis())
-
     # Invident Storage
     if not storage:
         storage = factory.get_incident_storage()
@@ -37,6 +34,8 @@ def check_scheduled(
         proposer = config.get("BOOKIE_PROPOSER")
     if not approver:
         approver = config.get("BOOKIE_APPROVER")
+
+    push_to_queue = []
 
     for call in INCIDENT_CALLS:
         log.info("- querying call {}".format(call))
@@ -65,23 +64,32 @@ def check_scheduled(
         for event in events:
             for incidentid in event.get(call, {}).get("incidents", []):
                 incident = storage.resolve_to_incident(incidentid)
-
                 if func_callback:
-                    job = q.enqueue(
-                        func_callback,
-                        args=(incident,),
-                        kwargs=dict(
-                            proposer=proposer,
-                            approver=approver
-                        )
-                    )
-                    ids.append(job.id)
+                    push_to_queue.append(incident)
+                    # it is enough to trigger one incident, worker will check the whole call
+                    break
+
+    # Flask queue
+    q = Queue(connection=get_redis())
+
+    # only push into the queue if it's somewhat empty (with 10% buffer), otherwise wait
+    if q.count * 1.1 < len(incident):
+        for incident in push_to_queue:
+            job = q.enqueue(
+                func_callback,
+                args=(incident,),
+                kwargs=dict(
+                    proposer=proposer,
+                    approver=approver
+                )
+            )
+            ids.append(job.id)
 
     return ids
 
 
 class PeriodicExecutor(threading.Thread):
-    """
+    """ Periodically execute a task
     """
 
     def __init__(self, sleep, func, *args, **kwargs):
@@ -94,12 +102,16 @@ class PeriodicExecutor(threading.Thread):
         threading.Thread.__init__(
             self,
             name="PeriodicExecutor")
-        self.setDaemon(1)
+        self.setDaemon(True)
 
     def run(self):
-        while 1:
-            time.sleep(self.sleep)
-            self.func(*self.args, **self.kwargs)
+        while true:
+            try:
+                self.func(*self.args, **self.kwargs)
+                time.sleep(self.sleep)
+            except Exception as e:
+                log.error(str(e))
+                time.sleep(self.sleep)
 
 
 def scheduler(

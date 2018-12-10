@@ -10,7 +10,7 @@ class CancelTrigger(Trigger):
     def _trigger(self, args):
         """ Set a BMG to ``in_progress``
         """
-        log.info("Setting a event to 'in_progress'...")
+        log.info("Cancel event ...")
         event = self.getEvent()
         event.status_update("canceled")
 

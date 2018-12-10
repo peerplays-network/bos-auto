@@ -25,6 +25,7 @@ from . import exceptions, TRIGGERS
 config = loadConfig()
 peerplays = PeerPlays(
     node=config.get("node", None),
+    nobroadcast=config.get("nobroadcast", False),
     num_retries=1  # Only try once then trow an exception
 )
 set_shared_blockchain_instance(peerplays)
@@ -197,6 +198,10 @@ def process(
         trigger.set_incident_status(status_name="related object not found")
         log.info(str(e))
 
+    except bookied_sync.exceptions.ObjectNotFoundError as e:
+        trigger.set_incident_status(status_name="related object not found")
+        log.info(str(e))
+
     except exceptions.CreateIncidentTooOldException as e:
         trigger.set_incident_status(status_name="create too old")
         log.warning(str(e))
@@ -205,8 +210,11 @@ def process(
         exception_details = "{}\n\n{}".format(str(e), traceback.format_exc())
 
         # retry uncaught exception once (to reduce ghost errors)
-        if trigger.get_incident_status()["name"] == "unhandled exception, retrying soon" or\
-                trigger.get_incident_status()["name"] == "unhandled exception":
+        if trigger.get_incident_status() is not None and\
+                (
+                    trigger.get_incident_status()["name"] == "unhandled exception, retrying soon" or
+                    trigger.get_incident_status()["name"] == "unhandled exception"
+        ):
             # already retried, finalize
             trigger.set_incident_status(
                 status_name="unhandled exception",

@@ -14,6 +14,7 @@ from peerplays.proposal import Proposals
 from peerplays.eventgroup import EventGroups
 from peerplays.bettingmarketgroup import BettingMarketGroups
 from peerplays.bettingmarket import BettingMarkets
+from peerplays.witness import Witnesses
 from peerplaysbase.operationids import operations
 
 from bookied_sync.lookup import Lookup
@@ -58,7 +59,7 @@ BlockchainObject._cache = ObjectCache(
 
 def lookup_test_event(id):
     event = {
-        "id": "1.18.2242",
+        "id": "1.22.2242",
         "teams": ["Atlanta Hawks", "Boston Celtics"],
         "eventgroup_identifier": "NBA",
         "sport_identifier": "Basketball",
@@ -73,11 +74,11 @@ def lookup_test_eventgroup(id):
     return LookupEventGroup("Basketball", "NBA")
 
 
-def add_to_object_cache(objects):
+def add_to_object_cache(objects, key="id"):
     if objects:
         for i in objects:
-            if "id" in i and i["id"]:
-                BlockchainObject._cache[i["id"]] = i
+            if key in i and i[key]:
+                BlockchainObject._cache[i[key]] = i
 
 
 def add_event(data):
@@ -102,6 +103,15 @@ def fixture_data():
         data = yaml.safe_load(fid)
     for ob in data.keys():
         add_to_object_cache(data[ob])
+
+    add_to_object_cache(data.get("accounts", []), key="name")
+
+    for witness in data.get("witnesses", []):
+        id = witness["id"]
+        if id not in Witnesses.cache or not Witnesses.cache[id]:
+            Witnesses.cache[id] = []
+        Witnesses.cache[id].append(witness)
+    Witnesses.cache["2.12.0"] = data.get("witness_schedule", [])
 
     for sport in data.get("sports", []):
         id = "sports"

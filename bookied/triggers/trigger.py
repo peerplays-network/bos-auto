@@ -92,7 +92,7 @@ class Trigger():
 
             eventgroup = event.eventgroup
             if not eventgroup.is_open:
-                log.info("Skipping not-yet-open BMG: {}".format(
+                log.debug("Skipping not-yet-open BMG: {}".format(
                     str(eventgroup.identifier)))
                 raise exceptions.EventGroupClosedException
 
