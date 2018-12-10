@@ -107,10 +107,7 @@ def worker(queue):
         for call in INCIDENT_CALLS:
             # "postponed", "unhandled exception, retrying soon" and "unknown" handled by scheduler
             for status_name in [
-                "undecided",
-                "connection lost",
-                "related object not found",
-                "event missing in bos_incidents"
+                "connection lost"
             ]:
                 events = list(
                     storage.get_events_by_call_status(
