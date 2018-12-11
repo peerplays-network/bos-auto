@@ -187,8 +187,8 @@ def trigger():
                 )
             )
             log.info(
-                "Forwarded incident {} to worker via redis".format(
-                    incident.get("call")))
+                "Forwarded incident {} to worker via redis".format(str(incident))
+            )
 
             # In case we "proposed" something, we also need to approve,
             # we do that by queuing a approve
