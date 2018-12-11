@@ -40,24 +40,28 @@ def check_scheduled(
     for call in INCIDENT_CALLS:
         log.info("- querying call {}".format(call))
 
-        events = storage.get_events_by_call_status(
-            call=call,
-            status_name="postponed",
-            status_expired_before=datetime.utcnow())
-        events = list(events)
+        events = []
 
-        events_unhandled = storage.get_events_by_call_status(
-            call=call,
-            status_name="unhandled exception, retrying soon",
-            status_expired_before=datetime.utcnow())
-        for event in events_unhandled:
-            events.append(event)
+        for status_name in [
+            "postponed",
+            "unhandled exception, retrying soon"
+        ]:
+            for event in storage.get_events_by_call_status(
+                    call=call,
+                    status_name=status_name,
+                    status_expired_before=datetime.utcnow()
+            ):
+                events.append(event)
 
-        events_unknown = storage.get_events_by_call_status(
-            call=call,
-            status_name="unknown")
-        for event in events_unknown:
-            events.append(event)
+        for status_name in [
+            "connection lost",
+            "unknown"
+        ]:
+            for event in storage.get_events_by_call_status(
+                    call=call,
+                    status_name=status_name
+            ):
+                events.append(event)
 
         ids = list()
         log.info("Scheduler retriggering " + str(len(events)) + " incident ...")
@@ -73,7 +77,7 @@ def check_scheduled(
     q = Queue(connection=get_redis())
 
     # only push into the queue if it's somewhat empty (with 10% buffer), otherwise wait
-    if q.count * 1.1 < len(incident):
+    if q.count + 2 < len(push_to_queue):
         for incident in push_to_queue:
             job = q.enqueue(
                 func_callback,
@@ -105,7 +109,7 @@ class PeriodicExecutor(threading.Thread):
         self.setDaemon(True)
 
     def run(self):
-        while true:
+        while True:
             try:
                 self.func(*self.args, **self.kwargs)
                 time.sleep(self.sleep)

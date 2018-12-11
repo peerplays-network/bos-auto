@@ -98,32 +98,28 @@ def finalize():
     # only added for debugging
     for call in INCIDENT_CALLS:
         log.info("- querying call for finalizing {}".format(call))
-
-        events = storage.get_events_by_call_status(
-            call=call,
-            status_name="postponed")
-        events = list(events)
-
-        events_unhandled = storage.get_events_by_call_status(
-            call=call,
-            status_name="unhandled exception, retrying soon")
-        for event in events_unhandled:
-            events.append(event)
-
-        events_unknown = storage.get_events_by_call_status(
-            call=call,
-            status_name="unknown")
-        for event in events_unknown:
-            events.append(event)
+        events = []
+        for status_name in [
+            "connection lost",
+            "unknown",
+            "postponed",
+            "unhandled exception, retrying soon"
+        ]:
+            for event in storage.get_events_by_call_status(
+                    call=call,
+                    status_name=status_name
+            ):
+                events.append(event)
 
         log.info("Finalizing " + str(len(events)) + " events ...")
         for event in events:
-            storage.update_event_status_by_id(event["id"], call=call, status_name="manually finalized")
+            storage.update_event_status_by_id(event["id_string"], call=call, status_name="manually finalized")
 
 
 @app.route("/finalize/purge")
 def finalize_purge():
     storage = factory.get_incident_storage(purge=True)
+    return "success"
 
 
 @app.route('/trigger', methods=["GET", "POST"])
@@ -187,8 +183,8 @@ def trigger():
                 )
             )
             log.info(
-                "Forwarded incident {} to worker via redis".format(
-                    incident.get("call")))
+                "Forwarded incident {} to worker via redis".format(str(incident))
+            )
 
             # In case we "proposed" something, we also need to approve,
             # we do that by queuing a approve

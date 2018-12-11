@@ -10,6 +10,12 @@ class EventGroupClosedException(Exception):
     pass
 
 
+class ProposalAlreadyExistsOrIsPendingException(Exception):
+    """ The event group is closed and no events can open
+    """
+    pass
+
+
 class EventCannotOpenException(Exception):
     """ An event cannot be opened yet, possibly due to
         leadtime_Max setting

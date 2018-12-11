@@ -82,44 +82,32 @@ def worker(queue):
     # Let's drop the redis database and refill it from incident store
     with Connection(get_redis()):
 
-        def retrigger_from_events(events, call):
-            for event in events:
-                for incidentid in event.get(call, {}).get("incidents", []):
-                    incident = storage.resolve_to_incident(incidentid)
-                    q.enqueue(
-                        work.process,
-                        args=(incident,),
-                        kwargs=dict(
-                            proposer=config.get("BOOKIE_PROPOSER"),
-                            approver=config.get("BOOKIE_APPROVER")
-                        )
-                    )
-                    # only reply the first incident!
-                    break
+        q = Queue("failed")
+        if q.count > 0:
+            log.info("Emptying Redis Queue (failed) ...")
+            q.empty()
+            job = q.dequeue()
+            while job is not None:
+                log.info("Canceling " + str(job))
+                job.cancel()
+                job.delete()
+                job = q.dequeue()
 
         q = Queue("default")
-        # Empty queue!
-        q.empty()
-        log.info("Redis Queue cleared")
+        count_before = q.count
 
-        log.info("Refilling redis queue from incident store")
-        storage = factory.get_incident_storage()
-        for call in INCIDENT_CALLS:
-            # "postponed", "unhandled exception, retrying soon" and "unknown" handled by scheduler
-            for status_name in [
-                "undecided",
-                "connection lost",
-                "related object not found",
-                "event missing in bos_incidents"
-            ]:
-                events = list(
-                    storage.get_events_by_call_status(
-                        call=call, status_name=status_name))
-                if len(events):
-                    log.info(
-                        "Retriggering {} {}:{} incidents".format(
-                            len(events), call, status_name))
-                retrigger_from_events(events, call)
+        if q.count > 0:
+            log.info("Emptying Redis Queue (default) ...")
+            q.empty()
+            job = q.dequeue()
+            while job is not None:
+                log.info("Canceling " + str(job))
+                job.cancel()
+                job.delete()
+                job = q.dequeue()
+            log.info("Redis Queue cleared (jobs before=" + str(count_before) + ")")
+        else:
+            log.info("Empty Redis Queue initialized")
 
     # This runs the Worker as thread
     with Connection(get_redis()):

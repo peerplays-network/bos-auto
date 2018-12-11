@@ -6,6 +6,7 @@ from bookied_sync.eventgroup import LookupEventGroup
 from bookied_sync.event import LookupEvent
 from bos_incidents import factory
 from bookiesports.normalize import IncidentsNormalizer, NotNormalizableException
+from peerplaysapi.exceptions import UnhandledRPCError
 from peerplays.bettingmarketgroup import BettingMarketGroups
 
 
@@ -178,7 +179,13 @@ class Trigger():
     def broadcast(self):
         """ This method broadcasts the updates to the chain
         """
-        return self.lookup.broadcast()
+        try:
+            return self.lookup.broadcast()
+        except UnhandledRPCError as e:
+            if "Proposed operation is already pending for approval" in str(e):
+                raise exceptions.ProposalAlreadyExistsOrIsPendingException()
+            else:
+                raise e
 
     def store_incident(self):
         """ This call stores the incident in the incident-store (bos-incident)
