@@ -4,6 +4,7 @@ import traceback
 import grapheneapi
 import bookied_sync
 import bos_incidents
+from bos_incidents.format import id_to_string
 import random
 
 from flask_rq import job
@@ -72,7 +73,7 @@ def process(
     peerplays.rpc.connect()
     try:
         t = time.time()
-        log.debug("Processing " + message["unique_string"])
+        log.info("processing " + message["unique_string"] + " for event " + id_to_string(message))
     except Exception as e:
         pass
 
@@ -100,7 +101,7 @@ def process(
     # Obtain arguments
     args = message.get("arguments")
 
-    log.info("processing {} call with args {}".format(
+    log.debug("initializing {} call with args {}".format(
         call, str(args)
     ))
     try:
@@ -136,6 +137,10 @@ def process(
             traceback.format_exc()))
         # No trigger can be executed!
         return
+
+    log.debug("processing {} call from event id {}".format(
+        call, str(trigger.id)
+    ))
 
     try:
         # Execute the trigger
@@ -236,7 +241,7 @@ def process(
                 ),
                 status_add={"details": exception_details}
             )
-            log.info("Uncaught exception, retrying: {}".format(str(e)))
+            log.info("Uncaught exception, retrying soon: {}".format(str(e)))
 
     try:
         elapsed = time.time() - t
