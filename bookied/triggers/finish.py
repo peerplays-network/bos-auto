@@ -44,7 +44,7 @@ class FinishTrigger(Trigger):
         incidents = self.get_all_incidents()
         if not incidents:
             raise exceptions.InsufficientIncidents
-        finish_incidents = incidents.get("finish", {}).get("incidents")
+        finish_incidents = incidents.get("finish", {}).get("incidents", [])
         provider_hashes = set()
         for incident in finish_incidents:
             provider_hash = incident.get("provider_info", {}).get("name", None)

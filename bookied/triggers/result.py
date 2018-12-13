@@ -106,7 +106,7 @@ class ResultTrigger(Trigger):
         incidents = self.get_all_incidents()
         if not incidents:
             raise exceptions.InsufficientIncidents
-        result_incidents = incidents.get("result", {}).get("incidents")
+        result_incidents = incidents.get("result", {}).get("incidents", [])
         provider_hashes = set()
         for incident in result_incidents:
             provider_hash = incident.get("provider_info", {}).get("name", None)

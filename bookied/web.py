@@ -9,6 +9,7 @@ from .redis_con import get_redis
 from .utils import resolve_hostnames
 from bos_incidents import factory, exceptions
 from bos_incidents.validator import IncidentValidator, InvalidIncidentFormatException
+from bookiesports.normalize import IncidentsNormalizer, NotNormalizableException
 
 from .log import log
 from . import INCIDENT_CALLS
@@ -161,6 +162,17 @@ def trigger():
                 "Received invalid request: {}".format(str(incident))
             )
             return "Invalid data format", 400
+
+        # Only accept normalizable incidents
+        # Normalize incident
+        normalizer = IncidentsNormalizer(chain=config.get("network", "beatrice"))
+        try:
+            incident = normalizer.normalize(incident)
+        except NotNormalizableException:
+            log.warning(
+                "Received not normalizable incident, discarding {}".format(str(incident))
+            )
+            return "Not normalized incident", 400
 
         try:
             # FIXME, remove copy()

@@ -152,8 +152,8 @@ class Trigger():
                 self.storage.delete_incident(self.message)
             except Exception:
                 pass
-            self.store_incident()
             self.message = message
+            self.store_incident()
 
     def get_all_incidents(self):
         """ Let's get all the incidents for an event
