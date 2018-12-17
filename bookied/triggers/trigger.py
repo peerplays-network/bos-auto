@@ -152,8 +152,8 @@ class Trigger():
                 self.storage.delete_incident(self.message)
             except Exception:
                 pass
-            self.store_incident()
             self.message = message
+            self.store_incident()
 
     def get_all_incidents(self):
         """ Let's get all the incidents for an event
@@ -179,13 +179,17 @@ class Trigger():
     def broadcast(self):
         """ This method broadcasts the updates to the chain
         """
+        """
         try:
-            return self.lookup.broadcast()
+        """
+        return self.lookup.broadcast()
+        """
         except UnhandledRPCError as e:
             if "Proposed operation is already pending for approval" in str(e):
                 raise exceptions.ProposalAlreadyExistsOrIsPendingException()
             else:
                 raise e
+        """
 
     def store_incident(self):
         """ This call stores the incident in the incident-store (bos-incident)
