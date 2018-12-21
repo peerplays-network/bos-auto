@@ -27,14 +27,14 @@ config = loadConfig()
 peerplays = PeerPlays(
     node=config.get("node", None),
     nobroadcast=config.get("nobroadcast", False),
-    num_retries=1  # Only try once then trow an exception
+    num_retries=1,  # Only try once then trow an exception
 )
 set_shared_blockchain_instance(peerplays)
 lookup = Lookup(
     proposing_account=config.get("BOOKIE_PROPOSER"),
     approving_account=config.get("BOOKIE_APPROVER"),
     blockchain_instance=peerplays,
-    network=config.get("network", "beatrice")
+    network=config.get("network", "beatrice"),
 )
 
 
@@ -61,10 +61,7 @@ def unlock():
 # Processing Job
 #
 @job
-def process(
-    message,
-    **kwargs
-):
+def process(message, **kwargs):
     """ This process is called by the queue to process an actual message
         received.
 
@@ -73,7 +70,12 @@ def process(
     peerplays.rpc.connect()
     try:
         t = time.time()
-        log.info("processing " + message["unique_string"] + " for event " + id_to_string(message))
+        log.info(
+            "processing "
+            + message["unique_string"]
+            + " for event "
+            + id_to_string(message)
+        )
     except Exception as e:
         pass
 
@@ -101,25 +103,18 @@ def process(
     # Obtain arguments
     args = message.get("arguments")
 
-    log.debug("initializing {} call with args {}".format(
-        call, str(args)
-    ))
+    log.debug("initializing {} call with args {}".format(call, str(args)))
     try:
 
         if call in TRIGGERS:
-            trigger = TRIGGERS[call](
-                message,
-                lookup_instance=lookup,
-                config=config,
-            )
+            trigger = TRIGGERS[call](message, lookup_instance=lookup, config=config)
 
         elif call == "unknown":
             return
 
         else:
             log.error(
-                "Received an unknown trigger {} with content: {}"
-                .format(call, message)
+                "Received an unknown trigger {} with content: {}".format(call, message)
             )
             return
 
@@ -132,15 +127,13 @@ def process(
         return
 
     except Exception as e:
-        log.critical("Uncaught exception: {}\n\n{}".format(
-            str(e),
-            traceback.format_exc()))
+        log.critical(
+            "Uncaught exception: {}\n\n{}".format(str(e), traceback.format_exc())
+        )
         # No trigger can be executed!
         return
 
-    log.debug("processing {} call from event id {}".format(
-        call, str(trigger.id)
-    ))
+    log.debug("processing {} call from event id {}".format(call, str(trigger.id)))
 
     try:
         # Execute the trigger
@@ -168,18 +161,24 @@ def process(
         """
         trigger.set_incident_status(
             status_name="postponed",
-            status_expiration=datetime.utcnow() + timedelta(
-                seconds=int(config["scheduler"]["expirations"]["EventCannotOpenException"])
-            )
+            status_expiration=datetime.utcnow()
+            + timedelta(
+                seconds=int(
+                    config["scheduler"]["expirations"]["EventCannotOpenException"]
+                )
+            ),
         )
 
     except exceptions.PostPoneIncidentException:
         log.info("This incident has been postponed")
         trigger.set_incident_status(
             status_name="postponed",
-            status_expiration=datetime.utcnow() + timedelta(
-                seconds=int(config["scheduler"]["expirations"]["PostPoneIncidentException"])
-            )
+            status_expiration=datetime.utcnow()
+            + timedelta(
+                seconds=int(
+                    config["scheduler"]["expirations"]["PostPoneIncidentException"]
+                )
+            ),
         )
 
     except exceptions.InsufficientIncidents:
@@ -196,8 +195,7 @@ def process(
     except bos_incidents.exceptions.EventNotFoundException as e:
         traceback.format_exc()
         log.warning("Invalid bos_incident event!")
-        trigger.set_incident_status(
-            status_name="event missing in bos_incidents")
+        trigger.set_incident_status(status_name="event missing in bos_incidents")
 
     except bookied_sync.exceptions.ObjectNotFoundInLookup as e:
         trigger.set_incident_status(status_name="related object not found")
@@ -215,37 +213,46 @@ def process(
         exception_details = "{}\n\n{}".format(str(e), traceback.format_exc())
 
         # retry uncaught exception once (to reduce ghost errors)
-        if trigger.get_incident_status() is not None and\
-                (
-                    trigger.get_incident_status()["name"] == "unhandled exception, retrying soon" or
-                    trigger.get_incident_status()["name"] == "unhandled exception"
+        if trigger.get_incident_status() is not None and (
+            trigger.get_incident_status()["name"]
+            == "unhandled exception, retrying soon"
+            or trigger.get_incident_status()["name"] == "unhandled exception"
         ):
             # already retried, finalize
             trigger.set_incident_status(
                 status_name="unhandled exception",
-                status_add={"details": exception_details}
+                status_add={"details": exception_details},
             )
-            log.critical("Uncaught exception: {}\n\n{}".format(
-                str(e),
-                traceback.format_exc())
+            log.critical(
+                "Uncaught exception: {}\n\n{}".format(str(e), traceback.format_exc())
             )
         else:
             # randomize it
             random_offset = random.randint(1, 3) * 60
-            expiration_in_seconds = max(30, int(config["scheduler"]["expirations"]["UnhandledException"]) - random_offset)
+            expiration_in_seconds = max(
+                30,
+                int(config["scheduler"]["expirations"]["UnhandledException"])
+                - random_offset,
+            )
 
             trigger.set_incident_status(
                 status_name="unhandled exception, retrying soon",
-                status_expiration=datetime.utcnow() + timedelta(
-                    seconds=expiration_in_seconds
-                ),
-                status_add={"details": exception_details}
+                status_expiration=datetime.utcnow()
+                + timedelta(seconds=expiration_in_seconds),
+                status_add={"details": exception_details},
             )
             log.info("Uncaught exception, retrying soon: {}".format(str(e)))
 
     try:
         elapsed = time.time() - t
-        log.debug("Done processing " + message["unique_string"] + ", call status now " + trigger.get_incident_status() + ", elapsed time is " + str(elapsed))
+        log.debug(
+            "Done processing "
+            + message["unique_string"]
+            + ", call status now "
+            + trigger.get_incident_status()
+            + ", elapsed time is "
+            + str(elapsed)
+        )
     except Exception as e:
         pass
 
@@ -271,22 +278,20 @@ def approve(*args, **kwargs):
 
     log.info(
         "Testing for pending proposals "
-        "created by {} that we could approve by {}"
-        .format(myproposer, myapprover))
+        "created by {} that we could approve by {}".format(myproposer, myapprover)
+    )
 
     proposals = Proposals("witness-account")
     approver = Account(myapprover)
     for proposal in proposals:
         proposer = Account(proposal.proposer)
         if (
-            proposer["name"] == myproposer and
-            approver["id"] not in proposal["available_active_approvals"]
+            proposer["name"] == myproposer
+            and approver["id"] not in proposal["available_active_approvals"]
         ):
             log.info(
                 "Proposal {} has been proposed by {}. Approving it!".format(
-                    proposal["id"],
-                    myproposer))
-            log.info(peerplays.approveproposal(
-                proposal["id"],
-                account=myapprover
-            ))
+                    proposal["id"], myproposer
+                )
+            )
+            log.info(peerplays.approveproposal(proposal["id"], account=myapprover))

@@ -20,12 +20,12 @@ from .fixtures import fixture_data, lookup, config
 
 
 class Testcases(unittest.TestCase):
-
     def mockEvent(self, x=False):
         # Do not update the event
         LookupEvent.can_open = PropertyMock(return_value=x)
         LookupEvent.can_open_by = PropertyMock(
-            return_value=(datetime.utcnow() - timedelta(minutes=1)))
+            return_value=(datetime.utcnow() - timedelta(minutes=1))
+        )
 
     def setUp(self):
         fixture_data()
@@ -41,7 +41,7 @@ class Testcases(unittest.TestCase):
                 "start_time": "2022-10-16T00:00:00Z",
                 "away": "Chicago Bulls",
                 "home": "Detroit Pistons",
-                "event_group_name": "NBA Regular Season"
+                "event_group_name": "NBA Regular Season",
             },
             "provider_info": {
                 "match_id": "1487207",
@@ -49,13 +49,11 @@ class Testcases(unittest.TestCase):
                 "source": "direct string input",
                 "name": "scorespro",
                 "bitArray": "00000001100",
-                "pushed": "2018-03-10T00:11:31.79Z"
+                "pushed": "2018-03-10T00:11:31.79Z",
             },
             "unique_string": "2018-03-10t000000z-basketball-nba-regular-season-detroit-pistons-chicago-bulls-create-20172018",
-            "arguments": {
-                "season": "2017/2018"
-            },
-            "call": "create"
+            "arguments": {"season": "2017/2018"},
+            "call": "create",
         }
         _message_create_2 = deepcopy(_message_create_1)
         _message_create_2["provider_info"]["name"] = "foobar"
@@ -65,7 +63,8 @@ class Testcases(unittest.TestCase):
             _message_create_1,
             lookup_instance=lookup,
             config=config,
-            purge=True, mongodb="mongodbtest",
+            purge=True,
+            mongodb="mongodbtest",
         )
         from bookied import schedule
 
@@ -80,8 +79,7 @@ class Testcases(unittest.TestCase):
             create.trigger(_message_create_1.get("arguments"))
 
         create.storage.insert_incident(_message_create_2)
-        self.assertTrue(
-            create.testConditions(_message_create_1.get("arguments")))
+        self.assertTrue(create.testConditions(_message_create_1.get("arguments")))
 
         with self.assertRaises(exceptions.EventCannotOpenException):
             create.trigger(_message_create_1.get("arguments"))
@@ -91,7 +89,8 @@ class Testcases(unittest.TestCase):
         events = create.storage.get_events_by_call_status(
             call="create",
             status_name="postponed",
-            status_expired_before=datetime.utcnow())
+            status_expired_before=datetime.utcnow(),
+        )
         events = list(events)
 
         self.assertEqual(len(events), 1)
@@ -116,4 +115,4 @@ class Testcases(unittest.TestCase):
         self.assertEqual(len(ops), 1)
         self.assertEqual(ops[0][0], 22)
         self.assertTrue(len(ops[0][1]["proposed_ops"]) > 1)
-        self.assertTrue(ops[0][1]["proposed_ops"][0]['op'][0], 56)
+        self.assertTrue(ops[0][1]["proposed_ops"][0]["op"][0], 56)

@@ -13,18 +13,13 @@ from .redis_con import get_redis
 config = loadConfig()
 
 
-def check_scheduled(
-    storage=None,
-    func_callback=None,
-    proposer=None,
-    approver=None,
-):
+def check_scheduled(storage=None, func_callback=None, proposer=None, approver=None):
     """
     """
     log.info(
         "Scheduler checking incidents database ... "
-        "(approver: {}/ proposer: {})".format(
-            approver, proposer))
+        "(approver: {}/ proposer: {})".format(approver, proposer)
+    )
 
     # Invident Storage
     if not storage:
@@ -42,24 +37,17 @@ def check_scheduled(
 
         events = []
 
-        for status_name in [
-            "postponed",
-            "unhandled exception, retrying soon"
-        ]:
+        for status_name in ["postponed", "unhandled exception, retrying soon"]:
             for event in storage.get_events_by_call_status(
-                    call=call,
-                    status_name=status_name,
-                    status_expired_before=datetime.utcnow()
+                call=call,
+                status_name=status_name,
+                status_expired_before=datetime.utcnow(),
             ):
                 events.append(event)
 
-        for status_name in [
-            "connection lost",
-            "unknown"
-        ]:
+        for status_name in ["connection lost", "unknown"]:
             for event in storage.get_events_by_call_status(
-                    call=call,
-                    status_name=status_name
+                call=call, status_name=status_name
             ):
                 events.append(event)
 
@@ -82,10 +70,7 @@ def check_scheduled(
             job = q.enqueue(
                 func_callback,
                 args=(incident,),
-                kwargs=dict(
-                    proposer=proposer,
-                    approver=approver
-                )
+                kwargs=dict(proposer=proposer, approver=approver),
             )
             ids.append(job.id)
 
@@ -103,9 +88,7 @@ class PeriodicExecutor(threading.Thread):
         self.sleep = sleep
         self.args = args
         self.kwargs = kwargs
-        threading.Thread.__init__(
-            self,
-            name="PeriodicExecutor")
+        threading.Thread.__init__(self, name="PeriodicExecutor")
         self.setDaemon(True)
 
     def run(self):
@@ -118,14 +101,11 @@ class PeriodicExecutor(threading.Thread):
                 time.sleep(self.sleep)
 
 
-def scheduler(
-    delay=None,
-    proposer=None,
-    approver=None,
-):
+def scheduler(delay=None, proposer=None, approver=None):
     """
     """
     from . import work
+
     if not delay:
         delay = config["scheduler"]["interval"]
 
@@ -135,10 +115,7 @@ def scheduler(
         approver = config.get("BOOKIE_APPROVER")
 
     check_scheduled(
-        storage=None,
-        func_callback=work.process,
-        proposer=proposer,
-        approver=approver
+        storage=None, func_callback=work.process, proposer=proposer, approver=approver
     )
 
     PeriodicExecutor(
@@ -147,5 +124,5 @@ def scheduler(
         storage=None,
         func_callback=work.process,
         proposer=proposer,
-        approver=approver
+        approver=approver,
     ).run()

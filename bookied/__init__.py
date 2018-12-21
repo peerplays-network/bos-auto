@@ -22,5 +22,5 @@ TRIGGERS = {
     "finish": FinishTrigger,
     "result": ResultTrigger,
     "canceled": CancelTrigger,
-    "dynamic_bmgs": DynamicBmgTrigger
+    "dynamic_bmgs": DynamicBmgTrigger,
 }

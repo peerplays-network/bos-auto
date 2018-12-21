@@ -1,9 +1,7 @@
 from .trigger import Trigger
 from bookied_sync import comparators
 from bookied_sync.bettingmarketgroup import LookupBettingMarketGroup
-from bookied_sync.bettingmarketgroupresolve import (
-    LookupBettingMarketGroupResolve
-)
+from bookied_sync.bettingmarketgroupresolve import LookupBettingMarketGroupResolve
 from ..log import log
 from .. import exceptions
 
@@ -20,15 +18,12 @@ class ResultTrigger(Trigger):
     def _trigger(self, args):
         """ Publish results to a BMG and set to ``finish``.
         """
-        log.info(
-            "Finishing an event by setting it to "
-            "'finished' (with results)...")
+        log.info("Finishing an event by setting it to " "'finished' (with results)...")
 
         event = self.getEvent()
 
         event.status_update(
-            "finished",
-            scores=[str(self.home_score), str(self.away_score)]
+            "finished", scores=[str(self.home_score), str(self.away_score)]
         )
 
         log.info("Settling betting market groups...")
@@ -49,7 +44,7 @@ class ResultTrigger(Trigger):
                     "find_id_search": [
                         comparators.cmp_event(),
                         comparators.cmp_description("_dynamic"),
-                    ]
+                    ],
                 }
             else:
                 fuzzy_args = {}
@@ -60,13 +55,11 @@ class ResultTrigger(Trigger):
 
             # Skip those bmgs that coudn't be found
             if not bmg.find_id():
-                log.error("BMG could not be found: {}".format(
-                    str(bmg.identifier)))
+                log.error("BMG could not be found: {}".format(str(bmg.identifier)))
                 continue
 
             settle = LookupBettingMarketGroupResolve(
-                bmg,
-                [self.home_score, self.away_score]
+                bmg, [self.home_score, self.away_score]
             )
             settle.update()
 
@@ -89,6 +82,7 @@ class ResultTrigger(Trigger):
         """ Internal counter of scores
         """
         from collections import Counter
+
         ret = Counter()
         for i in range(len(scores)):
             ret[scores[i]] += 1
@@ -117,16 +111,20 @@ class ResultTrigger(Trigger):
         if len(provider_hashes) < self.testThreshold():
             log.info(
                 "Insufficient incidents for {}({})".format(
-                    self.__class__.__name__,
-                    str(self.teams)))
+                    self.__class__.__name__, str(self.teams)
+                )
+            )
             raise exceptions.InsufficientIncidents
 
         # Figure out the most "probable" result
-        scores = ["{}{}{}".format(
-            x["arguments"]["away_score"],
-            _SCORE_SEPARATOR,
-            x["arguments"]["home_score"]
-        ) for x in result_incidents]
+        scores = [
+            "{}{}{}".format(
+                x["arguments"]["away_score"],
+                _SCORE_SEPARATOR,
+                x["arguments"]["home_score"],
+            )
+            for x in result_incidents
+        ]
         scores = self._count_score(scores)
 
         # Threshold scaled by number of scores
@@ -145,6 +143,9 @@ class ResultTrigger(Trigger):
         else:
             result = list(valid_results.keys())[0]
             self.away_score, self.home_score = result.split(_SCORE_SEPARATOR)
-            log.info("Resolving: home - away: ({} - {})".format(
-                self.home_score, self.away_score))
+            log.info(
+                "Resolving: home - away: ({} - {})".format(
+                    self.home_score, self.away_score
+                )
+            )
             return True

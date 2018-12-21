@@ -38,7 +38,7 @@ class Testcases(unittest.TestCase):
                 "start_time": "2022-10-16T00:00:00Z",
                 "away": "Chicago Bulls",
                 "home": "Detroit Pistons",
-                "event_group_name": "NBA Regular Season"
+                "event_group_name": "NBA Regular Season",
             },
             "provider_info": {
                 "match_id": "1487207",
@@ -46,20 +46,19 @@ class Testcases(unittest.TestCase):
                 "source": "direct string input",
                 "name": "scorespro",
                 "bitArray": "00000001100",
-                "pushed": "2018-03-10T00:11:31.79Z"
+                "pushed": "2018-03-10T00:11:31.79Z",
             },
             "unique_string": "2018-03-10t000000z-basketball-nba-regular-season-detroit-pistons-chicago-bulls-create-20172018",
-            "arguments": {
-                "season": "2017/2018"
-            },
-            "call": "create"
+            "arguments": {"season": "2017/2018"},
+            "call": "create",
         }
 
         create = CreateTrigger(
             _message_create_1,
             lookup_instance=lookup,
             config=config,
-            purge=True, mongodb="mongodbtest",
+            purge=True,
+            mongodb="mongodbtest",
         )
 
         event = create.getIncidentEvent()
@@ -67,8 +66,8 @@ class Testcases(unittest.TestCase):
         self.assertTrue(event.can_open)
 
     @patch(
-        'bookied_sync.eventgroup.LookupEventGroup.leadtime_Max',
-        PropertyMock(return_value=2)
+        "bookied_sync.eventgroup.LookupEventGroup.leadtime_Max",
+        PropertyMock(return_value=2),
     )
     def test_old(self):
         # Create incidents
@@ -79,7 +78,7 @@ class Testcases(unittest.TestCase):
                 "start_time": "2022-10-16T00:00:00Z",
                 "away": "Chicago Bulls",
                 "home": "Detroit Pistons",
-                "event_group_name": "NBA Regular Season"
+                "event_group_name": "NBA Regular Season",
             },
             "provider_info": {
                 "match_id": "1487207",
@@ -87,20 +86,19 @@ class Testcases(unittest.TestCase):
                 "source": "direct string input",
                 "name": "scorespro",
                 "bitArray": "00000001100",
-                "pushed": "2018-03-10T00:11:31.79Z"
+                "pushed": "2018-03-10T00:11:31.79Z",
             },
             "unique_string": "2018-03-10t000000z-basketball-nba-regular-season-detroit-pistons-chicago-bulls-create-20172018",
-            "arguments": {
-                "season": "2017/2018"
-            },
-            "call": "create"
+            "arguments": {"season": "2017/2018"},
+            "call": "create",
         }
 
         create = CreateTrigger(
             _message_create_1,
             lookup_instance=lookup,
             config=config,
-            purge=True, mongodb="mongodbtest",
+            purge=True,
+            mongodb="mongodbtest",
         )
 
         with self.assertRaises(exceptions.EventDoesNotExistException):
@@ -116,5 +114,7 @@ class Testcases(unittest.TestCase):
         now = int(time.mktime(datetime.utcnow().timetuple()))
         expiration_time = create.event.can_open_by + timedelta(seconds=(now % 120))
 
-        self.assertLessEqual(expiration_time, create.event.can_open_by + timedelta(seconds=120))
+        self.assertLessEqual(
+            expiration_time, create.event.can_open_by + timedelta(seconds=120)
+        )
         self.assertGreaterEqual(expiration_time, create.event.can_open_by)

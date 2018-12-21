@@ -11,15 +11,12 @@ class FinishTrigger(Trigger):
         """ Set a BMG to ``finish``.
         """
         log.info(
-            "Finishing an event by setting it to 'finished'"
-            " (without results)...")
+            "Finishing an event by setting it to 'finished'" " (without results)..."
+        )
 
         event = self.getEvent()
 
-        event.status_update(
-            "finished",
-            scores=[]
-        )
+        event.status_update("finished", scores=[])
 
         return True
 
@@ -57,6 +54,7 @@ class FinishTrigger(Trigger):
         else:
             log.info(
                 "Insufficient incidents for {}({})".format(
-                    self.__class__.__name__,
-                    str(self.teams)))
+                    self.__class__.__name__, str(self.teams)
+                )
+            )
             raise exceptions.InsufficientIncidents
