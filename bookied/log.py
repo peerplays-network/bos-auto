@@ -6,6 +6,7 @@ from .config import loadConfig
 HAS_TELEGRAM = False
 try:
     import telegram_handler
+
     HAS_TELEGRAM = True
 except Exception:
     pass
@@ -17,9 +18,9 @@ logging_config = config.get("logging", {})
 
 # Enable logging
 USE_TELEGRAM = (
-    bool(HAS_TELEGRAM) and
-    logging_config.get("telegram_token", None) is not None and
-    logging_config.get("telegram_chatid", None) is not None
+    bool(HAS_TELEGRAM)
+    and logging_config.get("telegram_token", None) is not None
+    and logging_config.get("telegram_chatid", None) is not None
 )
 USE_MAIL = logging_config.get("mailto", None)
 USE_STREAM = True  # logging_config.get("console", None)
@@ -44,7 +45,7 @@ def log_file(logger):
         log_handler_rotate = RotatingFileHandler(
             logging_config.get("file", "bookied.log"),
             maxBytes=1024 * 1024 * 100,
-            backupCount=20
+            backupCount=20,
         )
         log_handler_rotate.setLevel(logging.INFO)
         logger.addHandler(log_handler_rotate)
@@ -59,18 +60,21 @@ def log_mail(logger):
             config.get("mailhost", "localhost"),
             config.get("mailfrom", "bookied@example.com"),
             config.get("mailto"),
-            config.get("mailsubject", "BookieD notification mail"))
-        log_handler_mail.setFormatter(logging.Formatter(
-            "Message type:       %(levelname)s\n" +
-            "Location:           %(pathname)s:%(lineno)d\n" +
-            "Module:             %(module)s\n" +
-            "Function:           %(funcName)s\n" +
-            "Time:               %(asctime)s\n" +
-            "\n" +
-            "Message:\n" +
-            "\n" +
-            "%(message)s\n"
-        ))
+            config.get("mailsubject", "BookieD notification mail"),
+        )
+        log_handler_mail.setFormatter(
+            logging.Formatter(
+                "Message type:       %(levelname)s\n"
+                + "Location:           %(pathname)s:%(lineno)d\n"
+                + "Module:             %(module)s\n"
+                + "Function:           %(funcName)s\n"
+                + "Time:               %(asctime)s\n"
+                + "\n"
+                + "Message:\n"
+                + "\n"
+                + "%(message)s\n"
+            )
+        )
         log_handler_mail.setLevel(logging.WARNING)
         logger.addHandler(log_handler_mail)
 
@@ -81,7 +85,7 @@ def log_telegram(logger):
     if USE_TELEGRAM:
         tgHandler = telegram_handler.TelegramHandler(
             token=logging_config.get("telegram_token"),
-            chat_id=logging_config.get("telegram_chatid")
+            chat_id=logging_config.get("telegram_chatid"),
         )
         tgHandler.setLevel(logging.WARNING)
         logger.addHandler(tgHandler)
@@ -89,8 +93,9 @@ def log_telegram(logger):
 
 # Default logging facilities
 LOG_LEVEL = logging.getLevelName(logging_config.get("level", "INFO"))
-LOGFORMAT = ("  %(log_color)s%(levelname)-8s%(reset)s |"
-             " %(log_color)s%(message)s%(reset)s")
+LOGFORMAT = (
+    "  %(log_color)s%(levelname)-8s%(reset)s |" " %(log_color)s%(message)s%(reset)s"
+)
 logging.root.setLevel(LOG_LEVEL)
 formatter = ColoredFormatter(LOGFORMAT)
 

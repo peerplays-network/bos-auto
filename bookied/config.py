@@ -7,8 +7,7 @@ def loadConfig(config_file="config.yaml"):
     """
     config = dict()
     default_file = os.path.join(
-        os.path.dirname(os.path.realpath(__file__)),
-        "config-default.yaml"
+        os.path.dirname(os.path.realpath(__file__)), "config-default.yaml"
     )
     with open(default_file) as fid:
         config.update(yaml.load(fid))
