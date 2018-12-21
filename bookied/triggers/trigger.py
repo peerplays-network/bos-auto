@@ -10,17 +10,12 @@ from peerplaysapi.exceptions import UnhandledRPCError
 from peerplays.bettingmarketgroup import BettingMarketGroups
 
 
-class Trigger():
+class Trigger:
     """ This class is used to deal with Messages that have been received by any
         means and need processing thru bookied-sync
     """
-    def __init__(
-        self,
-        message,
-        lookup_instance,
-        config,
-        **kwargs
-    ):
+
+    def __init__(self, message, lookup_instance, config, **kwargs):
         self.message = message
         self.lookup = lookup_instance
         self.config = config
@@ -37,32 +32,26 @@ class Trigger():
             self.storage = kwargs["storage"]
         else:
             self.storage = factory.get_incident_storage(
-                kwargs.get("mongodb", None),
-                purge=kwargs.get("purge", False))
+                kwargs.get("mongodb", None), purge=kwargs.get("purge", False)
+            )
 
         # Normalize incident
-        self.normalizer = IncidentsNormalizer(
-            chain=lookup_instance._network_name)
+        self.normalizer = IncidentsNormalizer(chain=lookup_instance._network_name)
         self.normalize(message)
 
         # Try obtain the sport
         self.sport = LookupSport(self.id.get("sport"))
 
         # Given the sport, try to obtain the league (event group)
-        self.eventgroup = LookupEventGroup(
-            self.sport,
-            self.id.get("event_group_name"))
+        self.eventgroup = LookupEventGroup(self.sport, self.id.get("event_group_name"))
 
         self.event = None  # Will be filled in after receiving a trigger
 
         # Get Teams from query
-        self.teams = [
-            self.id.get("home"),
-            self.id.get("away")]
+        self.teams = [self.id.get("home"), self.id.get("away")]
 
         # Get start time from query
-        self.start_time = parse(
-            self.id.get("start_time", ""))
+        self.start_time = parse(self.id.get("start_time", ""))
 
     @property
     def incident(self):
@@ -79,11 +68,19 @@ class Trigger():
     def getEvent(self):
         """ Get an event from the lookup
         """
+        print(
+            dict(
+                teams=self.teams,
+                start_time=self.start_time,
+                eventgroup_identifier=self.eventgroup.identifier,
+                sport_identifier=self.sport.identifier,
+            )
+        )
         event = LookupEvent.find_event(
             teams=self.teams,
             start_time=self.start_time,
             eventgroup_identifier=self.eventgroup.identifier,
-            sport_identifier=self.sport.identifier
+            sport_identifier=self.sport.identifier,
         )
 
         if event:
@@ -93,8 +90,9 @@ class Trigger():
 
             eventgroup = event.eventgroup
             if not eventgroup.is_open:
-                log.debug("Skipping not-yet-open BMG: {}".format(
-                    str(eventgroup.identifier)))
+                log.debug(
+                    "Skipping not-yet-open BMG: {}".format(str(eventgroup.identifier))
+                )
                 raise exceptions.EventGroupClosedException
 
             return event
@@ -132,11 +130,7 @@ class Trigger():
 
         # unless _trigger raises an exception
         self.set_incident_status(
-            status_name="done",
-            status_add=dict(
-                proposals=proposal_ids,
-                actions=actions,
-            )
+            status_name="done", status_add=dict(proposals=proposal_ids, actions=actions)
         )
 
         return transactions
@@ -163,17 +157,12 @@ class Trigger():
     def set_incident_status(self, **kwargs):
         """ We here set the status of an **event** in the incidents storage
         """
-        self.storage.update_event_status_by_id(
-            self.id,
-            call=self.call,
-            **kwargs)
+        self.storage.update_event_status_by_id(self.id, call=self.call, **kwargs)
 
     def get_incident_status(self):
         """ Get the current status of an **event** in the incidents storage
         """
-        event = self.storage.get_event_by_id(
-            self.id,
-            False)
+        event = self.storage.get_event_by_id(self.id, False)
         return event.get(self.call, {}).get("status", None)
 
     def broadcast(self):
