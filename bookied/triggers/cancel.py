@@ -41,6 +41,7 @@ class CancelTrigger(Trigger):
         else:
             log.info(
                 "Insufficient incidents for {}({})".format(
-                    self.__class__.__name__,
-                    str(self.teams)))
+                    self.__class__.__name__, str(self.teams)
+                )
+            )
             raise exceptions.InsufficientIncidents

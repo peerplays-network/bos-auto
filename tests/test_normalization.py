@@ -16,7 +16,6 @@ from .fixtures import fixture_data, lookup, config, storage
 
 
 class Testcases(unittest.TestCase):
-
     def test_normalize_incident(self):
         # Create incidents
         _message_create_1 = {
@@ -34,20 +33,15 @@ class Testcases(unittest.TestCase):
                 "source": "direct string input",
                 "name": "scorespro",
                 "bitArray": "00000001100",
-                "pushed": "2018-03-10T00:11:31.79Z"
+                "pushed": "2018-03-10T00:11:31.79Z",
             },
             "unique_string": "2018-03-10t000000z-basketball-nba-regular-season-detroit-pistons-chicago-bulls-create-20172018",
-            "arguments": {
-                "season": "2017/2018"
-            },
-            "call": "create"
+            "arguments": {"season": "2017/2018"},
+            "call": "create",
         }
 
         create = CreateTrigger(
-            _message_create_1,
-            lookup_instance=lookup,
-            config=config,
-            storage=storage,
+            _message_create_1, lookup_instance=lookup, config=config, storage=storage
         )
         self.assertEqual(create.message["id"]["event_group_name"], "NBA Regular Season")
 
@@ -68,15 +62,12 @@ class Testcases(unittest.TestCase):
                 "source": "direct string input",
                 "name": "scorespro",
                 "bitArray": "00000001100",
-                "pushed": "2018-03-10T00:11:31.79Z"
+                "pushed": "2018-03-10T00:11:31.79Z",
             },
             "unique_string": "2018-03-10t000000z-basketball-nba-regular-season-detroit-pistons-chicago-bulls-create-20172018",
-            "arguments": {
-                "season": "2017/2018"
-            },
-            "call": "create"
+            "arguments": {"season": "2017/2018"},
+            "call": "create",
         }
-
 
         _message_create_2 = deepcopy(_message_create_1)
         _message_create_2["id"]["event_group_name"] = "Foobar"

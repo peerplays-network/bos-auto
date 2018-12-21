@@ -6,15 +6,15 @@ from dateutil.parser import parse
 
 from peerplays import PeerPlays
 from peerplays.instance import set_shared_peerplays_instance
-from peerplays.blockchainobject import BlockchainObject, ObjectCache
-from peerplays.sport import Sports
-from peerplays.event import Events
-from peerplays.rule import Rules
-from peerplays.proposal import Proposals
-from peerplays.eventgroup import EventGroups
-from peerplays.bettingmarketgroup import BettingMarketGroups
-from peerplays.bettingmarket import BettingMarkets
-from peerplays.witness import Witnesses
+from peerplays.account import Account
+from peerplays.sport import Sports, Sport
+from peerplays.event import Events, Event
+from peerplays.rule import Rules, Rule
+from peerplays.proposal import Proposals, Proposal
+from peerplays.eventgroup import EventGroups, EventGroup
+from peerplays.bettingmarketgroup import BettingMarketGroups, BettingMarketGroup
+from peerplays.bettingmarket import BettingMarkets, BettingMarket
+from peerplays.witness import Witnesses, Witness
 from peerplaysbase.operationids import operations
 
 from bookied_sync.lookup import Lookup
@@ -24,158 +24,126 @@ from bookied_sync.event import LookupEvent
 from bos_incidents import factory
 
 
-wif = "5KQwrPbwdL6PhXujxW37FSSQZ1JiwsST4cqQzDeyXtP79zkvFD3"
-config = dict(
-    nobroadcast=True
+# default wifs key for testing
+wifs = [
+    "5KQwrPbwdL6PhXujxW37FSSQZ1JiwsST4cqQzDeyXtP79zkvFD3",
+    "5KCBDTcyDqzsqehcb52tW5nU6pXife6V2rX9Yf7c3saYSzbDZ5W",
+]
+wif = wifs[0]
+core_unit = "TEST"
+
+# peerplays instance
+peerplays = PeerPlays(
+    "wss://api.ppy-beatrice.blckchnd.com", keys=wifs, nobroadcast=True, num_retries=1
 )
-ppy = PeerPlays(
-    keys=[wif],
-    nobroadcast=config["nobroadcast"],
-    num_retries=1,
-)
-set_shared_peerplays_instance(ppy)
+config = peerplays.config
+
+# Set defaults
+peerplays.set_default_account("init0")
+set_shared_peerplays_instance(peerplays)
+
+# Ensure we are not going to transaction anythin on chain!
+assert peerplays.nobroadcast
+
+# Setup base lookup
 lookup = Lookup(
     proposer="init0",
-    blockchain_instance=ppy,
+    blockchain_instance=peerplays,
     network="unittests",
     sports_folder=os.path.join(
-        os.path.dirname(os.path.realpath(__file__)),
-        "bookiesports"
+        os.path.dirname(os.path.realpath(__file__)), "bookiesports"
     ),
 )
 lookup.set_approving_account("init0")
+lookup.set_proposing_account("init0")
+
+# ensure lookup isn't broadcasting either
 assert lookup.blockchain.nobroadcast
 
 # Storage
-storage = factory.get_incident_storage(
-    "mongodbtest", purge=True)
-
-# Setup custom Cache
-BlockchainObject._cache = ObjectCache(
-    default_expiration=60 * 60 * 1,
-    no_overwrite=True
-)
+storage = factory.get_incident_storage("mongodbtest", purge=True)
 
 
 def lookup_test_event(id):
-    event = {
-        "id": "1.22.2242",
-        "teams": ["Atlanta Hawks", "Boston Celtics"],
-        "eventgroup_identifier": "NBA",
-        "sport_identifier": "Basketball",
-        "season": {"en": "2017-00-00"},
-        "start_time": parse("2022-10-16T00:00:00"),
-        "status": "upcoming",
-    }
-    return LookupEvent(**event)
+    return LookupEvent(
+        **{
+            "id": "1.22.2242",
+            "teams": ["Atlanta Hawks", "Boston Celtics"],
+            "eventgroup_identifier": "NBA",
+            "sport_identifier": "Basketball",
+            "season": {"en": "2017-00-00"},
+            "start_time": parse("2022-10-16T00:00:00"),
+            "status": "upcoming",
+        }
+    )
 
 
 def lookup_test_eventgroup(id):
     return LookupEventGroup("Basketball", "NBA")
 
 
-def add_to_object_cache(objects, key="id"):
-    if objects:
-        for i in objects:
-            if key in i and i[key]:
-                BlockchainObject._cache[i[key]] = i
-
-
-def add_event(data):
-    add_to_object_cache([data])
-    if "event_group_id" in data:
-        Events.cache[data["event_group_id"]].append(data)
-
-
 def fixture_data():
-    BettingMarkets.cache = dict()
-    Rules.cache = dict()
-    Proposals.cache = dict()
-    BettingMarketGroups.cache = dict()
-    Events.cache = dict()
-    EventGroups.cache = dict()
-    Sports.cache = dict()
+    peerplays.clear()
+    BettingMarkets.clear_cache()
+    Rules.clear_cache()
+    BettingMarketGroups.clear_cache()
+    Proposals.clear_cache()
+    Witnesses.clear_cache()
+    Events.clear_cache()
+    EventGroups.clear_cache()
+    Sports.clear_cache()
 
-    with open(os.path.join(
-        os.path.dirname(__file__),
-        "fixtures.yaml"
-    )) as fid:
+    with open(os.path.join(os.path.dirname(__file__), "fixtures.yaml")) as fid:
         data = yaml.safe_load(fid)
-    for ob in data.keys():
-        add_to_object_cache(data[ob])
 
-    add_to_object_cache(data.get("accounts", []), key="name")
+    Witnesses.cache_objects([Witness(x) for x in data.get("witnesses", [])])
+    Sports.cache_objects([Sport(x) for x in data.get("sports", [])])
 
-    for witness in data.get("witnesses", []):
-        id = witness["id"]
-        if id not in Witnesses.cache or not Witnesses.cache[id]:
-            Witnesses.cache[id] = []
-        Witnesses.cache[id].append(witness)
-    Witnesses.cache["2.12.0"] = data.get("witness_schedule", [])
-
-    for sport in data.get("sports", []):
-        id = "sports"
-        if id not in Sports.cache or not Sports.cache[id]:
-            Sports.cache[id] = []
-        Sports.cache[id].append(sport)
-
-    for event_group in data.get("eventgroups", []):
-        id = event_group["sport_id"]
-        if id not in EventGroups.cache or not EventGroups.cache[id]:
-            EventGroups.cache[id] = []
-        EventGroups.cache[id].append(event_group)
+    for evg in data.get("eventgroups", []):
+        EventGroups.cache_objects([EventGroup(evg)], key=evg["sport_id"])
 
     for event in data.get("events", []):
-        id = event["event_group_id"]
-        if id not in Events.cache or not Events.cache[id]:
-            Events.cache[id] = []
-        Events.cache[id].append(event)
+        Events.cache_objects([Event(event)], key=event["event_group_id"])
 
-    for bettingmarketgroup in data.get("bettingmarketgroups", []):
-        id = bettingmarketgroup["event_id"]
-        if id not in BettingMarketGroups.cache or not BettingMarketGroups.cache[id]:
-            BettingMarketGroups.cache[id] = []
-        BettingMarketGroups.cache[id].append(bettingmarketgroup)
+    for bmg in data.get("bettingmarketgroups", []):
+        BettingMarketGroups.cache_objects(
+            [BettingMarketGroup(bmg)], key=bmg["event_id"]
+        )
 
-    for bettingmarket in data.get("bettingmarkets", []):
-        id = bettingmarket["group_id"]
-        if id not in BettingMarkets.cache or not BettingMarkets.cache[id]:
-            BettingMarkets.cache[id] = []
-        BettingMarkets.cache[id].append(bettingmarket)
+    for bm in data.get("bettingmarkets", []):
+        BettingMarkets.cache_objects([BettingMarketGroup(bm)], bm["group_id"])
 
-    for rule in data.get("rules", []):
-        id = "rules"
-        if id not in Rules.cache or not Rules.cache[id]:
-            Rules.cache[id] = []
-        Rules.cache[id].append(rule)
+    Rules.cache_objects([Rule(x) for x in data.get("rules", [])])
+    for x in data.get("accounts", []):
+        Account.cache_object(x, x["name"])
+        Account.cache_object(x, x["id"])
 
+    proposals = []
     for proposal in data.get("proposals", []):
-        # id = proposal["required_active_approvals"][0]
-        id = "1.2.1"
         ops = list()
         for _op in proposal["operations"]:
             for opName, op in _op.items():
-                ops.append(
-                    [operations[opName], op]
-                )
+                ops.append([operations[opName], op])
         # Proposal!
         proposal_id = proposal["proposal_id"]
-        proposal_data = {'available_active_approvals': [],
-                         'available_key_approvals': [],
-                         'available_owner_approvals': [],
-                         'expiration_time': '2018-05-29T10:23:13',
-                         'id': proposal_id,
-                         'proposed_transaction': {'expiration': '2018-05-29T10:23:13',
-                                                  'extensions': [],
-                                                  'operations': ops,
-                                                  'ref_block_num': 0,
-                                                  'ref_block_prefix': 0},
-                         'proposer': '1.2.7',
-                         'required_active_approvals': ['1.2.1'],
-                         'required_owner_approvals': []}
+        proposal_data = {
+            "available_active_approvals": [],
+            "available_key_approvals": [],
+            "available_owner_approvals": [],
+            "expiration_time": "2018-05-29T10:23:13",
+            "id": proposal_id,
+            "proposed_transaction": {
+                "expiration": "2018-05-29T10:23:13",
+                "extensions": [],
+                "operations": ops,
+                "ref_block_num": 0,
+                "ref_block_prefix": 0,
+            },
+            "proposer": "1.2.7",
+            "required_active_approvals": ["1.2.1"],
+            "required_owner_approvals": [],
+        }
+        proposals.append(Proposal(proposal_data))
 
-        if id not in Proposals.cache or not Proposals.cache[id]:
-            Proposals.cache[id] = []
-        Proposals.cache[id].append(proposal_data)
-        # Also define the actual object in the Object Cache
-        BlockchainObject._cache[proposal_id] = proposal_data
+    Proposals.cache_objects(proposals, "1.2.1")
+    Proposals.cache_objects(proposals, "witness-account")

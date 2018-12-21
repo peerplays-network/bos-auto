@@ -1,4 +1,3 @@
-
 import pkg_resources
 from rq import use_connection, Connection, Queue
 from flask import Flask, request, jsonify
@@ -32,7 +31,7 @@ api_whitelist = resolve_hostnames(config.get("api_whitelist", ["0.0.0.0"]))
 background_threads = []
 
 
-@app.route('/')
+@app.route("/")
 def home():
     """ Let's not expose that this is a bos-auto endpoint
     """
@@ -43,13 +42,7 @@ def home():
 def isalive():
 
     versions = dict()
-    for name in [
-        "bos-auto",
-        "peerplays",
-        "bookiesports",
-        "bos-incidents",
-        "bos-sync"
-    ]:
+    for name in ["bos-auto", "peerplays", "bookiesports", "bos-incidents", "bos-sync"]:
         try:
             versions[name] = pkg_resources.require(name)[0].version
         except Exception:
@@ -59,24 +52,22 @@ def isalive():
     with Connection(redis):
         q = Queue(connection=redis)
         for queue in q.all():
-            queue_status[queue.name] = dict(
-                count=queue.count,
-            )
+            queue_status[queue.name] = dict(count=queue.count)
 
     background_threads_dict = {}
     for t in background_threads:
         try:
             background_threads_dict[t.name] = {"running": t.is_alive()}
         except Exception as e:
-            log.error(
-                "Error in background task: {}".format(str(e))
-            )
+            log.error("Error in background task: {}".format(str(e)))
 
-    return jsonify(dict(
-        versions=versions,
-        queue=dict(status=queue_status),
-        background=background_threads_dict
-    ))
+    return jsonify(
+        dict(
+            versions=versions,
+            queue=dict(status=queue_status),
+            background=background_threads_dict,
+        )
+    )
 
 
 @app.route("/events")
@@ -85,13 +76,9 @@ def events(event_id=None):
     if event_id is not None:
         event = storage.get_event_by_id(event_id, True, True)
         event.pop("_id")
-        return jsonify(
-            dict(event)
-        )
+        return jsonify(dict(event))
     else:
-        return jsonify(
-            storage.get_incidents_count()
-        )
+        return jsonify(storage.get_incidents_count())
 
 
 @app.route("/finalize")
@@ -104,17 +91,18 @@ def finalize():
             "connection lost",
             "unknown",
             "postponed",
-            "unhandled exception, retrying soon"
+            "unhandled exception, retrying soon",
         ]:
             for event in storage.get_events_by_call_status(
-                    call=call,
-                    status_name=status_name
+                call=call, status_name=status_name
             ):
                 events.append(event)
 
         log.info("Finalizing " + str(len(events)) + " events ...")
         for event in events:
-            storage.update_event_status_by_id(event["id_string"], call=call, status_name="manually finalized")
+            storage.update_event_status_by_id(
+                event["id_string"], call=call, status_name="manually finalized"
+            )
 
 
 @app.route("/finalize/purge")
@@ -123,7 +111,7 @@ def finalize_purge():
     return "success"
 
 
-@app.route('/trigger', methods=["GET", "POST"])
+@app.route("/trigger", methods=["GET", "POST"])
 def trigger():
     """ This endpoint is used to submit data to the queue so we can process it
         asynchronously to the web requests. The webrequests should be answered
@@ -142,13 +130,10 @@ def trigger():
         .. note:: The trigger endpoint stores the incidents through
                   (bos-incidents) already to allow later replaying.
     """
-    if request.method == 'POST':
+    if request.method == "POST":
         # Don't bother wit requests from IPs that are not
         # whitelisted
-        if (
-            request.remote_addr not in api_whitelist and
-            "0.0.0.0" not in api_whitelist
-        ):
+        if request.remote_addr not in api_whitelist and "0.0.0.0" not in api_whitelist:
             return "Your IP address is not allowed to post here!", 403
 
         # Obtain message from request body
@@ -158,9 +143,7 @@ def trigger():
         try:
             validator.validate_incident(incident)
         except InvalidIncidentFormatException:
-            log.error(
-                "Received invalid request: {}".format(str(incident))
-            )
+            log.error("Received invalid request: {}".format(str(incident)))
             return "Invalid data format", 400
 
         # Only accept normalizable incidents
@@ -170,7 +153,9 @@ def trigger():
             incident = normalizer.normalize(incident)
         except NotNormalizableException:
             log.warning(
-                "Received not normalizable incident, discarding {}".format(str(incident))
+                "Received not normalizable incident, discarding {}".format(
+                    str(incident)
+                )
             )
             return "Not normalized incident", 400
 
@@ -191,12 +176,10 @@ def trigger():
                 args=(incident,),
                 kwargs=dict(
                     proposer=app.config.get("BOOKIE_PROPOSER"),
-                    approver=app.config.get("BOOKIE_APPROVER")
-                )
+                    approver=app.config.get("BOOKIE_APPROVER"),
+                ),
             )
-            log.info(
-                "Forwarded incident {} to worker via redis".format(str(incident))
-            )
+            log.info("Forwarded incident {} to worker via redis".format(str(incident)))
 
             # In case we "proposed" something, we also need to approve,
             # we do that by queuing a approve
@@ -205,16 +188,18 @@ def trigger():
                 args=(),
                 kwargs=dict(
                     proposer=app.config.get("BOOKIE_PROPOSER"),
-                    approver=app.config.get("BOOKIE_APPROVER")
-                )
+                    approver=app.config.get("BOOKIE_APPROVER"),
+                ),
             )
 
         # Return message with id
-        return jsonify(dict(
-            result="processing",
-            message=incident,
-            id=str(job.id),
-            id_approve=str(approve_job.id)
-        ))
+        return jsonify(
+            dict(
+                result="processing",
+                message=incident,
+                id=str(job.id),
+                id_approve=str(approve_job.id),
+            )
+        )
 
     return "", 503
