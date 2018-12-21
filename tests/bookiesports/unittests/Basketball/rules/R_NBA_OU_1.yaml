@@ -1,0 +1,15 @@
+identifier: R_NBA_OU_1
+id:
+name:
+    en: R_NBA_OU_1
+description:
+    en: Foobar
+grading:
+ metric: '{result.total}'
+ resolutions:
+ - void: 'False'
+   not_win: '{metric} > {overunder.value}'
+   win: '{metric} <= {overunder.value}'
+ - void: 'False'
+   not_win: '{metric} <= {overunder.value}'
+   win: '{metric} > {overunder.value}'

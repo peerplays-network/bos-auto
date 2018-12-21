@@ -1,0 +1,18 @@
+identifier: R_NBA_HCP_1
+id:
+name:
+    en: R_NBA_HCP_1
+description:
+    en: Foobar
+grading:
+ # Unclear how handicap is going to be defined here.
+ metric: "({result.home} - {handicaps.home}) - ({result.away} - {handicaps.away})"
+ resolutions:
+   # First betting market is the "away team wins with handicap taken into account"
+   - win: "{metric} > 0"
+     not_win: "{metric} <= 0"
+     void: "False"
+   # Second betting market is "home team wins with handicap taken into account"
+   - win: "{metric} < 0"
+     not_win: "{metric} >= 0"
+     void: "False"
