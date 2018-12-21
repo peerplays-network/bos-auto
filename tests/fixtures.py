@@ -138,7 +138,7 @@ def fixture_data():
                 "ref_block_num": 0,
                 "ref_block_prefix": 0,
             },
-            "proposer": "1.2.7",
+            "proposer": proposal.get("proposer_id", "1.2.7"),
             "required_active_approvals": ["1.2.1"],
             "required_owner_approvals": [],
         }
