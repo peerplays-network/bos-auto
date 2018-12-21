@@ -231,7 +231,7 @@ proposals:
         - ["sen", "Total Points"]
         - ["_dynamic", "ou"]
         - ["_ou", "3.5"]
-        status: 'upcoming'
+        resolution_constraint: exactly_one_winner
         rules_id: '1.23.12'
         event_id: '1.22.2244'
 
@@ -266,7 +266,7 @@ accounts:
    active:
      address_auths: []
      key_auths:
-     - - BTS6MRyAjQq8ud7hVNYcfnVPJqcVpscN5So8BhtHuGYqET5GDW5CV
+     - - TEST6MRyAjQq8ud7hVNYcfnVPJqcVpscN5So8BhtHuGYqET5GDW5CV
        - 1
      account_auths: []
      weight_threshold: 1
@@ -275,7 +275,31 @@ accounts:
      voting_account: '1.2.5'
      votes: []
      num_committee: 0
-     memo_key: BTS6MRyAjQq8ud7hVNYcfnVPJqcVpscN5So8BhtHuGYqET5GDW5CV
+     memo_key: TEST6MRyAjQq8ud7hVNYcfnVPJqcVpscN5So8BhtHuGYqET5GDW5CV
+     num_witness: 0
+
+ - name: init1
+   id: 1.2.8
+   registrar: '1.2.8'
+   referrer: '1.2.8'
+   owner:
+     address_auths: []
+     key_auths: []
+     account_auths: []
+     weight_threshold: 1
+   active:
+     address_auths: []
+     key_auths:
+     - - TEST6MRyAjQq8ud7hVNYcfnVPJqcVpscN5So8BhtHuGYqET5GDW5CV
+       - 1
+     account_auths: []
+     weight_threshold: 1
+   options:
+     extensions: []
+     voting_account: '1.2.5'
+     votes: []
+     num_committee: 0
+     memo_key: TEST6MRyAjQq8ud7hVNYcfnVPJqcVpscN5So8BhtHuGYqET5GDW5CV
      num_witness: 0
 
  - name: witness-account
@@ -301,5 +325,5 @@ accounts:
      voting_account: '1.2.5'
      votes: []
      num_committee: 0
-     memo_key: BTS6MRyAjQq8ud7hVNYcfnVPJqcVpscN5So8BhtHuGYqET5GDW5CV
+     memo_key: TEST6MRyAjQq8ud7hVNYcfnVPJqcVpscN5So8BhtHuGYqET5GDW5CV
      num_witness: 0
