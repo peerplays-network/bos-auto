@@ -2,7 +2,6 @@ import os
 import yaml
 import datetime
 
-from pprint import pprint
 from dateutil.parser import parse
 
 from peerplays import PeerPlays
@@ -65,16 +64,17 @@ storage = factory.get_incident_storage("mongodbtest", purge=True)
 
 
 def lookup_test_event(id):
-    event = {
-        "id": "1.22.2242",
-        "teams": ["Atlanta Hawks", "Boston Celtics"],
-        "eventgroup_identifier": "NBA",
-        "sport_identifier": "Basketball",
-        "season": {"en": "2017-00-00"},
-        "start_time": parse("2022-10-16T00:00:00"),
-        "status": "upcoming",
-    }
-    return LookupEvent(**event)
+    return LookupEvent(
+        **{
+            "id": "1.22.2242",
+            "teams": ["Atlanta Hawks", "Boston Celtics"],
+            "eventgroup_identifier": "NBA",
+            "sport_identifier": "Basketball",
+            "season": {"en": "2017-00-00"},
+            "start_time": parse("2022-10-16T00:00:00"),
+            "status": "upcoming",
+        }
+    )
 
 
 def lookup_test_eventgroup(id):
@@ -113,7 +113,7 @@ def fixture_data():
         BettingMarkets.cache_objects([BettingMarketGroup(bm)], bm["group_id"])
 
     Rules.cache_objects([Rule(x) for x in data.get("rules", [])])
-    for x in data.get("accounts"):
+    for x in data.get("accounts", []):
         Account.cache_object(x, x["name"])
         Account.cache_object(x, x["id"])
 
