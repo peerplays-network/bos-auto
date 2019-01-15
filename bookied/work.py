@@ -67,6 +67,11 @@ def process(message, **kwargs):
 
         Hence, this method has the look and feel of a dispatcher!
     """
+    # We clear the buffers here so we start fresh with no
+    # operation in any buffer
+    lookup.clear()
+
+    # Let's also reconnect
     peerplays.rpc.connect()
     try:
         t = time.time()
