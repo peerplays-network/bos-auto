@@ -375,6 +375,127 @@ proposals:
          - ['en', 'Over 3.5']
         group_id: '0.0.0'
 
+ - proposal_id: 1.10.11245
+   proposer_id: 1.2.7
+   operations:
+    - event_create:
+         event_group_id: 1.21.12
+         extensions: []
+         fee: {amount: 100000, asset_id: 1.3.0}
+         name:
+         - [en, San Antonio Spurs @ Detroit Pistons]
+         season:
+         - [en, 2017/2018]
+         start_time: '2022-10-16T00:00:00'
+    - betting_market_group_create:
+        asset_id: 1.3.1
+        delay_before_settling: 0
+        description:
+        - [display_name, Moneyline]
+        - [en, Moneyline]
+        - [sen, Moneyline]
+        event_id: 0.0.0
+        extensions: []
+        fee: {amount: 100000, asset_id: 1.3.0}
+        never_in_play: false
+        resolution_constraint: exactly_one_winner
+        rules_id: 1.23.11
+    - betting_market_create:
+        description:
+        - [en, San Antonio Spurs]
+        extensions: []
+        fee: {amount: 100000, asset_id: 1.3.0}
+        group_id: 0.0.1
+        payout_condition: []
+    - betting_market_create:
+        description:
+        - [en, Detroit Pistons]
+        extensions: []
+        fee: {amount: 100000, asset_id: 1.3.0}
+        group_id: 0.0.1
+        payout_condition: []
+
+ - proposal_id: 1.10.11246
+   proposer_id: 1.2.7
+   operations:
+    - event_create:
+         event_group_id: 1.21.12
+         extensions: []
+         fee: {amount: 100000, asset_id: 1.3.0}
+         name:
+         - [en, Toronto Raptors @ Detroit Pistons]
+         season:
+         - [en, 2017/2018]
+         start_time: '2022-10-16T00:00:00'
+    - betting_market_group_create:
+        asset_id: 1.3.1
+        delay_before_settling: 0
+        description:
+        - [display_name, Moneyline]
+        - [en, Moneyline]
+        - [sen, Moneyline]
+        event_id: 0.0.0
+        extensions: []
+        fee: {amount: 100000, asset_id: 1.3.0}
+        never_in_play: false
+        resolution_constraint: exactly_one_winner
+        rules_id: 1.23.11
+    - betting_market_create:
+        description:
+        - [en, Toronto Raptors]
+        extensions: []
+        fee: {amount: 100000, asset_id: 1.3.0}
+        group_id: 0.0.1
+        payout_condition: []
+
+ - proposal_id: 1.10.11247
+   proposer_id: 1.2.7
+   operations:
+    - event_create:
+         event_group_id: 1.21.12
+         extensions: []
+         fee: {amount: 100000, asset_id: 1.3.0}
+         name:
+         - [en, Sacramento Kings @ Detroit Pistons]
+         season:
+         - [en, 2017/2018]
+         start_time: '2022-10-16T00:00:00'
+    - betting_market_group_create:
+        asset_id: 1.3.1
+        delay_before_settling: 0
+        description:
+        - [display_name, Moneyline]
+        - [en, Moneyline]
+        - [sen, Moneyline]
+        event_id: 0.0.0
+        extensions: []
+        fee: {amount: 100000, asset_id: 1.3.0}
+        never_in_play: false
+        resolution_constraint: exactly_one_winner
+        rules_id: 1.23.11
+    - betting_market_create:
+        description:
+        - [en, Sacramento Kings]
+        extensions: []
+        fee: {amount: 100000, asset_id: 1.3.0}
+        group_id: 0.0.1
+        payout_condition: []
+    - betting_market_create:
+        description:
+        - [en, Detroit Pistons]
+        extensions: []
+        fee: {amount: 100000, asset_id: 1.3.0}
+        group_id: 0.0.1
+        payout_condition: []
+    - betting_market_create:
+        description:
+        - [en, Additional Market that should prevent approval]
+        extensions: []
+        fee: {amount: 100000, asset_id: 1.3.0}
+        group_id: 0.0.1
+        payout_condition: []
+
+
 witness_schedule:
  - 1.6.0
 
