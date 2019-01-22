@@ -68,6 +68,14 @@ class Trigger:
     def getEvent(self):
         """ Get an event from the lookup
         """
+        print(
+            dict(
+                teams=self.teams,
+                start_time=self.start_time,
+                eventgroup_identifier=self.eventgroup.identifier,
+                sport_identifier=self.sport.identifier,
+            )
+        )
         event = LookupEvent.find_event(
             teams=self.teams,
             start_time=self.start_time,

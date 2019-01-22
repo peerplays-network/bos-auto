@@ -1,4 +1,4 @@
-bos-sync>=0.3.5
+bos-sync>=0.3.6
 bos-incidents
 
 redis==2.10.6
