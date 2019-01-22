@@ -245,6 +245,257 @@ proposals:
          - ['en', 'Over 3.5']
         group_id: '0.0.0'
 
+ - proposal_id: 1.10.6
+   proposer_id: 1.2.1000
+   operations:
+    - betting_market_group_create:
+        extensions: []
+        fee: {amount: 0, asset_id: 1.3.0}
+        asset_id: '1.3.1'
+        delay_before_settling: 0
+        description:
+        - ["display_name", "Over/Under 4.0 pts"]
+        - ["en", "Over/Under 4.0 pts"]
+        - ["sen", "Total Points"]
+        - ["_dynamic", "ou"]
+        - ["_ou", "4.0"]
+        resolution_constraint: exactly_one_winner
+        rules_id: '1.23.10'
+        event_id: '1.22.2245'
+    - betting_market_create:
+        description:
+         - ['en', 'Under 3.5']
+        group_id: '0.0.0'
+    - betting_market_create:
+        description:
+         - ['en', 'Over 3.5']
+        group_id: '0.0.0'
+
+ - proposal_id: 1.10.5
+   proposer_id: 1.2.1000
+   operations:
+    - betting_market_group_create:
+        extensions: []
+        fee: {amount: 0, asset_id: 1.3.0}
+        asset_id: '1.3.1'
+        delay_before_settling: 0
+        description:
+        - ["display_name", "Over/Under 4.0 pts"]
+        - ["en", "Over/Under 4.0 pts"]
+        - ["sen", "Total Points"]
+        - ["_dynamic", "ou"]
+        - ["_ou", "4.0"]
+        resolution_constraint: exactly_one_winner
+        rules_id: '1.23.10'
+        event_id: '1.22.2245'
+    - betting_market_create:
+        description:
+         - ['en', 'Under 3.5']
+        group_id: '0.0.0'
+    - betting_market_create:
+        description:
+         - ['en', 'Over 3.5']
+        group_id: '0.0.0'
+
+ - proposal_id: 1.10.4
+   proposer_id: 1.2.1000
+   operations:
+    - betting_market_group_create:
+        extensions: []
+        fee: {amount: 0, asset_id: 1.3.0}
+        asset_id: '1.3.1'
+        delay_before_settling: 0
+        description:
+        - ["display_name", "Over/Under 4.0 pts"]
+        - ["en", "Over/Under 4.0 pts"]
+        - ["sen", "Total Points"]
+        - ["_dynamic", "ou"]
+        - ["_ou", "4.0"]
+        resolution_constraint: exactly_one_winner
+        rules_id: '1.23.10'
+        event_id: '1.22.2245'
+    - betting_market_create:
+        description:
+         - ['en', 'Under 3.5']
+        group_id: '0.0.0'
+    - betting_market_create:
+        description:
+         - ['en', 'Over 3.5']
+        group_id: '0.0.0'
+
+ - proposal_id: 1.10.3
+   proposer_id: 1.2.1000
+   operations:
+    - betting_market_group_create:
+        extensions: []
+        fee: {amount: 0, asset_id: 1.3.0}
+        asset_id: '1.3.1'
+        delay_before_settling: 0
+        description:
+        - ["display_name", "Over/Under 4.0 pts"]
+        - ["en", "Over/Under 4.0 pts"]
+        - ["sen", "Total Points"]
+        - ["_dynamic", "ou"]
+        - ["_ou", "4.0"]
+        resolution_constraint: exactly_one_winner
+        rules_id: '1.23.10'
+        event_id: '1.22.2245'
+    - betting_market_create:
+        description:
+         - ['en', 'Under 3.5']
+        group_id: '0.0.0'
+    - betting_market_create:
+        description:
+         - ['en', 'Over 3.5']
+        group_id: '0.0.0'
+
+ - proposal_id: 1.10.2
+   proposer_id: 1.2.1000
+   operations:
+    - betting_market_group_create:
+        extensions: []
+        fee: {amount: 0, asset_id: 1.3.0}
+        asset_id: '1.3.1'
+        delay_before_settling: 0
+        description:
+        - ["display_name", "Over/Under 4.0 pts"]
+        - ["en", "Over/Under 4.0 pts"]
+        - ["sen", "Total Points"]
+        - ["_dynamic", "ou"]
+        - ["_ou", "4.0"]
+        resolution_constraint: exactly_one_winner
+        rules_id: '1.23.10'
+        event_id: '1.22.2245'
+    - betting_market_create:
+        description:
+         - ['en', 'Under 3.5']
+        group_id: '0.0.0'
+    - betting_market_create:
+        description:
+         - ['en', 'Over 3.5']
+        group_id: '0.0.0'
+
+ - proposal_id: 1.10.11245
+   proposer_id: 1.2.7
+   operations:
+    - event_create:
+         event_group_id: 1.21.12
+         extensions: []
+         fee: {amount: 100000, asset_id: 1.3.0}
+         name:
+         - [en, San Antonio Spurs @ Detroit Pistons]
+         season:
+         - [en, 2017/2018]
+         start_time: '2022-10-16T00:00:00'
+    - betting_market_group_create:
+        asset_id: 1.3.1
+        delay_before_settling: 0
+        description:
+        - [display_name, Moneyline]
+        - [en, Moneyline]
+        - [sen, Moneyline]
+        event_id: 0.0.0
+        extensions: []
+        fee: {amount: 100000, asset_id: 1.3.0}
+        never_in_play: false
+        resolution_constraint: exactly_one_winner
+        rules_id: 1.23.11
+    - betting_market_create:
+        description:
+        - [en, San Antonio Spurs]
+        extensions: []
+        fee: {amount: 100000, asset_id: 1.3.0}
+        group_id: 0.0.1
+        payout_condition: []
+    - betting_market_create:
+        description:
+        - [en, Detroit Pistons]
+        extensions: []
+        fee: {amount: 100000, asset_id: 1.3.0}
+        group_id: 0.0.1
+        payout_condition: []
+
+ - proposal_id: 1.10.11246
+   proposer_id: 1.2.7
+   operations:
+    - event_create:
+         event_group_id: 1.21.12
+         extensions: []
+         fee: {amount: 100000, asset_id: 1.3.0}
+         name:
+         - [en, Toronto Raptors @ Detroit Pistons]
+         season:
+         - [en, 2017/2018]
+         start_time: '2022-10-16T00:00:00'
+    - betting_market_group_create:
+        asset_id: 1.3.1
+        delay_before_settling: 0
+        description:
+        - [display_name, Moneyline]
+        - [en, Moneyline]
+        - [sen, Moneyline]
+        event_id: 0.0.0
+        extensions: []
+        fee: {amount: 100000, asset_id: 1.3.0}
+        never_in_play: false
+        resolution_constraint: exactly_one_winner
+        rules_id: 1.23.11
+    - betting_market_create:
+        description:
+        - [en, Toronto Raptors]
+        extensions: []
+        fee: {amount: 100000, asset_id: 1.3.0}
+        group_id: 0.0.1
+        payout_condition: []
+
+ - proposal_id: 1.10.11247
+   proposer_id: 1.2.7
+   operations:
+    - event_create:
+         event_group_id: 1.21.12
+         extensions: []
+         fee: {amount: 100000, asset_id: 1.3.0}
+         name:
+         - [en, Sacramento Kings @ Detroit Pistons]
+         season:
+         - [en, 2017/2018]
+         start_time: '2022-10-16T00:00:00'
+    - betting_market_group_create:
+        asset_id: 1.3.1
+        delay_before_settling: 0
+        description:
+        - [display_name, Moneyline]
+        - [en, Moneyline]
+        - [sen, Moneyline]
+        event_id: 0.0.0
+        extensions: []
+        fee: {amount: 100000, asset_id: 1.3.0}
+        never_in_play: false
+        resolution_constraint: exactly_one_winner
+        rules_id: 1.23.11
+    - betting_market_create:
+        description:
+        - [en, Sacramento Kings]
+        extensions: []
+        fee: {amount: 100000, asset_id: 1.3.0}
+        group_id: 0.0.1
+        payout_condition: []
+    - betting_market_create:
+        description:
+        - [en, Detroit Pistons]
+        extensions: []
+        fee: {amount: 100000, asset_id: 1.3.0}
+        group_id: 0.0.1
+        payout_condition: []
+    - betting_market_create:
+        description:
+        - [en, Additional Market that should prevent approval]
+        extensions: []
+        fee: {amount: 100000, asset_id: 1.3.0}
+        group_id: 0.0.1
+        payout_condition: []
+
+
 witness_schedule:
  - 1.6.0
 
@@ -319,6 +570,30 @@ accounts:
        - 1
      - - 1.2.8
        - 1
+     weight_threshold: 1
+   options:
+     extensions: []
+     voting_account: '1.2.5'
+     votes: []
+     num_committee: 0
+     memo_key: TEST6MRyAjQq8ud7hVNYcfnVPJqcVpscN5So8BhtHuGYqET5GDW5CV
+     num_witness: 0
+
+ - name: init9999
+   id: 1.2.1000
+   registrar: '1.2.7'
+   referrer: '1.2.7'
+   owner:
+     address_auths: []
+     key_auths: []
+     account_auths: []
+     weight_threshold: 1
+   active:
+     address_auths: []
+     key_auths:
+     - - TEST6MRyAjQq8ud7hVNYcfnVPJqcVpscN5So8BhtHuGYqET5GDW5CV
+       - 1
+     account_auths: []
      weight_threshold: 1
    options:
      extensions: []

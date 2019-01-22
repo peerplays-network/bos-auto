@@ -25,7 +25,7 @@ Install dependencies (as root/sudo)
 
 ::
 
-    apt-get install libffi-dev libssl-dev python-dev python3-pip
+    apt-get install libffi-dev libssl-dev python-dev python3-dev python3-pip
     pip3 install virtualenv
     
 Note that virtualenv is a best practice for python, but installation can also be on a user/global level.
