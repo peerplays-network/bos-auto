@@ -101,6 +101,7 @@ class Testcases(unittest.TestCase):
             mongodb="mongodbtest",
         )
 
+        create.storage.insert_incident(_message_create_1)
         with self.assertRaises(exceptions.EventDoesNotExistException):
             create.getEvent()
         with self.assertRaises(exceptions.EventCannotOpenException):

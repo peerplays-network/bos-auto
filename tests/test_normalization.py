@@ -1,21 +1,19 @@
 import os
 import unittest
-
 from copy import deepcopy
-
 from peerplays import PeerPlays
 from peerplays.instance import set_shared_peerplays_instance
-
 from bookied_sync.lookup import Lookup
-
 from bookiesports.normalize import NotNormalizableException
-
 from bookied.triggers.create import CreateTrigger
-
-from .fixtures import fixture_data, lookup, config, storage
+from .fixtures import fixture_data, lookup, config, storage, factory
 
 
 class Testcases(unittest.TestCase):
+    def setUp(self):
+        fixture_data()
+        self.storage = factory.get_incident_storage("mongodbtest", purge=True)
+
     def test_normalize_incident(self):
         # Create incidents
         _message_create_1 = {
@@ -41,7 +39,12 @@ class Testcases(unittest.TestCase):
         }
 
         create = CreateTrigger(
-            _message_create_1, lookup_instance=lookup, config=config, storage=storage
+            _message_create_1,
+            lookup_instance=lookup,
+            config=config,
+            storage=self.storage,
+            purge=True,
+            mongodb="mongodbtest",
         )
         self.assertEqual(create.message["id"]["event_group_name"], "NBA Regular Season")
 
@@ -78,7 +81,9 @@ class Testcases(unittest.TestCase):
                 _message_create_2,
                 lookup_instance=lookup,
                 config=config,
-                storage=storage,
+                storage=self.storage,
+                purge=True,
+                mongodb="mongodbtest",
             )
 
         event = storage.get_event_by_id(_message_create_2)
