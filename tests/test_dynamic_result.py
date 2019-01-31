@@ -10,7 +10,7 @@ from bookied.triggers.finish import FinishTrigger
 from bookied.triggers.cancel import CancelTrigger
 from bookied.triggers.dynamic_bmg import DynamicBmgTrigger
 
-from .fixtures import fixture_data, lookup, config
+from .fixtures import fixture_data, lookup, config, receive_incident, reset_storage
 
 # import logging
 # logging.basicConfig(level=logging.DEBUG)
@@ -20,6 +20,7 @@ class Testcases(unittest.TestCase):
     def setUp(self):
         fixture_data()
         lookup.clear()
+        self.storage = reset_storage()
 
     def test_result(self):
         # Result incident
@@ -52,19 +53,18 @@ class Testcases(unittest.TestCase):
             _message_result_1,
             lookup_instance=lookup,
             config=config,
-            purge=True,
-            mongodb="mongodbtest",
+            storage=self.storage,
         )
 
         with self.assertRaises(bos_incidents.exceptions.EventNotFoundException):
             result.trigger(_message_result_1.get("arguments"))
 
-        result.storage.insert_incident(_message_result_1)
+        receive_incident(_message_result_1)
 
         with self.assertRaises(exceptions.InsufficientIncidents):
             result.trigger(_message_result_1.get("arguments"))
 
-        result.storage.insert_incident(_message_result_2)
+        receive_incident(_message_result_2)
 
         # with self.assertRaises(bos_incidents.exceptions.EventNotFoundException):
         self.assertTrue(result.testConditions())

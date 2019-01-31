@@ -22,12 +22,14 @@ from bookied_sync.bettingmarket import LookupBettingMarket
 
 from bookied import exceptions
 from bookied.triggers.create import CreateTrigger
-from .fixtures import fixture_data, lookup, config
+from .fixtures import fixture_data, lookup, config, receive_incident, reset_storage
 
 
 class Testcases(unittest.TestCase):
     def setUp(self):
         fixture_data()
+        lookup.clear()
+        self.storage = reset_storage()
 
     def test_create(self):
         # Create incidents
@@ -57,8 +59,7 @@ class Testcases(unittest.TestCase):
             _message_create_1,
             lookup_instance=lookup,
             config=config,
-            purge=True,
-            mongodb="mongodbtest",
+            storage=self.storage,
         )
 
         event = create.getIncidentEvent()
@@ -97,11 +98,10 @@ class Testcases(unittest.TestCase):
             _message_create_1,
             lookup_instance=lookup,
             config=config,
-            purge=True,
-            mongodb="mongodbtest",
+            storage=self.storage,
         )
 
-        create.storage.insert_incident(_message_create_1)
+        receive_incident(_message_create_1)
         with self.assertRaises(exceptions.EventDoesNotExistException):
             create.getEvent()
         with self.assertRaises(exceptions.EventCannotOpenException):

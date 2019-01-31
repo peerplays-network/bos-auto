@@ -22,10 +22,15 @@ from bookied_sync.bettingmarket import LookupBettingMarket
 from bookied import exceptions
 from bookied.triggers.create import CreateTrigger
 
-from .fixtures import fixture_data, lookup, config
+from .fixtures import fixture_data, lookup, config, reset_storage
 
 
 class Testcases(unittest.TestCase):
+    def setUp(self):
+        fixture_data()
+        lookup.clear()
+        self.storage = reset_storage()
+
     def test_create(self):
         # Create incidents
         _message_create_1 = {
@@ -54,8 +59,7 @@ class Testcases(unittest.TestCase):
             _message_create_1,
             lookup_instance=lookup,
             config=config,
-            purge=True,
-            mongodb="mongodbtest",
+            storage=self.storage,
         )
 
         with self.assertRaises(exceptions.CreateIncidentTooOldException):
