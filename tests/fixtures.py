@@ -99,7 +99,7 @@ def receive_incident(incident):
     # Validate
     validator.validate_incident(incident)
     # Normalize
-    incident = normalizer.normalize(incident)
+    incident = normalizer.normalize(incident, True)
     # store
     storage.insert_incident(incident.copy())
     return incident
