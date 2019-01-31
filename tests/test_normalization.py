@@ -114,11 +114,18 @@ class Testcases(unittest.TestCase):
             "arguments": {"season": "2017/2018"},
             "call": "create",
         }
+        # Let's insert the valid incident
+        # receive_incident(_message_create_1)
 
+        # Let's fake a broken one
         _message_create_2 = deepcopy(_message_create_1)
         _message_create_2["id"]["event_group_name"] = "Foobar"
-        receive_incident(_message_create_2)
+        _message_create_2["unique_string"] += "Foobar"
 
+        # We insert the broken one manually because it would fail normalization
+        storage.insert_incident(_message_create_2)
+
+        # ... it fails here
         with self.assertRaises(NotNormalizableException):
             CreateTrigger(
                 _message_create_2,
@@ -127,5 +134,12 @@ class Testcases(unittest.TestCase):
                 storage=self.storage,
             )
 
+        # ... and here
+        with self.assertRaises(NotNormalizableException):
+            receive_incident(_message_create_2)
+
+        # Let's obtain the event
         event = storage.get_event_by_id(_message_create_2)
+
+        # The create shoudl have a certain status
         self.assertEqual(event["create"]["status"]["name"], "not normalizable")
