@@ -22,6 +22,9 @@ from bookied_sync.eventgroup import LookupEventGroup
 from bookied_sync.event import LookupEvent
 
 from bos_incidents import factory
+from bos_incidents.validator import IncidentValidator, InvalidIncidentFormatException
+
+from bookiesports.normalize import IncidentsNormalizer, NotNormalizableException
 
 # default wifs key for testing
 wifs = [
@@ -62,6 +65,14 @@ assert lookup.blockchain.nobroadcast
 # Storage
 storage = factory.get_incident_storage("mongodbtest", purge=True)
 
+# Incident validator
+validator = IncidentValidator()
+normalizer = IncidentsNormalizer(chain="unittests")
+
+
+def reset_storage():
+    return factory.get_incident_storage("mongodbtest", purge=True)
+
 
 def lookup_test_event(id):
     return LookupEvent(
@@ -79,6 +90,19 @@ def lookup_test_event(id):
 
 def lookup_test_eventgroup(id):
     return LookupEventGroup("Basketball", "NBA")
+
+
+def receive_incident(incident):
+    """ This method mimics the way web.py receives incidents via web POST
+        requests
+    """
+    # Validate
+    validator.validate_incident(incident)
+    # Normalize
+    incident = normalizer.normalize(incident, True)
+    # store
+    storage.insert_incident(incident.copy())
+    return incident
 
 
 def fixture_data():

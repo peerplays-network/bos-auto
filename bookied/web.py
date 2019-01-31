@@ -150,7 +150,7 @@ def trigger():
         # Normalize incident
         normalizer = IncidentsNormalizer(chain=config.get("network", "beatrice"))
         try:
-            incident = normalizer.normalize(incident)
+            incident = normalizer.normalize(incident, True)
         except NotNormalizableException:
             log.warning(
                 "Received not normalizable incident, discarding {}".format(

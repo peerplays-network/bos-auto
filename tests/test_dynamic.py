@@ -11,7 +11,7 @@ from bookied.triggers.finish import FinishTrigger
 from bookied.triggers.cancel import CancelTrigger
 from bookied.triggers.dynamic_bmg import DynamicBmgTrigger
 
-from .fixtures import fixture_data, lookup, config
+from .fixtures import fixture_data, lookup, config, receive_incident, reset_storage
 
 # import logging
 # logging.basicConfig(level=logging.DEBUG)
@@ -21,6 +21,7 @@ class Testcases(unittest.TestCase):
     def setUp(self):
         fixture_data()
         lookup.clear()
+        self.storage = reset_storage()
 
     def test_dynamic_testCondition(self):
         _message = {
@@ -52,11 +53,7 @@ class Testcases(unittest.TestCase):
 
         _message["timestamp"] = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
         trigger = DynamicBmgTrigger(
-            _message,
-            lookup_instance=lookup,
-            config=config,
-            purge=True,
-            mongodb="mongodbtest",
+            _message, lookup_instance=lookup, config=config, storage=self.storage
         )
         with self.assertRaises(exceptions.PostPoneIncidentException):
             trigger.testConditions()
@@ -65,11 +62,7 @@ class Testcases(unittest.TestCase):
             "%Y-%m-%dT%H:%M:%SZ"
         )
         trigger = DynamicBmgTrigger(
-            _message,
-            lookup_instance=lookup,
-            config=config,
-            purge=True,
-            mongodb="mongodbtest",
+            _message, lookup_instance=lookup, config=config, storage=self.storage
         )
         with self.assertRaises(exceptions.PostPoneIncidentException):
             trigger.testConditions()
@@ -79,11 +72,7 @@ class Testcases(unittest.TestCase):
             "%Y-%m-%dT%H:%M:%SZ"
         )
         trigger = DynamicBmgTrigger(
-            _message,
-            lookup_instance=lookup,
-            config=config,
-            purge=True,
-            mongodb="mongodbtest",
+            _message, lookup_instance=lookup, config=config, storage=self.storage
         )
         self.assertTrue(trigger.testConditions())
 
@@ -110,14 +99,10 @@ class Testcases(unittest.TestCase):
             },
         }
         trigger = DynamicBmgTrigger(
-            _message,
-            lookup_instance=lookup,
-            config=config,
-            purge=True,
-            mongodb="mongodbtest",
+            _message, lookup_instance=lookup, config=config, storage=self.storage
         )
 
-        trigger.storage.insert_incident(_message)
+        receive_incident(_message)
         tx = trigger.trigger(_message.get("arguments"))
 
         ops = tx[0].get("operations")
@@ -164,14 +149,10 @@ class Testcases(unittest.TestCase):
         }
 
         trigger = DynamicBmgTrigger(
-            _message,
-            lookup_instance=lookup,
-            config=config,
-            purge=True,
-            mongodb="mongodbtest",
+            _message, lookup_instance=lookup, config=config, storage=self.storage
         )
 
-        trigger.storage.insert_incident(_message)
+        receive_incident(_message)
         tx = trigger.trigger(_message.get("arguments"))
 
         ops = tx[0].get("operations")
@@ -228,14 +209,10 @@ class Testcases(unittest.TestCase):
         # = +1 : -1
 
         trigger = DynamicBmgTrigger(
-            _message,
-            lookup_instance=lookup,
-            config=config,
-            purge=True,
-            mongodb="mongodbtest",
+            _message, lookup_instance=lookup, config=config, storage=self.storage
         )
 
-        trigger.storage.insert_incident(_message)
+        receive_incident(_message)
         tx = trigger.trigger(_message.get("arguments"))
 
         ops = tx[0].get("operations")
@@ -286,14 +263,10 @@ class Testcases(unittest.TestCase):
         }
 
         trigger = DynamicBmgTrigger(
-            _message,
-            lookup_instance=lookup,
-            config=config,
-            purge=True,
-            mongodb="mongodbtest",
+            _message, lookup_instance=lookup, config=config, storage=self.storage
         )
 
-        trigger.storage.insert_incident(_message)
+        receive_incident(_message)
         tx = trigger.trigger(_message.get("arguments"))
 
         ops = tx[0].get("operations")
@@ -353,14 +326,10 @@ class Testcases(unittest.TestCase):
         }
 
         trigger = DynamicBmgTrigger(
-            _message,
-            lookup_instance=lookup,
-            config=config,
-            purge=True,
-            mongodb="mongodbtest",
+            _message, lookup_instance=lookup, config=config, storage=self.storage
         )
 
-        trigger.storage.insert_incident(_message)
+        receive_incident(_message)
         tx = trigger.trigger(_message.get("arguments"))
 
         ops = tx[0].get("operations")
@@ -406,17 +375,10 @@ class Testcases(unittest.TestCase):
         }
 
         trigger = DynamicBmgTrigger(
-            _message,
-            lookup_instance=lookup,
-            config=config,
-            purge=True,
-            mongodb="mongodbtest",
+            _message, lookup_instance=lookup, config=config, storage=self.storage
         )
 
-        trigger.storage.insert_incident(_message)
+        receive_incident(_message)
         tx = trigger.trigger(_message.get("arguments"))
         self.assertEqual(len(tx), 1)
-        from pprint import pprint
-
-        pprint(tx)
         self.assertTrue(tx[0].is_approval())

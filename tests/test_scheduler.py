@@ -16,7 +16,7 @@ from bookied_sync.event import LookupEvent
 from bookied import exceptions
 from bookied.triggers.create import CreateTrigger
 
-from .fixtures import fixture_data, lookup, config
+from .fixtures import fixture_data, lookup, config, receive_incident, reset_storage
 
 
 class Testcases(unittest.TestCase):
@@ -30,6 +30,7 @@ class Testcases(unittest.TestCase):
     def setUp(self):
         fixture_data()
         lookup.clear()
+        self.storage = reset_storage()
 
     def test_create(self):
 
@@ -63,8 +64,7 @@ class Testcases(unittest.TestCase):
             _message_create_1,
             lookup_instance=lookup,
             config=config,
-            purge=True,
-            mongodb="mongodbtest",
+            storage=self.storage,
         )
         from bookied import schedule
 
@@ -73,12 +73,12 @@ class Testcases(unittest.TestCase):
         with self.assertRaises(bos_incidents.exceptions.EventNotFoundException):
             create.testConditions(_message_create_1.get("arguments"))
 
-        create.storage.insert_incident(_message_create_1)
+        receive_incident(_message_create_1)
 
         with self.assertRaises(exceptions.InsufficientIncidents):
             create.trigger(_message_create_1.get("arguments"))
 
-        create.storage.insert_incident(_message_create_2)
+        receive_incident(_message_create_2)
         self.assertTrue(create.testConditions(_message_create_1.get("arguments")))
 
         with self.assertRaises(exceptions.EventCannotOpenException):

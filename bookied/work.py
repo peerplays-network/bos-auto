@@ -198,8 +198,8 @@ def process(message, **kwargs):
         trigger.set_incident_status(status_name="connection lost")
 
     except bos_incidents.exceptions.EventNotFoundException as e:
-        traceback.format_exc()
-        log.warning("Invalid bos_incident event!")
+        # traceback.format_exc()
+        # log.warning("Invalid bos_incident event!")
         trigger.set_incident_status(status_name="event missing in bos_incidents")
 
     except bookied_sync.exceptions.ObjectNotFoundInLookup as e:

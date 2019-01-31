@@ -10,7 +10,7 @@ from bookied.triggers.finish import FinishTrigger
 from bookied.triggers.cancel import CancelTrigger
 from bookied.triggers.dynamic_bmg import DynamicBmgTrigger
 
-from .fixtures import fixture_data, lookup, config
+from .fixtures import fixture_data, lookup, config, receive_incident, reset_storage
 
 # import logging
 # logging.basicConfig(level=logging.DEBUG)
@@ -20,6 +20,7 @@ class Testcases(unittest.TestCase):
     def setUp(self):
         fixture_data()
         lookup.clear()
+        self.storage = reset_storage()
 
     def test_duplicate_incident(self):
         _message_duplicate = {
@@ -44,16 +45,15 @@ class Testcases(unittest.TestCase):
             "call": "create",
         }
 
-        create = CreateTrigger(
+        receive_incident(_message_duplicate)
+        CreateTrigger(
             _message_duplicate,
             lookup_instance=lookup,
             config=config,
-            purge=True,
-            mongodb="mongodbtest",
+            storage=self.storage,
         )
-        create.store_incident()
         with self.assertRaises(bos_incidents.exceptions.DuplicateIncidentException):
-            create.store_incident()
+            receive_incident(_message_duplicate)
 
     def test_create(self):
 
@@ -87,19 +87,18 @@ class Testcases(unittest.TestCase):
             _message_create_1,
             lookup_instance=lookup,
             config=config,
-            purge=True,
-            mongodb="mongodbtest",
+            storage=self.storage,
         )
 
         with self.assertRaises(bos_incidents.exceptions.EventNotFoundException):
             create.testConditions(_message_create_1.get("arguments"))
 
-        create.storage.insert_incident(_message_create_1)
+        receive_incident(_message_create_1)
 
         with self.assertRaises(exceptions.InsufficientIncidents):
             create.trigger(_message_create_1.get("arguments"))
 
-        create.storage.insert_incident(_message_create_2)
+        receive_incident(_message_create_2)
         self.assertTrue(create.testConditions(_message_create_1.get("arguments")))
 
         tx = create.trigger(_message_create_1.get("arguments"))
@@ -143,11 +142,9 @@ class Testcases(unittest.TestCase):
             _message_in_play,
             lookup_instance=lookup,
             config=config,
-            purge=True,
-            mongodb="mongodbtest",
+            storage=self.storage,
         )
-
-        play.storage.insert_incident(_message_in_play)
+        receive_incident(_message_in_play)
 
         self.assertTrue(play.testConditions())
 
@@ -198,16 +195,15 @@ class Testcases(unittest.TestCase):
             _message_finish_1,
             lookup_instance=lookup,
             config=config,
-            purge=True,
-            mongodb="mongodbtest",
+            storage=self.storage,
         )
 
-        finish.storage.insert_incident(_message_finish_1)
+        receive_incident(_message_finish_1)
 
         with self.assertRaises(exceptions.InsufficientIncidents):
             finish.trigger(_message_finish_1.get("arguments"))
 
-        finish.storage.insert_incident(_message_finish_2)
+        receive_incident(_message_finish_2)
 
         self.assertTrue(finish.testConditions())
 
@@ -256,19 +252,18 @@ class Testcases(unittest.TestCase):
             _message_result_1,
             lookup_instance=lookup,
             config=config,
-            purge=True,
-            mongodb="mongodbtest",
+            storage=self.storage,
         )
 
         with self.assertRaises(bos_incidents.exceptions.EventNotFoundException):
             result.trigger(_message_result_1.get("arguments"))
 
-        result.storage.insert_incident(_message_result_1)
+        receive_incident(_message_result_1)
 
         with self.assertRaises(exceptions.InsufficientIncidents):
             result.trigger(_message_result_1.get("arguments"))
 
-        result.storage.insert_incident(_message_result_2)
+        receive_incident(_message_result_2)
 
         # with self.assertRaises(bos_incidents.exceptions.EventNotFoundException):
         self.assertTrue(result.testConditions())
@@ -332,16 +327,15 @@ class Testcases(unittest.TestCase):
             _message_cancel_1,
             lookup_instance=lookup,
             config=config,
-            purge=True,
-            mongodb="mongodbtest",
+            storage=self.storage,
         )
 
-        cancel.storage.insert_incident(_message_cancel_1)
+        receive_incident(_message_cancel_1)
 
         with self.assertRaises(exceptions.InsufficientIncidents):
             cancel.trigger(_message_cancel_1.get("arguments"))
 
-        cancel.storage.insert_incident(_message_cancel_2)
+        receive_incident(_message_cancel_2)
 
         self.assertTrue(cancel.testConditions())
 
