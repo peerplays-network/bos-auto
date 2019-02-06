@@ -149,7 +149,10 @@ class Trigger:
     def set_incident_status(self, **kwargs):
         """ We here set the status of an **event** in the incidents storage
         """
-        self.storage.update_event_status_by_id(self.id, call=self.call, **kwargs)
+        try:
+            self.storage.update_event_status_by_id(self.id, call=self.call, **kwargs)
+        except Exception:
+            pass
 
     def get_incident_status(self):
         """ Get the current status of an **event** in the incidents storage
