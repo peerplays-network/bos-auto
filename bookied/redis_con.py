@@ -3,7 +3,7 @@ from .config import loadConfig
 from .log import log
 
 
-def get_redis():
+def get_redis():  # pragma: no cover
     """ Open the redis connection
     """
     config = loadConfig()
@@ -20,6 +20,3 @@ def get_redis():
         password=config.get("redis_password"),
         db=config.get("redis_db", 0) or 0,
     )
-
-
-# redis = get_redis()

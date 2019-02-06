@@ -33,7 +33,7 @@ class DynamicBmgTrigger(Trigger):
     """
 
     def _trigger(self, args):
-        """ Trigger the 'create' message
+        """ Trigger the 'dynamic' message
         """
         self.event = self.getEvent()
         self.teams = self.event.teams
@@ -48,17 +48,16 @@ class DynamicBmgTrigger(Trigger):
 
         types_done = list()
         for incident_type in incident_types:
+            # This type of incident has multiple incident types, we go through
+            # all of them individually
+
+            # Let's see if we can find the corresponding BMG on chain already
             exists_on_chain = False
             for chain_bmg in on_chain_bmgs:
 
                 # Test if we may have a dynamic BMG of that group on chain already:
-                description = dList2Dict(chain_bmg["description"])
-                if (
-                    "_dynamic" in description
-                    and description["_dynamic"]
-                    and LookupBettingMarketGroup.is_dynamic_type(
-                        description["_dynamic"], incident_type["type"]
-                    )
+                if chain_bmg.is_dynamic() and chain_bmg.is_dynamic_type(
+                    incident_type["type"]
                 ):
                     exists_on_chain = True
                     # We *DO* have this on chain already!
@@ -68,69 +67,30 @@ class DynamicBmgTrigger(Trigger):
                         )
                     )
 
-            # Dot not dublicate efforts
-            if not exists_on_chain and incident_type["type"] not in types_done:
-                log.info("Creating dynamic BMGs ...")
-                self.createBmgs(self.event, incident_type)
-                types_done.append(incident_type["type"])
-            else:
+            # Let's skip if we have we this type exists on chain already, or
+            # we've already worked on one that is similar
+            if exists_on_chain or incident_type["type"] in types_done:
                 log.info("Already found BMGs on chain.. Aborting")
-                # just return, the worker will set the incident status to done
+                continue
 
-    def median_value(self, t, side=None):
-        log.debug("Obtaining median value of incidents")
-        incidents = self.get_all_incidents()
-        if not incidents:
-            raise exceptions.InsufficientIncidents("No incident found")
-        dynamic_incidents = incidents.get("dynamic_bmgs", {}).get("incidents", [])
-        incidents = [self.storage.resolve_to_incident(x) for x in dynamic_incidents]
-        # Obtain incidents that have an OU for this event in it
-        values = list()
-        for incident in incidents:
-            for incident_type in incident["arguments"]["types"]:
-                # Same type?
-                if LookupBettingMarketGroup.is_dynamic_type(incident_type["type"], t):
+            # ... else, we create the BMG and corresponding BMs
+            log.info("Creating dynamic BMGs ...")
+            try:
+                self.createBmg(self.event, incident_type)
+            except Exception as e:
+                # If an exception is raised, let's log and continue
+                log.critical("{}: {}".format(e.__class__.__name__, str(e)))
 
-                    if LookupBettingMarketGroup.is_hc_type(t):
+            types_done.append(incident_type["type"])
 
-                        # Correct team orientation?
-                        this_side = obtain_participant_side(
-                            incident_type["participant"], self.teams
-                        )
-                        # If sides don't match, we need to invert values
-                        if this_side == side:
-                            values.append(float(incident_type["value"]))
-                        else:
-                            values.append(-float(incident_type["value"]))
-                        log.debug(
-                            "Dealing with Handicap value: {}".format(
-                                incident_type["value"]
-                            )
-                        )
+    def createBmg(self, event, incident_type):
+        """ Go through all Betting Market groups and create the one that
+            matches the type in the incident together with the corresponding
+            betting markets.
 
-                    elif LookupBettingMarketGroup.is_ou_type(t):
-                        values.append(float(incident_type["value"]))
-                        log.debug(
-                            "Dealing with over/under value: {}".format(
-                                incident_type["value"]
-                            )
-                        )
-
-                    else:
-                        log.error("Type '{}' isn't known!".format(t))
-                else:
-                    log.error(
-                        "Not same type: {} != {}".format(incident_type["type"], t)
-                    )
-
-        if values:
-            log.debug("Obtaining median ({}) for values: {}".format(t, str(values)))
-            return statistics.median(values)
-        else:
-            log.warning("No values could be processed for type {}!".format(t))
-
-    def createBmgs(self, event, incident_type):
-        """ Go through all Betting Market groups and create them
+            This method is called for each type in the incident, that means, if
+            an incident contains a handicap and an over under, this method will
+            be called
         """
         assert "type" in incident_type
         assert "value" in incident_type
@@ -142,109 +102,28 @@ class DynamicBmgTrigger(Trigger):
         for bmg in bmgs:
 
             # Only do dynamic ones here
-            if not bmg["dynamic"] or not LookupBettingMarketGroup.is_dynamic_type(
-                bmg["dynamic"], typ
-            ):
+            if not bmg.get("dynamic"):
                 log.debug("BMG is not dynamic: {}".format(bmg.identifier))
                 continue
 
-            # If this is a Overunder BMG
+            # We only deal with the one corresponding with the incident_type
+            if not LookupBettingMarketGroup.is_dynamic_type(bmg["dynamic"], typ):
+                log.debug("BMG {} is not of type {}".format(bmg.identifier, typ))
+                continue
+
+            # If incident is a Overunder BMG
             if LookupBettingMarketGroup.is_ou_type(
                 bmg.get("dynamic")
             ) and LookupBettingMarketGroup.is_ou_type(typ):
-                log.debug("BMG is dynamic Over/Under: {}".format(bmg.identifier))
-
-                # Let's obtain the overunder value
-                # overunder = math.floor(self.median_value("ou")) + 0.5
-                overunder = self.median_value(
-                    "ou"
-                )  # The rounding will need to happen somewhere else!
-
-                # Set Overunder
-                bmg.set_overunder(overunder)
-
-                # Update and crate BMs
-                fuzzy_args = {
-                    "test_operation_equal_search": [
-                        comparators.cmp_required_keys(
-                            [
-                                "betting_market_group_id",
-                                "new_description",
-                                "new_event_id",
-                                "new_rules_id",
-                            ],
-                            [
-                                "betting_market_group_id",
-                                "description",
-                                "event_id",
-                                "rules_id",
-                            ],
-                        ),
-                        comparators.cmp_status(),
-                        comparators.cmp_event(),
-                        comparators.cmp_description("_dynamic"),
-                        comparators.cmp_fuzzy(
-                            config["dynamic"]["overunder"]["fuzzy_value"]
-                        ),
-                    ],
-                    "find_id_search": [
-                        comparators.cmp_event(),
-                        comparators.cmp_fuzzy(
-                            config["dynamic"]["overunder"]["fuzzy_value"]
-                        ),
-                        comparators.cmp_description("_dynamic"),
-                    ],
-                }
-                bmg.update(**fuzzy_args)
+                self.updateOverUnderBMg(bmg)
                 self.createBms(bmg)
                 return
 
-            # If this is a Handicap BMG
+            # If incident is a Handicap BMG
             elif LookupBettingMarketGroup.is_hc_type(
                 bmg.get("dynamic")
             ) and LookupBettingMarketGroup.is_hc_type(typ):
-                log.debug("BMG is dynamic Handicap: {}".format(bmg.identifier))
-
-                # Identify which player has the handicap
-                side = obtain_participant_side(incident_type["participant"], self.teams)
-
-                # Set handicap
-                handicap = round(self.median_value("hc", side=side))
-                bmg.set_handicaps(**{side: handicap})
-
-                # Update and crate BMs
-                fuzzy_args = {
-                    "test_operation_equal_search": [
-                        comparators.cmp_required_keys(
-                            [
-                                "betting_market_group_id",
-                                "new_description",
-                                "new_event_id",
-                                "new_rules_id",
-                            ],
-                            [
-                                "betting_market_group_id",
-                                "description",
-                                "event_id",
-                                "rules_id",
-                            ],
-                        ),
-                        comparators.cmp_status(),
-                        comparators.cmp_event(),
-                        comparators.cmp_description("_dynamic"),
-                        comparators.cmp_fuzzy(
-                            config["dynamic"]["handicap"]["fuzzy_value"]
-                        ),
-                    ],
-                    "find_id_search": [
-                        comparators.cmp_event(),
-                        comparators.cmp_fuzzy(
-                            config["dynamic"]["handicap"]["fuzzy_value"]
-                        ),
-                        comparators.cmp_description("_dynamic"),
-                    ],
-                }
-                bmg.update(**fuzzy_args)
+                self.updateHandicapBMg(bmg, incident_type)
                 self.createBms(bmg)
                 return
 
@@ -254,6 +133,125 @@ class DynamicBmgTrigger(Trigger):
                         bmg.identifier, (typ or "empty string")
                     )
                 )
+
+    def updateOverUnderBMg(self, bmg):
+        """ This method creates a BMG for OverUnder
+        """
+        log.debug("BMG is dynamic Over/Under: {}".format(bmg.identifier))
+
+        # Let's obtain the overunder value
+        overunder = self.median_value("ou")
+
+        # Set Overunder
+        bmg.set_overunder(overunder)
+
+        # We use fuzzy arguments by defining and injecting our own
+        # test_operation_equal_search and find_id_search comparators.
+        # This allows us to select what to actually look for.
+        fuzzy_args = {
+            "test_operation_equal_search": [
+                # The following keys are required
+                comparators.cmp_required_keys(
+                    [  # other for updates with new_*
+                        "betting_market_group_id",
+                        "new_description",
+                        "new_event_id",
+                        "new_rules_id",
+                    ],
+                    [  # or as actual creates
+                        "betting_market_group_id",
+                        "description",
+                        "event_id",
+                        "rules_id",
+                    ],
+                ),
+                # The status needs to match, if not update
+                comparators.cmp_status(),
+                # The status needs to match
+                comparators.cmp_event(),
+                # The description must have a _dynamic attribute
+                comparators.cmp_description("_dynamic"),
+                # The fuzzy comparator takes the fuzzyness from config
+                # and tries to find the bmgs for handicap and over
+                # under dynamic factors but allows some fuzzyness for
+                # the actual value
+                comparators.cmp_dynamic_bmg_fuzzy(
+                    config["dynamic"]["overunder"]["fuzzy_value"]
+                ),
+            ],
+            # We identify the bmg by comparing
+            "find_id_search": [
+                # parent event id
+                comparators.cmp_event(),
+                # comparing type of dynamic
+                comparators.cmp_description("_dynamic"),
+                # fuzzy matching of dynamic value
+                comparators.cmp_dynamic_bmg_fuzzy(
+                    config["dynamic"]["overunder"]["fuzzy_value"]
+                ),
+            ],
+        }
+        bmg.update(**fuzzy_args)
+
+    def updateHandicapBMg(self, bmg, incident_type):
+        """ This method creates a BMG for Hanidcap
+        """
+        log.debug("BMG is dynamic Handicap: {}".format(bmg.identifier))
+
+        # Identify which player has the handicap
+        side = obtain_participant_side(incident_type["participant"], self.teams)
+
+        # Set handicap
+        handicap = round(self.median_value("hc", side=side))
+        bmg.set_handicaps(**{side: handicap})
+
+        # We use fuzzy arguments by defining and injecting our own
+        # test_operation_equal_search and find_id_search comparators.
+        # This allows us to select what to actually look for.
+        fuzzy_args = {
+            "test_operation_equal_search": [
+                # The following keys are required
+                comparators.cmp_required_keys(
+                    [  # other for updates with new_*
+                        "betting_market_group_id",
+                        "new_description",
+                        "new_event_id",
+                        "new_rules_id",
+                    ],
+                    [  # or as actual creates
+                        "betting_market_group_id",
+                        "description",
+                        "event_id",
+                        "rules_id",
+                    ],
+                ),
+                # The status needs to match, if not update
+                comparators.cmp_status(),
+                # The status needs to match
+                comparators.cmp_event(),
+                # The description must have a _dynamic attribute
+                comparators.cmp_description("_dynamic"),
+                # The fuzzy comparator takes the fuzzyness from config
+                # and tries to find the bmgs for handicap and over
+                # under dynamic factors but allows some fuzzyness for
+                # the actual value
+                comparators.cmp_dynamic_bmg_fuzzy(
+                    config["dynamic"]["handicap"]["fuzzy_value"]
+                ),
+            ],
+            # We identify the bmg by comparing
+            "find_id_search": [
+                # parent event id
+                comparators.cmp_event(),
+                # comparing type of dynamic
+                comparators.cmp_description("_dynamic"),
+                # fuzzy matching of dynamic value
+                comparators.cmp_dynamic_bmg_fuzzy(
+                    config["dynamic"]["handicap"]["fuzzy_value"]
+                ),
+            ],
+        }
+        bmg.update(**fuzzy_args)
 
     def createBms(self, bmg):
         """ Go through all betting markets and create them
@@ -290,3 +288,70 @@ class DynamicBmgTrigger(Trigger):
             )
             log.info(msg)
             raise exceptions.PostPoneIncidentException(msg)
+
+    def median_value(self, type, side=None):
+        """ This method is used to obtain the median value of all incidents
+            that provide a value for a certain incident type. This ensure that
+            multiple incident providers with different opinion about the
+            dynamic market will result in just the median to be created.
+        """
+        log.debug("Obtaining median value of incidents")
+
+        # Get all incidents for the current event
+        incidents = self.get_all_incidents()
+
+        # We raise if no incident is found, this should really not happen.
+        # Also, there should be multiple incidents matching this query
+        # according to testConditions()
+        if not incidents:
+            raise exceptions.InsufficientIncidents("No incident found")
+
+        # Let's resolve the dynamic incidents
+        dynamic_incidents = incidents.get("dynamic_bmgs", {}).get("incidents", [])
+        incidents = [self.storage.resolve_to_incident(x) for x in dynamic_incidents]
+
+        # Obtain those incidents that have our type
+        values = list()
+        for incident in incidents:
+
+            for incident_type in incident["arguments"]["types"]:
+
+                # Same type?
+                if not LookupBettingMarketGroup.is_dynamic_type(
+                    incident_type["type"], type
+                ):
+                    # .. of skip, if not
+                    continue
+
+                # Let's see if this is handicap type
+                if LookupBettingMarketGroup.is_hc_type(type):
+                    log.debug(
+                        "Dealing with Handicap value: {}".format(incident_type["value"])
+                    )
+
+                    # Correct team orientation?
+                    this_side = obtain_participant_side(
+                        incident_type["participant"], self.teams
+                    )
+                    # If sides don't match, we need to invert values
+                    if this_side == side:
+                        values.append(float(incident_type["value"]))
+                    else:
+                        values.append(-float(incident_type["value"]))
+
+                # let's see if this is over under type
+                elif LookupBettingMarketGroup.is_ou_type(type):
+                    log.debug(
+                        "Dealing with over/under value: {}".format(
+                            incident_type["value"]
+                        )
+                    )
+
+                    # store value
+                    values.append(float(incident_type["value"]))
+
+        if values:
+            log.debug("Obtaining median ({}) for values: {}".format(type, str(values)))
+            return statistics.median(values)
+        else:
+            log.warning("No values could be processed for type {}!".format(type))
