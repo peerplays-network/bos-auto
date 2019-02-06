@@ -198,7 +198,9 @@ def process(message, **kwargs):
         trigger.set_incident_status(status_name="connection lost")
 
     except bos_incidents.exceptions.EventNotFoundException as e:
-        trigger.set_incident_status(status_name="event missing in bos_incidents")
+        # We do not set the incident status because this requires an event to
+        # exist which doesn't - that's why we are in here, afterall
+        # trigger.set_incident_status(status_name="event missing in bos_incidents")
         log.debug("Invalid bos_incident event!")
 
     except bookied_sync.exceptions.ObjectNotFoundInLookup as e:
