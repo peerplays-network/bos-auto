@@ -13,7 +13,9 @@ from .redis_con import get_redis
 config = loadConfig()
 
 
-def check_scheduled(storage=None, func_callback=None, proposer=None, approver=None):
+def check_scheduled(
+    storage=None, func_callback=None, proposer=None, approver=None
+):  # pragma: no cover
     """
     """
     log.info(
@@ -77,7 +79,7 @@ def check_scheduled(storage=None, func_callback=None, proposer=None, approver=No
     return ids
 
 
-class PeriodicExecutor(threading.Thread):
+class PeriodicExecutor(threading.Thread):  # pragma: no cover
     """ Periodically execute a task
     """
 
@@ -101,7 +103,7 @@ class PeriodicExecutor(threading.Thread):
                 time.sleep(self.sleep)
 
 
-def scheduler(delay=None, proposer=None, approver=None):
+def scheduler(delay=None, proposer=None, approver=None):  # pragma: no cover
     """
     """
     from . import work

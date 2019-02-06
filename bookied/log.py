@@ -4,7 +4,7 @@ from colorlog import ColoredFormatter
 from .config import loadConfig
 
 HAS_TELEGRAM = False
-try:
+try:  # pragma: no cover
     import telegram_handler
 
     HAS_TELEGRAM = True
@@ -27,7 +27,7 @@ USE_STREAM = True  # logging_config.get("console", None)
 USE_FILE = logging_config.get("file", None)
 
 
-def log_stream(logger):
+def log_stream(logger):  # pragma: no cover
     """ Log content in the output/syslog
     """
     if USE_STREAM:
@@ -38,7 +38,7 @@ def log_stream(logger):
         logger.addHandler(stream)
 
 
-def log_file(logger):
+def log_file(logger):  # pragma: no cover
     """ Log content to a file
     """
     if USE_FILE:
@@ -51,7 +51,7 @@ def log_file(logger):
         logger.addHandler(log_handler_rotate)
 
 
-def log_mail(logger):
+def log_mail(logger):  # pragma: no cover
     """ Send an email for logging
     """
     if USE_MAIL:
@@ -79,7 +79,7 @@ def log_mail(logger):
         logger.addHandler(log_handler_mail)
 
 
-def log_telegram(logger):
+def log_telegram(logger):  # pragma: no cover
     """ Enable logging via Telegram
     """
     if USE_TELEGRAM:
