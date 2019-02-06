@@ -1,3 +1,4 @@
+peerplays>=0.3.7
 bos-sync>=0.3.8
 bos-incidents>=0.3.7
 
