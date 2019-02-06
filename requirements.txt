@@ -1,5 +1,5 @@
-bos-sync>=0.3.7
-bos-incidents
+bos-sync>=0.3.8
+bos-incidents>=0.3.7
 
 redis==2.10.6
 rq==0.12.0
