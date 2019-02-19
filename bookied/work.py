@@ -99,8 +99,8 @@ def process(message, **kwargs):
     if proposer:
         lookup.set_proposing_account(proposer)
 
-    log.debug("Proposer account: {}".format(lookup.proposing_account))
-    log.debug("Approver account: {}".format(lookup.approving_account))
+    log.info("Proposer account: {}".format(lookup.proposing_account))
+    log.info("Approver account: {}".format(lookup.approving_account))
 
     # Call
     call = message.get("call").lower()
@@ -108,7 +108,7 @@ def process(message, **kwargs):
     # Obtain arguments
     args = message.get("arguments")
 
-    log.debug("initializing {} call with args {}".format(call, str(args)))
+    log.info("initializing {} call with args {}".format(call, str(args)))
     try:
 
         if call in TRIGGERS:
@@ -138,7 +138,7 @@ def process(message, **kwargs):
         # No trigger can be executed!
         return
 
-    log.debug("processing {} call from event id {}".format(call, str(trigger.id)))
+    log.info("processing {} call from event id {}".format(call, str(trigger.id)))
 
     try:
         # Execute the trigger
@@ -201,7 +201,7 @@ def process(message, **kwargs):
         # We do not set the incident status because this requires an event to
         # exist which doesn't - that's why we are in here, afterall
         # trigger.set_incident_status(status_name="event missing in bos_incidents")
-        log.debug("Invalid bos_incident event!")
+        log.info("Invalid bos_incident event!")
 
     except bookied_sync.exceptions.ObjectNotFoundInLookup as e:
         trigger.set_incident_status(status_name="related object not found")
@@ -251,7 +251,7 @@ def process(message, **kwargs):
 
     try:
         elapsed = time.time() - t
-        log.debug(
+        log.info(
             "Done processing "
             + message["unique_string"]
             + ", call status now "
