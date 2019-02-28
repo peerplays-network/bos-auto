@@ -65,6 +65,7 @@ class Testcases(unittest.TestCase):
             lookup_instance=lookup,
             config=config,
             storage=self.storage,
+            clear_caches=False,
         )
         from bookied import schedule
 

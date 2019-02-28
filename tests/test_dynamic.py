@@ -53,7 +53,11 @@ class Testcases(unittest.TestCase):
 
         _message["timestamp"] = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
         trigger = DynamicBmgTrigger(
-            _message, lookup_instance=lookup, config=config, storage=self.storage
+            _message,
+            lookup_instance=lookup,
+            config=config,
+            storage=self.storage,
+            clear_caches=False,
         )
         with self.assertRaises(exceptions.PostPoneIncidentException):
             trigger.testConditions()
@@ -62,7 +66,11 @@ class Testcases(unittest.TestCase):
             "%Y-%m-%dT%H:%M:%SZ"
         )
         trigger = DynamicBmgTrigger(
-            _message, lookup_instance=lookup, config=config, storage=self.storage
+            _message,
+            lookup_instance=lookup,
+            config=config,
+            storage=self.storage,
+            clear_caches=False,
         )
         with self.assertRaises(exceptions.PostPoneIncidentException):
             trigger.testConditions()
@@ -72,7 +80,11 @@ class Testcases(unittest.TestCase):
             "%Y-%m-%dT%H:%M:%SZ"
         )
         trigger = DynamicBmgTrigger(
-            _message, lookup_instance=lookup, config=config, storage=self.storage
+            _message,
+            lookup_instance=lookup,
+            config=config,
+            storage=self.storage,
+            clear_caches=False,
         )
         self.assertTrue(trigger.testConditions())
 
@@ -99,7 +111,11 @@ class Testcases(unittest.TestCase):
             },
         }
         trigger = DynamicBmgTrigger(
-            _message, lookup_instance=lookup, config=config, storage=self.storage
+            _message,
+            lookup_instance=lookup,
+            config=config,
+            storage=self.storage,
+            clear_caches=False,
         )
 
         receive_incident(_message)
@@ -149,7 +165,11 @@ class Testcases(unittest.TestCase):
         }
 
         trigger = DynamicBmgTrigger(
-            _message, lookup_instance=lookup, config=config, storage=self.storage
+            _message,
+            lookup_instance=lookup,
+            config=config,
+            storage=self.storage,
+            clear_caches=False,
         )
 
         receive_incident(_message)
@@ -209,7 +229,11 @@ class Testcases(unittest.TestCase):
         # = +1 : -1
 
         trigger = DynamicBmgTrigger(
-            _message, lookup_instance=lookup, config=config, storage=self.storage
+            _message,
+            lookup_instance=lookup,
+            config=config,
+            storage=self.storage,
+            clear_caches=False,
         )
 
         receive_incident(_message)
@@ -263,7 +287,11 @@ class Testcases(unittest.TestCase):
         }
 
         trigger = DynamicBmgTrigger(
-            _message, lookup_instance=lookup, config=config, storage=self.storage
+            _message,
+            lookup_instance=lookup,
+            config=config,
+            storage=self.storage,
+            clear_caches=False,
         )
 
         receive_incident(_message)
@@ -326,7 +354,11 @@ class Testcases(unittest.TestCase):
         }
 
         trigger = DynamicBmgTrigger(
-            _message, lookup_instance=lookup, config=config, storage=self.storage
+            _message,
+            lookup_instance=lookup,
+            config=config,
+            storage=self.storage,
+            clear_caches=False,
         )
 
         receive_incident(_message)
@@ -375,7 +407,11 @@ class Testcases(unittest.TestCase):
         }
 
         trigger = DynamicBmgTrigger(
-            _message, lookup_instance=lookup, config=config, storage=self.storage
+            _message,
+            lookup_instance=lookup,
+            config=config,
+            storage=self.storage,
+            clear_caches=False,
         )
 
         receive_incident(_message)

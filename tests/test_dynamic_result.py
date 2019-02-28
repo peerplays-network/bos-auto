@@ -54,6 +54,7 @@ class Testcases(unittest.TestCase):
             lookup_instance=lookup,
             config=config,
             storage=self.storage,
+            clear_caches=False,
         )
 
         with self.assertRaises(bos_incidents.exceptions.EventNotFoundException):
