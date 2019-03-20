@@ -9,7 +9,7 @@ click
 click-datetime
 
 jsonschema
-pyyaml
+pyyaml==3.13
 strict_rfc3339
 
 flask
