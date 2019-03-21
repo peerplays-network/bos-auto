@@ -60,6 +60,7 @@ class Testcases(unittest.TestCase):
             lookup_instance=lookup,
             config=config,
             storage=self.storage,
+            clear_caches=False,
         )
 
         event = create.getIncidentEvent()
@@ -99,6 +100,7 @@ class Testcases(unittest.TestCase):
             lookup_instance=lookup,
             config=config,
             storage=self.storage,
+            clear_caches=False,
         )
 
         receive_incident(_message_create_1)

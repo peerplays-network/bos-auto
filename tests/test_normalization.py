@@ -88,6 +88,7 @@ class Testcases(unittest.TestCase):
             lookup_instance=lookup,
             config=config,
             storage=self.storage,
+            clear_caches=False,
         )
         self.assertEqual(create.message["id"]["event_group_name"], "NBA Regular Season")
 
@@ -132,6 +133,7 @@ class Testcases(unittest.TestCase):
                 lookup_instance=lookup,
                 config=config,
                 storage=self.storage,
+                clear_caches=False,
             )
 
         # ... and here

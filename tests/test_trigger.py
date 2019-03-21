@@ -51,6 +51,7 @@ class Testcases(unittest.TestCase):
             lookup_instance=lookup,
             config=config,
             storage=self.storage,
+            clear_caches=False,
         )
         with self.assertRaises(bos_incidents.exceptions.DuplicateIncidentException):
             receive_incident(_message_duplicate)
@@ -88,6 +89,7 @@ class Testcases(unittest.TestCase):
             lookup_instance=lookup,
             config=config,
             storage=self.storage,
+            clear_caches=False,
         )
 
         with self.assertRaises(bos_incidents.exceptions.EventNotFoundException):
@@ -143,6 +145,7 @@ class Testcases(unittest.TestCase):
             lookup_instance=lookup,
             config=config,
             storage=self.storage,
+            clear_caches=False,
         )
         receive_incident(_message_in_play)
 
@@ -196,6 +199,7 @@ class Testcases(unittest.TestCase):
             lookup_instance=lookup,
             config=config,
             storage=self.storage,
+            clear_caches=False,
         )
 
         receive_incident(_message_finish_1)
@@ -253,6 +257,7 @@ class Testcases(unittest.TestCase):
             lookup_instance=lookup,
             config=config,
             storage=self.storage,
+            clear_caches=False,
         )
 
         with self.assertRaises(bos_incidents.exceptions.EventNotFoundException):
@@ -328,6 +333,7 @@ class Testcases(unittest.TestCase):
             lookup_instance=lookup,
             config=config,
             storage=self.storage,
+            clear_caches=False,
         )
 
         receive_incident(_message_cancel_1)

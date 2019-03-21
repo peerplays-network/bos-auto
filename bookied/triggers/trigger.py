@@ -8,6 +8,8 @@ from bos_incidents import factory
 from bookiesports.normalize import IncidentsNormalizer, NotNormalizableException
 from peerplaysapi.exceptions import UnhandledRPCError
 from peerplays.bettingmarketgroup import BettingMarketGroups
+from peerplays.event import Events
+from peerplays.proposal import Proposals
 
 
 class Trigger:
@@ -15,7 +17,7 @@ class Trigger:
         means and need processing thru bookied-sync
     """
 
-    def __init__(self, message, lookup_instance, config, **kwargs):
+    def __init__(self, message, lookup_instance, config, clear_caches=True, **kwargs):
         self.message = message
         self.lookup = lookup_instance
         self.config = config
@@ -38,6 +40,15 @@ class Trigger:
         # Normalize incident
         self.normalizer = IncidentsNormalizer(chain=lookup_instance._network_name)
         self.normalize(message)
+
+        # Let's clear the caches for Proposals and events
+        # We need to do so because of the internal pypeerplays cache.
+        # The cache reduces the API calls to the backend and thus latency.
+        # However, to be sure the event hasn't been created since before the
+        # cache has expired, we force a refresh from the blockchain.
+        if clear_caches:
+            Events.clear_cache()
+            Proposals.clear_cache()
 
         # Try obtain the sport
         self.sport = LookupSport(self.id.get("sport"))
