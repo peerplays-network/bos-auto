@@ -21,6 +21,7 @@ colorlog
 tqdm
 
 # Notifications
+requests==2.21.0
 python-telegram-handler
 
 # needed for fast signing of transactions!
