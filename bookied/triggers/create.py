@@ -57,7 +57,7 @@ class CreateTrigger(Trigger):
             while x < len(uialist):
                 bmg["asset"] =  uialist[x]
                 if(len(uialist) > 1):
-                   bmg["description"]["en"] = name + " " + str(bmg["asset"]) 
+                   bmg["description"]["en"] = name + "_" + str(bmg["asset"]) 
                  
                 x += 1
                 # Skip dynamic bmgs
