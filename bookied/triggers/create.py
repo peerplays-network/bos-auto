@@ -49,19 +49,28 @@ class CreateTrigger(Trigger):
         """ Go through all Betting Market groups and create them
         """
         for bmg in self.event.bettingmarketgroups:
-
-            # Skip dynamic bmgs
-            if bmg["dynamic"]:
-                # Dynamic BMGs are created separately
-                log.debug("Skipping dynamic BMG: {}".format(str(bmg.identifier)))
-                continue
-            bmg.update()
-            self.createBms(bmg)
+            # Create BMG's based on assets listed in yaml files and update description to differenciate
+            uialist = list()
+            uialist = bmg["asset"]
+            name = bmg["description"]["en"]
+            x = 0 
+            while x < len(uialist):
+                bmg["asset"] =  uialist[x]
+                if(len(uialist) > 1):
+                   bmg["description"]["en"] = name + " " + str(bmg["asset"]) 
+                 
+                x += 1
+                # Skip dynamic bmgs
+                if bmg["dynamic"]:
+                   # Dynamic BMGs are created separately
+                   log.debug("Skipping dynamic BMG: {}".format(str(bmg.identifier)))
+                   continue
+                bmg.update()
+                self.createBms(bmg)
 
     def createBms(self, bmg):
         """ Go through all betting markets and create them
         """
-        log.debug("Updating Betting Markets ...")
         for bm in bmg.bettingmarkets:
             log.debug(
                 "Updating Betting Market {} ...".format(bm["description"].get("en"))
