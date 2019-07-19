@@ -34,34 +34,44 @@ class ResultTrigger(Trigger):
         """ Resolve the BMGs
         """
         for bmg in event.bettingmarketgroups:
-            if bmg["dynamic"]:
-                # Update and crate BMs
-                fuzzy_args = {
-                    "test_operation_equal_search": [
-                        comparators.cmp_event(),
-                        comparators.cmp_description("_dynamic"),
-                    ],
-                    "find_id_search": [
-                        comparators.cmp_event(),
-                        comparators.cmp_description("_dynamic"),
-                    ],
-                }
-            else:
-                fuzzy_args = {}
+            uialist = list()
+            uialist = bmg["asset"]
+            name = bmg["description"]["en"]
+            x = 0 
+            while x < len(uialist):
+                bmg["asset"] =  uialist[x]
+                if(len(uialist) > 1):
+                   bmg["description"]["en"] = name + "_" + str(bmg["asset"]) 
+                 
+                x += 1
+                if bmg["dynamic"]:
+                    # Update and crate BMs
+                    fuzzy_args = {
+                        "test_operation_equal_search": [
+                            comparators.cmp_event(),
+                            comparators.cmp_description("_dynamic"),
+                        ],
+                        "find_id_search": [
+                            comparators.cmp_event(),
+                            comparators.cmp_description("_dynamic"),
+                        ],
+                    }
+                else:
+                    fuzzy_args = {}
 
-            # Let's try find an id with fuzzy
-            # This also sets the dynamic parameters in the bmg object!
-            _ = bmg.find_id(**fuzzy_args)
+                # Let's try find an id with fuzzy
+                # This also sets the dynamic parameters in the bmg object!
+                _ = bmg.find_id(**fuzzy_args)
 
-            # Skip those bmgs that coudn't be found
-            if not bmg.find_id():
-                log.error("BMG could not be found: {}".format(str(bmg.identifier)))
-                continue
+                # Skip those bmgs that coudn't be found
+                if not bmg.find_id():
+                    log.error("BMG could not be found: {}".format(str(bmg.identifier)))
+                    continue
 
-            settle = LookupBettingMarketGroupResolve(
-                bmg, [self.home_score, self.away_score]
-            )
-            settle.update()
+                settle = LookupBettingMarketGroupResolve(
+                    bmg, [self.home_score, self.away_score]
+                )
+                settle.update()
 
     def testThreshold(self):
         """ The threshold that needs to be crossed in order to "grade" an event
