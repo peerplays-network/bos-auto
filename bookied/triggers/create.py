@@ -5,7 +5,6 @@ from ..log import log
 from bookied_sync.event import LookupEvent
 from datetime import datetime
 
-
 class CreateTrigger(Trigger):
     """ This trigger inherits class:`Trigger` and deals with create incidents
         that are fired by the data proxy when new events are announced.
@@ -49,7 +48,8 @@ class CreateTrigger(Trigger):
         """ Go through all Betting Market groups and create them
         """
         for bmg in self.event.bettingmarketgroups:
-            # Create BMG's based on assets listed in yaml files and update description to differenciate
+            # Create BMG's based on assets listed in yaml files and
+            # update description to differentiate and don't pass duplicate id for search
             uialist = list()
             uialist = bmg["asset"]
             name = bmg["description"]["en"]
@@ -58,6 +58,9 @@ class CreateTrigger(Trigger):
                 bmg["asset"] =  uialist[x]
                 if(len(uialist) > 1):
                    bmg["description"]["en"] = name + "_" + str(bmg["asset"]) 
+                   # To avoid duplicate BMG's on retriggering replays from DP's
+                   if "id" in bmg:
+                      bmg["id"] = None
                  
                 x += 1
                 # Skip dynamic bmgs
