@@ -1,3 +1,4 @@
+from . import work
 import threading
 import time
 from datetime import datetime
@@ -39,6 +40,13 @@ def check_scheduled(
 
         events = []
 
+        # midway is the status of the incidents which are terminated intentionally as creating bms took time.
+        for status_name in ["midway"]:
+            for event in storage.get_events_by_call_status(
+                call=call, status_name=status_name
+            ):
+                events.append(event)
+
         for status_name in ["postponed", "unhandled exception, retrying soon"]:
             for event in storage.get_events_by_call_status(
                 call=call,
@@ -66,8 +74,10 @@ def check_scheduled(
     # Flask queue
     q = Queue(connection=get_redis())
 
-    # only push into the queue if it's somewhat empty (with 10% buffer), otherwise wait
-    if q.count + 2 < len(push_to_queue):
+    # If push_to_queue has events, then empty queue and fill it again with push_to_queue
+    # This approach ensures that events which are on the chain but not all bms are created shall be processed first.
+    if len(push_to_queue) > 0:
+        q.empty()
         for incident in push_to_queue:
             job = q.enqueue(
                 func_callback,
@@ -106,7 +116,6 @@ class PeriodicExecutor(threading.Thread):  # pragma: no cover
 def scheduler(delay=None, proposer=None, approver=None):  # pragma: no cover
     """
     """
-    from . import work
 
     if not delay:
         delay = config["scheduler"]["interval"]

@@ -1,9 +1,9 @@
-peerplays>=0.3.7
-bos-sync>=0.3.8
-bos-incidents>=0.3.7
+peerplays
+bos-sync
+bos-incidents
 
-redis==2.10.6
-rq==0.12.0
+redis
+rq
 
 click
 click-datetime
@@ -21,7 +21,7 @@ colorlog
 tqdm
 
 # Notifications
-requests==2.21.0
+requests
 python-telegram-handler
 
 # needed for fast signing of transactions!

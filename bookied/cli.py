@@ -80,12 +80,12 @@ def worker(queue):
         if q.count > 0:
             log.info("Emptying Redis Queue (default) ...")
             q.empty()
-            job = q.dequeue()
+            job = q.delete()
             while job is not None:
                 log.info("Canceling " + str(job))
                 job.cancel()
                 job.delete()
-                job = q.dequeue()
+                job = q.delete()
             log.info("Redis Queue cleared (jobs before=" + str(count_before) + ")")
         else:
             log.info("Empty Redis Queue initialized")
