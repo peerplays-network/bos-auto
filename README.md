@@ -14,7 +14,7 @@ further stores these incidents via [`bos-incidents`](https://github.com/PBSA/bos
 display them in the manual intervention(MINT) module [`bos-mint`](https://github.com/PBSA/bos-mint).
 
 ## Documentation
-For directions on how to install and run `bos-auto` please visit our [documentation page](http://bos-auto.readthedocs.io/en/develop/installation.html).
+For directions on how to install and run `bos-auto` please visit our [documentation page](https://www.peerplays.tech/bookie-oracle-suite-bos/).
 
 [![docs master](https://readthedocs.org/projects/bos-auto/badge/?version=latest)](http://bos-auto.rtfd.io/en/latest/)
 [![docs develop](https://readthedocs.org/projects/bos-auto/badge/?version=develop)](http://bos-auto.rtfd.io/en/develop/)

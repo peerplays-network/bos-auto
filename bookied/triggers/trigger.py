@@ -1,3 +1,4 @@
+import time
 from ..log import log
 from .. import exceptions
 from dateutil.parser import parse
@@ -104,6 +105,7 @@ class Trigger:
             raise exceptions.EventDoesNotExistException
 
     def trigger(self, *args, **kwargs):
+        tic = time.time()
         """ Forward a trigger to the actual trigger implementation
             in the subclass
         """
@@ -112,7 +114,8 @@ class Trigger:
         self.testConditions()
 
         # Execute the actual Trigger
-        self._trigger(*args, **kwargs)
+        status = self._trigger(*args, **kwargs)
+        print('trigger.py, def trigger, line 118, after _trigger done, time:', time.time() - tic)
 
         # if a proposal is going to be published, let's enable
         # blocking so we can obtain the proposal id
@@ -132,11 +135,17 @@ class Trigger:
         actions = [x.action() for x in transactions]
 
         # unless _trigger raises an exception
-        self.set_incident_status(
-            status_name="done", status_add=dict(proposals=proposal_ids, actions=actions)
-        )
+        if status == 'midway':
+            self.set_incident_status(
+                status_name="midway", status_add=dict(proposals=proposal_ids, actions=actions)
+            )
+            return transactions
+        else:
+            self.set_incident_status(
+                status_name="done", status_add=dict(proposals=proposal_ids, actions=actions)
+            )
 
-        return transactions
+            return transactions
 
     def normalize(self, *args, **kwargs):
         try:

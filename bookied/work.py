@@ -67,6 +67,8 @@ def process(message, **kwargs):
 
         Hence, this method has the look and feel of a dispatcher!
     """
+    approve()  # approve to minimize approval pendig map error.
+
     # We clear the buffers here so we start fresh with no
     # operation in any buffer
     lookup.clear()
@@ -262,6 +264,7 @@ def process(message, **kwargs):
     except Exception as e:
         pass
 
+    approve() # approved called after proposal
 
 #
 # Approve my own Proposals

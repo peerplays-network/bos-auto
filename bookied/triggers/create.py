@@ -1,9 +1,11 @@
+import time
 from . import SKIP_DYNAMIC_BMS
 from .trigger import Trigger
 from .. import exceptions
 from ..log import log
 from bookied_sync.event import LookupEvent
 from datetime import datetime
+
 
 class CreateTrigger(Trigger):
     """ This trigger inherits class:`Trigger` and deals with create incidents
@@ -40,11 +42,15 @@ class CreateTrigger(Trigger):
         self.event.update()
 
         # Create Betting market Groups
-        self.createBmgs()
+        status = self.createBmgs()
 
-        return True
+        if status == 'midway':
+            return status
+        else:
+            return True
 
     def createBmgs(self):
+        tic = time.time()
         """ Go through all Betting Market groups and create them
         """
         for bmg in self.event.bettingmarketgroups:
@@ -53,32 +59,48 @@ class CreateTrigger(Trigger):
             uialist = list()
             uialist = bmg["asset"]
             name = bmg["description"]["en"]
-            x = 0 
+            x = 0
             while x < len(uialist):
-                bmg["asset"] =  uialist[x]
+                bmg["asset"] = uialist[x]
                 if(len(uialist) > 1):
-                   bmg["description"]["en"] = name + "_" + str(bmg["asset"]) 
-                   # To avoid duplicate BMG's on retriggering replays from DP's
-                   if "id" in bmg:
-                      bmg["id"] = None
-                 
+                    bmg["description"]["en"] = name + "_" + str(bmg["asset"])
+                    # To avoid duplicate BMG's on retriggering replays from DP's
+                    if "id" in bmg:
+                        bmg["id"] = None
+
                 x += 1
                 # Skip dynamic bmgs
                 if bmg["dynamic"]:
-                   # Dynamic BMGs are created separately
-                   log.debug("Skipping dynamic BMG: {}".format(str(bmg.identifier)))
-                   continue
+                    # Dynamic BMGs are created separately
+                    log.debug("Skipping dynamic BMG: {}".format(str(bmg.identifier)))
+                    continue
                 bmg.update()
-                self.createBms(bmg)
+                statusCreateBms = self.createBms(bmg)
+                if statusCreateBms == "midway":
+                    print("createBmms, toc > 10")
+                    return 'midway'
+
+            # Terminate loop and return midway if bmg creation took time.
+            # So that incident is processed later.
+            toc = time.time() - tic
+            if toc > 30:
+                return 'midway'
 
     def createBms(self, bmg):
         """ Go through all betting markets and create them
         """
+        tic = time.time()
         for bm in bmg.bettingmarkets:
+
             log.debug(
                 "Updating Betting Market {} ...".format(bm["description"].get("en"))
             )
             bm.update()
+            # break the loop and return midway if bm creation takes time.
+            toc = time.time()
+            if (toc - tic) > 10:
+                return "midway"
+            tic = toc
 
     def getIncidentEvent(self):
         """ Does not throw in all cases but returns None in case of error
