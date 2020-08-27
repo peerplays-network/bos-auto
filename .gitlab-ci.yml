@@ -1,0 +1,19 @@
+# gitlab scanning
+include:
+  - template: Dependency-Scanning.gitlab-ci.yml
+  - template: License-Management.gitlab-ci.yml
+
+# python docker image on which this would be run
+image: python:latest
+
+stages:
+  - test
+
+before_script:
+  - pip install -r requirements.txt
+
+test:
+    script:
+        - pip install -r requirements.txt
+    tags:
+        - docker
