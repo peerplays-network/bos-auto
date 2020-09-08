@@ -11,7 +11,7 @@ stages:
 
 before_script:
   - apt-get update
-  - apt-get install build-essential libsecp256k1-dev redis-server -y
+  - apt-get install pkg-config build-essential libsecp256k1-dev redis-server -y
   - pip install -r requirements.txt
 
 test:
