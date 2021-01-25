@@ -27,8 +27,7 @@ class CreateTrigger(Trigger):
         if isinstance(season, str):
             season = {"en": season}
         if self.event["season"] and not (
-            self.event["season"].get("en") in season.get("en")
-            or season.get("en") in self.event["season"].get("en")
+            self.event["season"].get("en") in season.get("en") or season.get("en") in self.event["season"].get("en")
         ):
             err = "Seasons don't match: {} != {}".format(
                 season.get("en"), self.event["season"].get("en")
@@ -77,7 +76,7 @@ class CreateTrigger(Trigger):
                 bmg.update()
                 statusCreateBms = self.createBms(bmg)
                 if statusCreateBms == "midway":
-                    print("createBmms, toc > 10")
+                    log.debug("createBmms, toc > 10")
                     return 'midway'
 
             # Terminate loop and return midway if bmg creation took time.
