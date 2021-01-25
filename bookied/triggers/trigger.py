@@ -115,7 +115,7 @@ class Trigger:
 
         # Execute the actual Trigger
         status = self._trigger(*args, **kwargs)
-        print('trigger.py, def trigger, line 118, after _trigger done, time:', time.time() - tic)
+        log.debug('trigger.py, def trigger, line 118, after _trigger done, time:', time.time() - tic)
 
         # if a proposal is going to be published, let's enable
         # blocking so we can obtain the proposal id
