@@ -30,6 +30,14 @@ api_whitelist = resolve_hostnames(config.get("api_whitelist", ["0.0.0.0"]))
 
 background_threads = []
 
+def verify_siganture(incidentSigned, pub_key):
+    pub_key_sig = ecdsa.verify_message(
+        incidentSigned["incidentJson"],
+        bytes(incidentSigned["signature"], "lating"))
+    if hexlify(pub_key_sig).decode("latin") ==  pub_key:
+        return True
+    else:
+        return False
 
 @app.route("/")
 def home():
@@ -137,7 +145,12 @@ def trigger():
             return "Your IP address is not allowed to post here!", 403
 
         # Obtain message from request body
-        incident = request.get_json()
+        incidentSigned = request.get_json()
+        if verify_siganture(incidentSigned, pub_key):
+            incident = incidentSigned["incidentJson"]
+            incident = json.loads(incident)
+        else:
+            LOG WRONG SIGNATURE
 
         # Ensure it is json
         try:
