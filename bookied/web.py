@@ -1,6 +1,8 @@
+import json
 import pkg_resources
 from rq import use_connection, Connection, Queue
 from flask import Flask, request, jsonify
+from binascii import hexlify
 
 from . import work
 from .config import loadConfig
@@ -9,6 +11,9 @@ from .utils import resolve_hostnames
 from bos_incidents import factory, exceptions
 from bos_incidents.validator import IncidentValidator, InvalidIncidentFormatException
 from bookiesports.normalize import IncidentsNormalizer, NotNormalizableException
+from peerplays import PeerPlays
+from peerplays.instance import set_shared_blockchain_instance
+from graphenebase import ecdsa, PublicKey  # PrivateKey
 
 from .log import log
 from . import INCIDENT_CALLS
@@ -30,14 +35,30 @@ api_whitelist = resolve_hostnames(config.get("api_whitelist", ["0.0.0.0"]))
 
 background_threads = []
 
-def verify_siganture(incidentSigned, pub_key):
+peerplays = PeerPlays(
+    node=config.get("node", None),
+    nobroadcast=config.get("nobroadcast", False),
+    num_retries=1,  # Only try once then trow an exception
+)
+set_shared_blockchain_instance(peerplays)
+
+
+def verify_siganture(incidentSigned):
+    incident = incidentSigned["incidentJson"]
+    incident = json.loads(incident)
+    print("incident:", incident)
+    name = incident["provider_info"]["name"]
+    print("name:", name)
+    pub_key = peerplays.rpc.get_account(name)["options"]["memo_key"]
+    print("pub_key:", pub_key)
     pub_key_sig = ecdsa.verify_message(
         incidentSigned["incidentJson"],
-        bytes(incidentSigned["signature"], "lating"))
-    if hexlify(pub_key_sig).decode("latin") ==  pub_key:
-        return True
+        bytes(incidentSigned["signature"], "latin"))
+    if hexlify(pub_key_sig).decode("latin") == repr(PublicKey(pub_key, prefix="TEST")):
+        return True, incident
     else:
-        return False
+        return False, incident
+
 
 @app.route("/")
 def home():
@@ -146,11 +167,10 @@ def trigger():
 
         # Obtain message from request body
         incidentSigned = request.get_json()
-        if verify_siganture(incidentSigned, pub_key):
-            incident = incidentSigned["incidentJson"]
-            incident = json.loads(incident)
-        else:
-            LOG WRONG SIGNATURE
+        verified, incident = verify_siganture(incidentSigned)
+        if not verified:
+            log.warning("Signature verification failed")
+            return "Your signature is wrong!", 403
 
         # Ensure it is json
         try:
