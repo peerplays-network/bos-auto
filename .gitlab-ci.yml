@@ -1,7 +1,7 @@
 # gitlab scanning
 include:
   - template: Dependency-Scanning.gitlab-ci.yml
-  - template: License-Management.gitlab-ci.yml
+  - template: License-Scanning.gitlab-ci.yml
 
 # python docker image on which this would be run
 image: python:latest
